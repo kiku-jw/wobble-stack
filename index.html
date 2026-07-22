@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f58a70" />
+    <meta
+      name="description"
+      content="A tiny one-thumb physics game prototype about keeping five wobbling creatures stacked."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23d95454'/%3E%3Ccircle cx='32' cy='25' r='13' fill='%23fff4bf'/%3E%3Cpath d='M14 46h36' stroke='%23fff4bf' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E"
+    />
+    <title>Wobble Stack — play in your browser</title>
+  </head>
+  <body>
+    <main class="prototype-shell">
+      <section class="game-frame" aria-labelledby="game-title">
+        <h1 id="game-title" class="sr-only">Wobble Stack</h1>
+
+        <canvas
+          id="game-canvas"
+          width="390"
+          height="844"
+          role="img"
+          aria-label="Five creatures balanced on a tilting platform. Drag left and right or use the arrow keys to keep them from falling."
+          tabindex="0"
+        ></canvas>
+
+        <div class="hud">
+          <div class="score-block">
+            <span class="score-label">TIME</span>
+            <strong id="score-value">0.0</strong>
+            <span id="best-value" class="best-value">BEST 0.0</span>
+          </div>
+          <button id="pause-button" class="icon-button" type="button" aria-label="Pause game">
+            <span class="pause-icon" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <div id="gust-warning" class="gust-warning" aria-hidden="true">
+          <span id="gust-arrow" class="gust-arrow">➜</span>
+          <span>GUST!</span>
+        </div>
+
+        <div id="start-overlay" class="game-overlay is-visible">
+          <div class="title-lockup">
+            <p class="eyebrow">ONE-THUMB PHYSICS TOY</p>
+            <h2>Wobble<br />Stack</h2>
+            <p>Keep five little disasters together.</p>
+          </div>
+          <button id="start-button" class="primary-button" type="button">Play</button>
+          <p class="input-hint">Drag anywhere · or use ← →</p>
+        </div>
+
+        <div id="result-overlay" class="game-overlay result-overlay" hidden>
+          <div class="result-copy">
+            <p id="result-kicker" class="eyebrow">TOTAL DISASTER</p>
+            <h2 id="result-score">0.0s</h2>
+            <p id="result-best">Best 0.0s</p>
+          </div>
+          <button id="retry-button" class="primary-button" type="button">Retry</button>
+        </div>
+
+        <div id="pause-overlay" class="game-overlay pause-overlay" hidden>
+          <div class="result-copy">
+            <p class="eyebrow">EVERYONE FREEZE</p>
+            <h2>Paused</h2>
+          </div>
+          <button id="resume-button" class="primary-button" type="button">Keep wobbling</button>
+        </div>
+
+        <div id="thumb-cue" class="thumb-cue" aria-hidden="true">
+          <span class="cue-track"></span>
+          <span class="cue-thumb"></span>
+          <span>DRAG TO TILT</span>
+        </div>
+
+        <p id="live-status" class="sr-only" aria-live="polite">Ready to play.</p>
+      </section>
+
+      <p class="prototype-note">Greybox web prototype · nothing here is final art</p>
+    </main>
+
+    <script type="module" src="/src/game.js"></script>
+  </body>
+</html>

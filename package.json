@@ -1,0 +1,30 @@
+{
+  "name": "wobble-stack",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A tiny one-thumb browser physics game about keeping five creatures balanced.",
+  "homepage": "https://kiku-jw.github.io/wobble-stack/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kiku-jw/wobble-stack.git"
+  },
+  "license": "MIT",
+  "packageManager": "pnpm@10.20.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test",
+    "check": "pnpm test && pnpm build"
+  },
+  "dependencies": {
+    "matter-js": "0.20.0"
+  },
+  "devDependencies": {
+    "vite": "8.1.5"
+  }
+}
