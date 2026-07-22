@@ -2,7 +2,7 @@
   "name": "wobble-stack",
   "private": true,
   "version": "0.1.0",
-  "description": "A tiny one-thumb browser physics game about keeping five creatures balanced.",
+  "description": "A tiny one-thumb browser physics game about keeping one to five creatures balanced against the wind.",
   "homepage": "https://kiku-jw.github.io/wobble-stack/",
   "repository": {
     "type": "git",

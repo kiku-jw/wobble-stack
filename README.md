@@ -1,6 +1,6 @@
 # Wobble Stack
 
-Keep five little disasters together while the wind tries to tear the tower apart.
+Keep one to five little disasters together while the wind tries to tear the tower apart.
 
 [**Play Wobble Stack**](https://kiku-jw.github.io/wobble-stack/) · Touch, mouse, and keyboard
 
@@ -23,8 +23,11 @@ accounts, backend, progression, shop, ads, analytics, or final character art.
 
 - **Touch or mouse:** press anywhere in the game and move left or right.
 - **Keyboard:** use Left/Right or A/D.
-- **Goal:** keep all five creatures on the beam as gusts get stronger.
+- **Goal:** lean opposite the wind and keep every creature on the beam as gusts get stronger.
 - **Pause:** use the button in the top-right corner or press Escape.
+
+Before each run you can choose Gentle, Normal, or Wild wind and a stack of one
+to five creatures. Best times are tracked separately for every combination.
 
 ## Run locally
 
@@ -45,10 +48,11 @@ pnpm build
 ## How it works
 
 - Matter.js provides gravity, collision, and rigid-body motion.
-- A custom Canvas renderer draws the stage and five characters.
+- A custom Canvas renderer draws the stage and up to five characters.
 - Pointer and keyboard input control one target angle for the beam.
-- Seeded, telegraphed gusts increase pressure over time.
-- Best time is stored locally in the browser; nothing is sent anywhere.
+- Seeded, telegraphed gusts ease in and increase pressure over time.
+- The warning shows where the wind pushes and which way to lean.
+- Per-setup best times and the last setup are stored locally; nothing is sent anywhere.
 
 ## Visual direction
 

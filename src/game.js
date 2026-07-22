@@ -1,6 +1,15 @@
 import Matter from "matter-js";
 import "./style.css";
-import { clamp, createSeededRandom, formatTime, getGustTiming } from "./game-logic.js";
+import {
+  DIFFICULTY_PROFILES,
+  clamp,
+  createSeededRandom,
+  formatTime,
+  getDifficultyPressure,
+  getGustEnvelope,
+  getGustTiming,
+  layoutStack,
+} from "./game-logic.js";
 
 const { Bodies, Body, Composite, Constraint, Engine } = Matter;
 
@@ -8,9 +17,13 @@ const WIDTH = 390;
 const HEIGHT = 844;
 const CENTER_X = WIDTH / 2;
 const FIXED_STEP = 1000 / 60;
-const MAX_PLATFORM_ANGLE = 0.38;
+const PLATFORM_TOP = 665;
+const GRAVITY_SCALE = 0.00105;
+const MAX_PLATFORM_ANGLE = 0.46;
 const FAIL_Y = 744;
-const BEST_SCORE_KEY = "wobble-stack-best-v1";
+const LEGACY_BEST_SCORE_KEY = "wobble-stack-best-v1";
+const BEST_SCORES_KEY = "wobble-stack-best-v2";
+const SETTINGS_KEY = "wobble-stack-settings-v1";
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const canvas = document.querySelector("#game-canvas");
@@ -18,15 +31,24 @@ const context = canvas.getContext("2d");
 const scoreValue = document.querySelector("#score-value");
 const bestValue = document.querySelector("#best-value");
 const pauseButton = document.querySelector("#pause-button");
+const windMeter = document.querySelector("#wind-meter");
+const windBars = [...document.querySelectorAll(".wind-bars i")];
 const gustWarning = document.querySelector("#gust-warning");
-const gustArrow = document.querySelector("#gust-arrow");
+const windArrow = document.querySelector("#wind-arrow");
+const leanArrow = document.querySelector("#lean-arrow");
 const startOverlay = document.querySelector("#start-overlay");
 const startButton = document.querySelector("#start-button");
+const difficultyInputs = [...document.querySelectorAll('input[name="difficulty"]')];
+const difficultyNote = document.querySelector("#difficulty-note");
+const countMinusButton = document.querySelector("#count-minus");
+const countPlusButton = document.querySelector("#count-plus");
+const countValue = document.querySelector("#count-value");
 const resultOverlay = document.querySelector("#result-overlay");
 const resultKicker = document.querySelector("#result-kicker");
 const resultScore = document.querySelector("#result-score");
 const resultBest = document.querySelector("#result-best");
 const retryButton = document.querySelector("#retry-button");
+const changeSetupButton = document.querySelector("#change-setup-button");
 const pauseOverlay = document.querySelector("#pause-overlay");
 const resumeButton = document.querySelector("#resume-button");
 const thumbCue = document.querySelector("#thumb-cue");
@@ -34,12 +56,15 @@ const liveStatus = document.querySelector("#live-status");
 
 let engine;
 let platform;
-let platformPin;
 let creatures = [];
 let state = "ready";
 let previousState = "ready";
 let runSeconds = 0;
-let bestSeconds = readBestScore();
+const storedSettings = readSettings();
+let selectedDifficulty = storedSettings.difficulty;
+let selectedCreatureCount = storedSettings.creatureCount;
+let bestScores = readBestScores();
+let bestSeconds = getBestScore();
 let targetAngle = 0;
 let pointerActive = false;
 let keyboardDirection = 0;
@@ -63,6 +88,7 @@ const creatureSpecs = [
 ];
 
 setupCanvas();
+syncSetupControls();
 resetPhysics();
 syncScore();
 syncControls();
@@ -70,8 +96,17 @@ requestAnimationFrame(frame);
 
 startButton.addEventListener("click", startRun);
 retryButton.addEventListener("click", startRun);
+changeSetupButton.addEventListener("click", returnToSetup);
 pauseButton.addEventListener("click", pauseRun);
 resumeButton.addEventListener("click", resumeRun);
+countMinusButton.addEventListener("click", () => setCreatureCount(selectedCreatureCount - 1));
+countPlusButton.addEventListener("click", () => setCreatureCount(selectedCreatureCount + 1));
+
+for (const input of difficultyInputs) {
+  input.addEventListener("change", () => {
+    if (input.checked) setDifficulty(input.value);
+  });
+}
 
 canvas.addEventListener("pointerdown", (event) => {
   if (state !== "playing") return;
@@ -135,31 +170,72 @@ function setupCanvas() {
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 }
 
+function setDifficulty(value) {
+  if (!Object.hasOwn(DIFFICULTY_PROFILES, value)) return;
+  selectedDifficulty = value;
+  updateSetup();
+}
+
+function setCreatureCount(value) {
+  selectedCreatureCount = clamp(Math.round(value), 1, creatureSpecs.length);
+  updateSetup();
+}
+
+function updateSetup() {
+  bestSeconds = getBestScore();
+  writeSettings();
+  syncSetupControls();
+  resetPhysics();
+  syncScore();
+}
+
+function syncSetupControls() {
+  const profile = DIFFICULTY_PROFILES[selectedDifficulty];
+
+  for (const input of difficultyInputs) input.checked = input.value === selectedDifficulty;
+  difficultyNote.textContent = profile.note;
+  countValue.value = String(selectedCreatureCount);
+  countValue.textContent = String(selectedCreatureCount);
+  countMinusButton.disabled = selectedCreatureCount === 1;
+  countPlusButton.disabled = selectedCreatureCount === creatureSpecs.length;
+  canvas.setAttribute(
+    "aria-label",
+    `${selectedCreatureCount} ${selectedCreatureCount === 1 ? "creature" : "creatures"} balanced on a tilting platform. Drag left and right or use the arrow keys to keep them from falling.`,
+  );
+}
+
 function resetPhysics() {
   engine = Engine.create({ enableSleeping: false });
   engine.gravity.y = 1;
-  engine.gravity.scale = 0.00105;
+  engine.gravity.scale = GRAVITY_SCALE;
 
   platform = Bodies.rectangle(CENTER_X, 676, 286, 22, {
     label: "platform",
-    density: 0.006,
-    friction: 0.95,
-    frictionAir: 0.08,
+    isStatic: true,
+    friction: 1,
+    frictionStatic: 1.6,
     restitution: 0.02,
     chamfer: { radius: 10 },
   });
 
-  platformPin = Constraint.create({
-    label: "platform-pin",
-    pointA: { x: CENTER_X, y: 694 },
-    bodyB: platform,
-    pointB: { x: 0, y: 18 },
-    length: 0,
-    stiffness: 1,
-    damping: 0.28,
-  });
+  const activeSpecs = layoutStack(creatureSpecs, PLATFORM_TOP, selectedCreatureCount);
+  creatures = activeSpecs.map((spec) => createCreature(spec));
+  const stackLinks = creatures.slice(1).flatMap((creature, index) => {
+    const lowerCreature = creatures[index];
+    const jointWidth = Math.min(lowerCreature.proxyWidth, creature.proxyWidth) * 0.18;
 
-  creatures = creatureSpecs.map((spec) => createCreature(spec));
+    return [-1, 1].map((side) => Constraint.create({
+      label: "stack-friendship",
+      bodyA: lowerCreature.body,
+      pointA: { x: side * jointWidth, y: -lowerCreature.proxyHeight / 2 },
+      bodyB: creature.body,
+      pointB: { x: side * jointWidth, y: creature.proxyHeight / 2 },
+      length: 0,
+      stiffness: 0.016,
+      damping: 0.08,
+      render: { visible: false },
+    }));
+  });
 
   const catchFloor = Bodies.rectangle(CENTER_X, 830, 520, 30, {
     label: "catch-floor",
@@ -169,16 +245,21 @@ function resetPhysics() {
     render: { visible: false },
   });
 
-  Composite.add(engine.world, [platform, platformPin, catchFloor, ...creatures.map((item) => item.body)]);
+  Composite.add(engine.world, [
+    platform,
+    catchFloor,
+    ...creatures.map((item) => item.body),
+    ...stackLinks,
+  ]);
 }
 
 function createCreature(spec) {
   const common = {
     label: `creature-${spec.kind}`,
     density: 0.0024,
-    friction: 0.88,
-    frictionStatic: 1.2,
-    frictionAir: 0.012,
+    friction: 0.95,
+    frictionStatic: 1.5,
+    frictionAir: 0.08,
     restitution: 0.03,
     slop: 0.02,
   };
@@ -215,8 +296,8 @@ function startRun() {
   startOverlay.hidden = true;
   resultOverlay.hidden = true;
   pauseOverlay.hidden = true;
-  liveStatus.textContent = "Game started. Keep the creatures balanced.";
-  scheduleGust(4.2);
+  liveStatus.textContent = `Game started with ${selectedCreatureCount} creatures on ${selectedDifficulty} wind.`;
+  scheduleGust(DIFFICULTY_PROFILES[selectedDifficulty].initialCalmSeconds);
   syncScore();
   syncControls();
 
@@ -274,7 +355,8 @@ function showResults() {
 
   if (isNewBest) {
     bestSeconds = runSeconds;
-    writeBestScore(bestSeconds);
+    bestScores[getScoreKey()] = bestSeconds;
+    writeBestScores();
   }
 
   resultKicker.textContent = isNewBest ? "NEW BEST!" : pickFailureLine();
@@ -285,6 +367,22 @@ function showResults() {
   syncScore();
   syncControls();
   retryButton.focus({ preventScroll: true });
+}
+
+function returnToSetup() {
+  if (state !== "results") return;
+  state = "ready";
+  runSeconds = 0;
+  targetAngle = 0;
+  gust = null;
+  resultOverlay.hidden = true;
+  startOverlay.hidden = false;
+  hideGustWarning();
+  resetPhysics();
+  syncScore();
+  syncControls();
+  liveStatus.textContent = "Choose the wind and number of creatures.";
+  startButton.focus({ preventScroll: true });
 }
 
 function pickFailureLine() {
@@ -320,10 +418,11 @@ function frame(now) {
       updatePlatformControl();
       applyGustForce();
       Engine.update(engine, FIXED_STEP);
+      enforcePlatformLimits();
       accumulator -= FIXED_STEP;
     }
 
-    if (creatures.some(({ body }) => body.position.y > FAIL_Y || body.position.x < -55 || body.position.x > WIDTH + 55)) {
+    if (hasStackCollapsed()) {
       beginFailure();
     }
   } else if (state === "failing") {
@@ -332,6 +431,7 @@ function frame(now) {
 
     while (accumulator >= FIXED_STEP) {
       Engine.update(engine, FIXED_STEP);
+      enforcePlatformLimits();
       accumulator -= FIXED_STEP;
     }
 
@@ -346,26 +446,45 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
+function hasStackCollapsed() {
+  const leftPlayArea = creatures.some(
+    ({ body }) => body.position.y > FAIL_Y || body.position.x < -55 || body.position.x > WIDTH + 55,
+  );
+  const lostVerticalOrder = creatures
+    .slice(1)
+    .some((creature, index) => creatures[index].body.position.y - creature.body.position.y < 18);
+  return leftPlayArea || lostVerticalOrder;
+}
+
 function updatePlatformControl() {
-  const inputTarget = keyboardDirection === 0 ? targetAngle : keyboardDirection * MAX_PLATFORM_ANGLE;
+  const inputTarget = keyboardDirection === 0 ? targetAngle : getKeyboardTargetAngle();
   const neutralTarget = pointerActive || keyboardDirection !== 0 ? inputTarget : 0;
   const error = neutralTarget - platform.angle;
-  const desiredVelocity = clamp(error * 0.17, -0.055, 0.055);
-  const nextVelocity = platform.angularVelocity * 0.7 + desiredVelocity * 0.3;
+  const angleStep = clamp(error * 0.08, -0.005, 0.005);
 
-  Body.setAngularVelocity(platform, nextVelocity);
+  Body.setAngle(platform, clamp(platform.angle + angleStep, -MAX_PLATFORM_ANGLE, MAX_PLATFORM_ANGLE));
+  Body.setAngularVelocity(platform, 0);
+}
 
-  if (platform.angle < -MAX_PLATFORM_ANGLE - 0.02) {
-    Body.setAngle(platform, -MAX_PLATFORM_ANGLE - 0.02);
-    Body.setAngularVelocity(platform, Math.max(0, platform.angularVelocity));
-  } else if (platform.angle > MAX_PLATFORM_ANGLE + 0.02) {
-    Body.setAngle(platform, MAX_PLATFORM_ANGLE + 0.02);
-    Body.setAngularVelocity(platform, Math.min(0, platform.angularVelocity));
+function getKeyboardTargetAngle() {
+  const isCounteringGust = gust && gust.phase !== "waiting" && keyboardDirection === -gust.direction;
+  const assistedMagnitude = isCounteringGust
+    ? clamp(Math.atan(gust.force / GRAVITY_SCALE), 0.045, MAX_PLATFORM_ANGLE)
+    : 0.09;
+  return keyboardDirection * assistedMagnitude;
+}
+
+function enforcePlatformLimits() {
+  const boundedAngle = clamp(platform.angle, -MAX_PLATFORM_ANGLE, MAX_PLATFORM_ANGLE);
+
+  if (boundedAngle !== platform.angle) {
+    Body.setAngle(platform, boundedAngle);
+    Body.setAngularVelocity(platform, 0);
   }
 }
 
 function scheduleGust(minimumRest = 0) {
-  const timing = getGustTiming(runSeconds, random);
+  const timing = getGustTiming(runSeconds, random, DIFFICULTY_PROFILES[selectedDifficulty]);
   const restSeconds = Math.max(minimumRest, timing.restSeconds);
   gust = {
     phase: "waiting",
@@ -374,6 +493,7 @@ function scheduleGust(minimumRest = 0) {
     startsAt: runSeconds + restSeconds + timing.warningSeconds,
     endsAt: runSeconds + restSeconds + timing.warningSeconds + timing.durationSeconds,
     force: timing.force,
+    pressure: timing.pressure,
   };
 }
 
@@ -383,7 +503,9 @@ function updateGustPhase() {
   if (gust.phase === "waiting" && runSeconds >= gust.warningAt) {
     gust.phase = "warning";
     showGustWarning(gust.direction);
-    liveStatus.textContent = `Wind warning from the ${gust.direction > 0 ? "left" : "right"}.`;
+    const pushDirection = gust.direction > 0 ? "right" : "left";
+    const leanDirection = gust.direction > 0 ? "left" : "right";
+    liveStatus.textContent = `Wind pushes ${pushDirection}. Lean ${leanDirection}.`;
   }
 
   if (gust.phase === "warning" && runSeconds >= gust.startsAt) {
@@ -402,12 +524,12 @@ function applyGustForce() {
   if (!gust || gust.phase !== "active") return;
   const duration = Math.max(0.01, gust.endsAt - gust.startsAt);
   const progress = clamp((runSeconds - gust.startsAt) / duration, 0, 1);
-  const pulse = Math.sin(progress * Math.PI);
+  const pulse = getGustEnvelope(progress);
 
   for (const { body } of creatures) {
     Body.applyForce(body, body.position, {
       x: gust.direction * gust.force * body.mass * pulse,
-      y: -0.00004 * body.mass * pulse,
+      y: -0.000012 * body.mass * pulse,
     });
   }
 }
@@ -431,13 +553,13 @@ function updateDangerFeedback() {
 }
 
 function showGustWarning(direction) {
-  gustWarning.classList.toggle("from-right", direction < 0);
-  gustArrow.textContent = "➜";
+  windArrow.textContent = direction > 0 ? "→" : "←";
+  leanArrow.textContent = direction > 0 ? "←" : "→";
   gustWarning.classList.add("is-visible");
 }
 
 function hideGustWarning() {
-  gustWarning.classList.remove("is-visible", "is-active", "from-right");
+  gustWarning.classList.remove("is-visible", "is-active");
 }
 
 function burst(x, y, color, count) {
@@ -776,6 +898,13 @@ function drawSaveFlash() {
 function syncScore() {
   scoreValue.textContent = formatTime(runSeconds);
   bestValue.textContent = `BEST ${formatTime(bestSeconds)}`;
+  const pressure = getDifficultyPressure(runSeconds, DIFFICULTY_PROFILES[selectedDifficulty]);
+  const windLevel = 1 + Math.min(4, Math.floor(pressure * 5));
+  windMeter.setAttribute("aria-label", `Wind level ${windLevel} of 5`);
+
+  for (const [index, bar] of windBars.entries()) {
+    bar.classList.toggle("is-filled", index < windLevel);
+  }
 }
 
 function syncControls() {
@@ -785,20 +914,68 @@ function syncControls() {
   pauseButton.style.pointerEvents = canPause ? "auto" : "none";
 }
 
-function readBestScore() {
+function getScoreKey() {
+  return `${selectedDifficulty}:${selectedCreatureCount}`;
+}
+
+function getBestScore() {
+  return bestScores[getScoreKey()] || 0;
+}
+
+function readBestScores() {
+  const scores = {};
+
   try {
-    const value = Number.parseFloat(window.localStorage.getItem(BEST_SCORE_KEY) || "0");
-    return Number.isFinite(value) ? value : 0;
+    const stored = JSON.parse(window.localStorage.getItem(BEST_SCORES_KEY) || "{}");
+
+    if (stored && typeof stored === "object" && !Array.isArray(stored)) {
+      for (const [key, value] of Object.entries(stored)) {
+        if (typeof value === "number" && Number.isFinite(value) && value >= 0) scores[key] = value;
+      }
+    }
+
+    const legacy = Number.parseFloat(window.localStorage.getItem(LEGACY_BEST_SCORE_KEY) || "0");
+    if (Number.isFinite(legacy) && legacy > 0 && !Object.hasOwn(scores, "normal:5")) {
+      scores["normal:5"] = legacy;
+    }
   } catch {
-    return 0;
+    // The game remains fully playable when storage is unavailable or malformed.
+  }
+
+  return scores;
+}
+
+function writeBestScores() {
+  try {
+    window.localStorage.setItem(BEST_SCORES_KEY, JSON.stringify(bestScores));
+  } catch {
+    // The game remains fully playable when storage is unavailable.
   }
 }
 
-function writeBestScore(value) {
+function readSettings() {
+  const defaults = { difficulty: "normal", creatureCount: 5 };
+
   try {
-    window.localStorage.setItem(BEST_SCORE_KEY, String(value));
+    const stored = JSON.parse(window.localStorage.getItem(SETTINGS_KEY) || "{}");
+    const difficulty = Object.hasOwn(DIFFICULTY_PROFILES, stored.difficulty)
+      ? stored.difficulty
+      : defaults.difficulty;
+    const creatureCount = clamp(Math.round(Number(stored.creatureCount) || defaults.creatureCount), 1, 5);
+    return { difficulty, creatureCount };
   } catch {
-    // The game remains fully playable when storage is unavailable.
+    return defaults;
+  }
+}
+
+function writeSettings() {
+  try {
+    window.localStorage.setItem(
+      SETTINGS_KEY,
+      JSON.stringify({ difficulty: selectedDifficulty, creatureCount: selectedCreatureCount }),
+    );
+  } catch {
+    // Settings fall back to Normal with five creatures when storage is unavailable.
   }
 }
 
@@ -807,6 +984,16 @@ if (new URLSearchParams(window.location.search).has("debug")) {
     getState: () => state,
     getRunSeconds: () => runSeconds,
     getPlatformAngle: () => platform.angle,
+    getSetup: () => ({ difficulty: selectedDifficulty, creatureCount: selectedCreatureCount }),
+    getGustState: () => (gust ? { ...gust } : null),
+    getCreaturePositions: () => creatures.map(({ body }) => ({ x: body.position.x, y: body.position.y })),
+    setSetup: (difficulty, creatureCount) => {
+      if (state !== "ready") return false;
+      if (Object.hasOwn(DIFFICULTY_PROFILES, difficulty)) selectedDifficulty = difficulty;
+      selectedCreatureCount = clamp(Math.round(creatureCount), 1, creatureSpecs.length);
+      updateSetup();
+      return true;
+    },
     failNow: () => beginFailure(),
   };
 }

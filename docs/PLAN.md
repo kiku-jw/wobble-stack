@@ -9,7 +9,7 @@ Prove whether the one-thumb loop feels readable and retryable in a browser befor
 ## Scope
 
 - Standalone portrait prototype in this repository.
-- Five physical bodies on one controllable beam.
+- One to five physical bodies on one controllable beam.
 - Pointer, touch, and keyboard input.
 - Telegraph-first wind gusts, survival time, best score, collapse, pause, and Retry.
 - No route, navigation item, analytics, account, backend, shop, progression, or final art.
@@ -56,6 +56,27 @@ Acceptance:
 - Retry becomes actionable within one second of failure.
 
 Verify with the repository Playwright CLI workflow and a mobile screenshot.
+
+### M4 — readable wind and configurable runs
+
+Acceptance:
+
+- Gentle, Normal, and Wild use explicit force curves rather than one hidden multiplier.
+- Early Normal wind needs roughly 3.5 degrees of counter-tilt; late Normal remains within the 26-degree control range.
+- Every gust eases in before reaching peak force.
+- The warning shows both wind direction and the opposite lean direction.
+- Setup supports 1–5 creatures and rebuilds a contact-safe stack before play.
+- Best time is isolated by difficulty and creature count.
+- Retry keeps the current setup; Change Setup returns to the start controls.
+
+Verify:
+
+```sh
+pnpm test
+pnpm build
+```
+
+Then run the browser matrix in `TEST_PLAN.md` and verify the deployed GitHub Pages build.
 
 ## Kill gate
 
