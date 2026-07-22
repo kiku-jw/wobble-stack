@@ -44,6 +44,7 @@
 - Pages run `29953856192` deployed commit `c4ffa84`; live debug smoke confirmed the 3-creature floor, random Normal timing/force, missing arrow pill, `1 → 0.18 → 1` failure time scale, and zero console errors.
 - Wind-speed regression QA measured equal 250 ms windows at about 17 px near onset, 53 px while building, and 70 px at peak (`69 → 213 → 279 px/s`). The fix changes only Canvas travel integration; gust physics and timing are untouched.
 - Pause held accumulated wind travel at exactly zero delta across 500 ms; 10 deterministic tests, production build, and browser console checks passed.
+- Pages run `29954743370` deployed commit `52930eb`; live 390 × 844 sampling measured `18.6 → 65.7 → 77.4 px` across equal 250 ms windows (`91 → 283 → 310 px/s`) while the game remained playable and the console stayed clean.
 - Eight deterministic tests, production build, and browser console checks passed.
 - Pages run `29949106957` deployed commit `5404501`; the live 390 × 844 collapse registered multiple dazed faces at 0.8 seconds and exposed Retry with zero console errors.
 

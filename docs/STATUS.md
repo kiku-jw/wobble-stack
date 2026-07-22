@@ -44,7 +44,7 @@ Updated: 2026-07-22
 - GitHub Pages run `29949106957` deployed commit `5404501`; the live five-creature collapse stayed in slow motion at 0.8 s, showed independent impact reactions, reached Retry, and logged no console errors.
 - Nine deterministic logic tests and the Vite production build pass for M6.
 - GitHub Pages run `29953856192` built and deployed commit `c4ffa84`; the live 390 × 844 build clamped two creatures to three, scheduled Normal at 3.37 seconds with random force `0.0000919`, removed the arrow pill, slowed only on impact, returned to normal physics before results, and logged no console errors.
-- Wind-speed regression fix: Canvas streak travel now integrates frame-by-frame distance instead of multiplying a changing speed by absolute time. Local browser samples increased from about 69 px/s near onset to 213 px/s while building and 279 px/s at peak; Pause held travel at a zero delta for 500 ms, 10 logic tests and the build pass, publication pending.
+- Wind-speed regression fix: Canvas streak travel now integrates frame-by-frame distance instead of multiplying a changing speed by absolute time. Local browser samples increased from about 69 px/s near onset to 213 px/s while building and 279 px/s at peak; Pause held travel at a zero delta for 500 ms. GitHub Pages run `29954743370` deployed commit `52930eb`; live equal-window travel increased `18.6 → 65.7 → 77.4 px` with zero console errors.
 
 ## Next
 
