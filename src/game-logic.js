@@ -1,48 +1,33 @@
 export const DIFFICULTY_PROFILES = Object.freeze({
   gentle: Object.freeze({
     label: "Gentle",
-    note: "Slow build · always counterable",
-    initialCalmSeconds: 7,
-    rampSeconds: 90,
-    forceStart: 0.00005,
-    forceEnd: 0.00028,
-    restStart: 5.5,
-    restEnd: 3.8,
-    restJitter: 1.2,
-    warningStart: 1.2,
-    warningEnd: 0.8,
-    durationStart: 1.45,
-    durationEnd: 1.65,
+    note: "Light gusts · room to recover",
+    forceMin: 0.000025,
+    forceMax: 0.00005,
+    restMin: 3.2,
+    restMax: 5,
+    durationMin: 3.6,
+    durationMax: 4.6,
   }),
   normal: Object.freeze({
     label: "Normal",
-    note: "Balanced · learns, then bites",
-    initialCalmSeconds: 6,
-    rampSeconds: 75,
-    forceStart: 0.000065,
-    forceEnd: 0.00042,
-    restStart: 5,
-    restEnd: 3,
-    restJitter: 1.3,
-    warningStart: 1.1,
-    warningEnd: 0.65,
-    durationStart: 1.35,
-    durationEnd: 1.55,
+    note: "Random gusts · real pressure",
+    forceMin: 0.000065,
+    forceMax: 0.000105,
+    restMin: 2.2,
+    restMax: 3.8,
+    durationMin: 3.8,
+    durationMax: 5,
   }),
   wild: Object.freeze({
     label: "Wild",
-    note: "Fast ramp · late wind can win",
-    initialCalmSeconds: 4.5,
-    rampSeconds: 55,
-    forceStart: 0.000085,
-    forceEnd: 0.00058,
-    restStart: 4.6,
-    restEnd: 2.2,
-    restJitter: 1.1,
-    warningStart: 0.95,
-    warningEnd: 0.5,
-    durationStart: 1.2,
-    durationEnd: 1.5,
+    note: "Heavy gusts · little recovery",
+    forceMin: 0.00011,
+    forceMax: 0.000135,
+    restMin: 1.3,
+    restMax: 2.6,
+    durationMin: 4,
+    durationMax: 5.4,
   }),
 });
 
@@ -62,23 +47,16 @@ export function createSeededRandom(seed) {
   };
 }
 
-function interpolate(start, end, progress) {
-  return start + (end - start) * progress;
+function sampleRange(min, max, random) {
+  return min + (max - min) * random();
 }
 
-export function getDifficultyPressure(elapsedSeconds, profile) {
-  return clamp((elapsedSeconds - profile.initialCalmSeconds) / profile.rampSeconds, 0, 1);
-}
-
-export function getGustTiming(elapsedSeconds, random, profile = DIFFICULTY_PROFILES.normal) {
-  const pressure = getDifficultyPressure(elapsedSeconds, profile);
-  const restSeconds =
-    interpolate(profile.restStart, profile.restEnd, pressure) + random() * profile.restJitter;
-  const warningSeconds = interpolate(profile.warningStart, profile.warningEnd, pressure);
-  const durationSeconds = interpolate(profile.durationStart, profile.durationEnd, pressure);
-  const force = interpolate(profile.forceStart, profile.forceEnd, pressure);
-
-  return { pressure, restSeconds, warningSeconds, durationSeconds, force };
+export function getGustTiming(random, profile = DIFFICULTY_PROFILES.normal) {
+  return {
+    restSeconds: sampleRange(profile.restMin, profile.restMax, random),
+    durationSeconds: sampleRange(profile.durationMin, profile.durationMax, random),
+    force: sampleRange(profile.forceMin, profile.forceMax, random),
+  };
 }
 
 function smoothstep(value) {
@@ -113,6 +91,10 @@ export function shouldShowFailureResults(elapsedMs, firstImpactAtMs, impactHoldM
   const impactReactionWasVisible =
     firstImpactAtMs !== null && elapsedMs - firstImpactAtMs >= impactHoldMs;
   return impactReactionWasVisible || elapsedMs >= timeoutMs;
+}
+
+export function getFailureTimeScale(elapsedMs, impactSlowMoEndsAtMs, slowMoScale) {
+  return impactSlowMoEndsAtMs !== null && elapsedMs < impactSlowMoEndsAtMs ? slowMoScale : 1;
 }
 
 export function formatTime(seconds) {

@@ -1,13 +1,13 @@
 # Wobble Stack
 
-Keep one to five little disasters together while the wind tries to tear the tower apart.
+Keep three to five little disasters together while the wind tries to tear the tower apart.
 
 [**Play Wobble Stack**](https://kiku-jw.github.io/wobble-stack/) · Touch, mouse, and keyboard
 
 [![Deploy GitHub Pages](https://github.com/kiku-jw/wobble-stack/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/kiku-jw/wobble-stack/actions/workflows/deploy-pages.yml)
 
 <p align="center">
-  <img src="docs/gameplay.png" width="320" alt="Five colorful creatures stacked on a balance beam while a gust warning appears" />
+  <img src="docs/gameplay.png" width="320" alt="Five colorful creatures counter-leaning on a balance beam as wind streaks cross the stage" />
 </p>
 
 ## What it is
@@ -23,10 +23,10 @@ accounts, backend, progression, shop, ads, analytics, or final character art.
 
 - **Touch or mouse:** press anywhere in the game and move left or right.
 - **Keyboard:** use Left/Right or A/D.
-- **Goal:** lean opposite the wind and keep every creature on the beam as gusts get stronger.
+- **Goal:** lean opposite the wind and keep every creature on the beam as each gust builds.
 - **Pause:** use the button in the top-right corner or press Escape.
 
-Before each run you can choose Gentle, Normal, or Wild wind and a stack of one
+Before each run you can choose Gentle, Normal, or Wild wind and a stack of three
 to five creatures. Best times are tracked separately for every combination.
 
 ## Run locally
@@ -50,9 +50,9 @@ pnpm build
 - Matter.js provides gravity, collision, and rigid-body motion.
 - A custom Canvas renderer draws the stage and up to five characters.
 - Pointer and keyboard input control one target angle for the beam.
-- Seeded, telegraphed gusts ease in and increase pressure over time.
-- The warning shows where the wind pushes and which way to lean.
-- Collapse continues in slow motion, and each creature reacts when it hits the ground.
+- Seeded gusts vary inside distinct difficulty ranges and build through visible wind streaks.
+- Moving wind streaks show direction while their speed, density, and opacity build with force.
+- Creatures fall at normal speed; the first ground impact triggers a brief slow-motion beat.
 - Per-setup best times and the last setup are stored locally; nothing is sent anywhere.
 
 ## Visual direction

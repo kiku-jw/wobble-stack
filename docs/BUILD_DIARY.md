@@ -3,7 +3,7 @@
 ## Status
 
 - artifact type: playable demo repository
-- current phase: M5 cinematic collapse published and live
+- current phase: M6 calibrated locally; publication pending
 - public-safe gate: passed
 - demo: https://kiku-jw.github.io/wobble-stack/
 - review status: live Pages build verified; human playtest pending
@@ -21,8 +21,8 @@
 
 ## Evidence
 
-- Configurable one-to-five-body Matter.js stack with touch, mouse, and keyboard input.
-- Three explicit wind profiles, attack/hold/release gusts, opposite-lean cue, collapse, pause, scoped local best score, and reset without navigation.
+- Configurable three-to-five-body Matter.js stack with touch, mouse, and keyboard input.
+- Three explicit random wind profiles, long attack/hold/release gusts, code-native direction cue, collapse, pause, scoped local best score, and reset without navigation.
 - Seven deterministic logic tests.
 - Browser checks at 320 x 700, 390 x 844, and 1280 x 900.
 - Retry became actionable within one second during the prototype QA run.
@@ -34,7 +34,13 @@
 - M5 browser proof: normal collapse stayed in slow-motion failure at 0.8 seconds, registered four independent impact reactions, and exposed Retry at about 1.0 second.
 - Reduced-motion preserved crossed-eye impact faces and exposed Retry in about 0.3 seconds.
 - No-impact failure stayed cinematic at 2.3 seconds and reached the 2.6-second hard timeout without hanging.
-- A one-creature Retry rebuilt the body with a clean reaction state; five-creature impact remained legible at 320 × 700.
+- M6 browser calibration sampled first gusts at 4.52 seconds / `0.0000418` (Gentle), 3.37 seconds / `0.0000919` (Normal), and 2.25 seconds / `0.0001268` (Wild).
+- An untouched Normal run collapsed at 9.0 seconds; holding the correct direction kept five figures upright through the full first gust at 7.75 seconds.
+- A natural untouched Normal collapse entered failure at time scale `1`, fell for about 1017 ms before ground contact, then slowed to `0.18` for 360 ms and returned to `1`; the deterministic debug scatter hit the floor in 83 ms and exposed results after the 900 ms reaction hold.
+- Reduced-motion on 320 × 700 used `0.86` for 100 ms at impact, returned to `1`, kept three independent reactions, and produced no horizontal overflow.
+- A stored or debug count below three clamped to three and disabled the minus control; the old one- and two-body best-score keys remain untouched.
+- The arrow pill no longer exists in the DOM; the wind envelope drove measured visual intensity from `0.013` near onset to `0.808` at Normal peak.
+- Nine deterministic tests, production build, and browser console checks pass with zero errors.
 - Eight deterministic tests, production build, and browser console checks passed.
 - Pages run `29949106957` deployed commit `5404501`; the live 390 × 844 collapse registered multiple dazed faces at 0.8 seconds and exposed Retry with zero console errors.
 

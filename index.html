@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f58a70" />
     <meta
       name="description"
-      content="A tiny one-thumb physics game about keeping one to five wobbling creatures stacked against the wind."
+      content="A tiny one-thumb physics game about keeping three to five wobbling creatures stacked against the wind."
     />
     <link
       rel="icon"
@@ -47,12 +47,6 @@
           </div>
         </div>
 
-        <div id="gust-warning" class="gust-warning" aria-hidden="true">
-          <span class="gust-line"><small>WIND</small><b id="wind-arrow">→</b></span>
-          <span class="gust-divider" aria-hidden="true"></span>
-          <span class="gust-line"><small>LEAN</small><b id="lean-arrow">←</b></span>
-        </div>
-
         <div id="start-overlay" class="game-overlay is-visible">
           <div class="title-lockup">
             <p class="eyebrow">ONE-THUMB PHYSICS TOY</p>
@@ -67,7 +61,7 @@
                 <label><input type="radio" name="difficulty" value="normal" /><span>Normal</span></label>
                 <label><input type="radio" name="difficulty" value="wild" /><span>Wild</span></label>
               </div>
-              <p id="difficulty-note">Balanced · learns, then bites</p>
+              <p id="difficulty-note">Random gusts · real pressure</p>
             </fieldset>
             <div class="count-picker">
               <span>CREATURES</span>

@@ -5,7 +5,7 @@ import {
   clamp,
   createSeededRandom,
   formatTime,
-  getDifficultyPressure,
+  getFailureTimeScale,
   getGustEnvelope,
   getGustTiming,
   layoutStack,
@@ -22,10 +22,14 @@ const PLATFORM_TOP = 665;
 const GRAVITY_SCALE = 0.00105;
 const MAX_PLATFORM_ANGLE = 0.46;
 const FAIL_Y = 744;
-const FAILURE_TIME_SCALE = 0.26;
+const MIN_CREATURE_COUNT = 3;
+const MAX_CREATURE_COUNT = 5;
+const IMPACT_SLOWMO_TIME_SCALE = 0.18;
+const IMPACT_SLOWMO_DURATION_MS = 360;
 const FAILURE_TIMEOUT_MS = 2600;
 const FAILURE_IMPACT_HOLD_MS = 900;
-const REDUCED_FAILURE_TIME_SCALE = 0.82;
+const REDUCED_IMPACT_SLOWMO_TIME_SCALE = 0.86;
+const REDUCED_IMPACT_SLOWMO_DURATION_MS = 100;
 const REDUCED_FAILURE_TIMEOUT_MS = 1100;
 const REDUCED_FAILURE_IMPACT_HOLD_MS = 180;
 const LEGACY_BEST_SCORE_KEY = "wobble-stack-best-v1";
@@ -40,9 +44,6 @@ const bestValue = document.querySelector("#best-value");
 const pauseButton = document.querySelector("#pause-button");
 const windMeter = document.querySelector("#wind-meter");
 const windBars = [...document.querySelectorAll(".wind-bars i")];
-const gustWarning = document.querySelector("#gust-warning");
-const windArrow = document.querySelector("#wind-arrow");
-const leanArrow = document.querySelector("#lean-arrow");
 const startOverlay = document.querySelector("#start-overlay");
 const startButton = document.querySelector("#start-button");
 const difficultyInputs = [...document.querySelectorAll('input[name="difficulty"]')];
@@ -80,6 +81,7 @@ let accumulator = 0;
 let lastFrameTime = performance.now();
 let failElapsed = 0;
 let firstImpactAt = null;
+let impactSlowMoEndsAt = null;
 let random = createSeededRandom(1);
 let gust = null;
 let dangerWasHigh = false;
@@ -186,7 +188,7 @@ function setDifficulty(value) {
 }
 
 function setCreatureCount(value) {
-  selectedCreatureCount = clamp(Math.round(value), 1, creatureSpecs.length);
+  selectedCreatureCount = clamp(Math.round(value), MIN_CREATURE_COUNT, MAX_CREATURE_COUNT);
   updateSetup();
 }
 
@@ -205,11 +207,11 @@ function syncSetupControls() {
   difficultyNote.textContent = profile.note;
   countValue.value = String(selectedCreatureCount);
   countValue.textContent = String(selectedCreatureCount);
-  countMinusButton.disabled = selectedCreatureCount === 1;
-  countPlusButton.disabled = selectedCreatureCount === creatureSpecs.length;
+  countMinusButton.disabled = selectedCreatureCount === MIN_CREATURE_COUNT;
+  countPlusButton.disabled = selectedCreatureCount === MAX_CREATURE_COUNT;
   canvas.setAttribute(
     "aria-label",
-    `${selectedCreatureCount} ${selectedCreatureCount === 1 ? "creature" : "creatures"} balanced on a tilting platform. Drag left and right or use the arrow keys to keep them from falling.`,
+    `${selectedCreatureCount} creatures balanced on a tilting platform. Drag left and right or use the arrow keys to keep them from falling.`,
   );
 }
 
@@ -219,6 +221,7 @@ function resetPhysics() {
   engine.gravity.scale = GRAVITY_SCALE;
   failElapsed = 0;
   firstImpactAt = null;
+  impactSlowMoEndsAt = null;
 
   platform = Bodies.rectangle(CENTER_X, 676, 286, 22, {
     label: "platform",
@@ -297,6 +300,7 @@ function startRun() {
   pointerActive = false;
   failElapsed = 0;
   firstImpactAt = null;
+  impactSlowMoEndsAt = null;
   accumulator = 0;
   gust = null;
   dangerWasHigh = false;
@@ -310,7 +314,7 @@ function startRun() {
   resultOverlay.hidden = true;
   pauseOverlay.hidden = true;
   liveStatus.textContent = `Game started with ${selectedCreatureCount} creatures on ${selectedDifficulty} wind.`;
-  scheduleGust(DIFFICULTY_PROFILES[selectedDifficulty].initialCalmSeconds);
+  scheduleGust();
   syncScore();
   syncControls();
 
@@ -348,14 +352,16 @@ function beginFailure() {
   if (state !== "playing") return;
   state = "failing";
   failElapsed = 0;
+  firstImpactAt = null;
+  impactSlowMoEndsAt = null;
   pointerActive = false;
   keyboardDirection = 0;
   targetAngle = platform.angle;
+  gust = null;
   thumbCue.classList.remove("is-visible");
-  hideGustWarning();
   for (const link of stackLinks) Composite.remove(engine.world, link);
   stackLinks = [];
-  engine.timing.timeScale = reducedMotion.matches ? REDUCED_FAILURE_TIME_SCALE : FAILURE_TIME_SCALE;
+  engine.timing.timeScale = 1;
   shake = reducedMotion.matches ? 0 : 10;
   burst(CENTER_X, 625, "#fff2b3", 12);
   liveStatus.textContent = "The stack fell.";
@@ -363,7 +369,7 @@ function beginFailure() {
 }
 
 function handleCollisionStart(event) {
-  if (state !== "playing" && state !== "failing") return;
+  if (state !== "failing") return;
 
   for (const pair of event.pairs) {
     const creatureBody = pair.bodyA.label === "catch-floor"
@@ -375,9 +381,18 @@ function handleCollisionStart(event) {
 
     if (!creature || creature.impactElapsed !== null) continue;
 
-    creature.impactElapsed = state === "failing" ? failElapsed : 0;
+    creature.impactElapsed = failElapsed;
     const isFirstImpact = firstImpactAt === null;
-    if (isFirstImpact) firstImpactAt = creature.impactElapsed;
+    if (isFirstImpact) {
+      firstImpactAt = creature.impactElapsed;
+      const slowMoDuration = reducedMotion.matches
+        ? REDUCED_IMPACT_SLOWMO_DURATION_MS
+        : IMPACT_SLOWMO_DURATION_MS;
+      impactSlowMoEndsAt = failElapsed + slowMoDuration;
+      engine.timing.timeScale = reducedMotion.matches
+        ? REDUCED_IMPACT_SLOWMO_TIME_SCALE
+        : IMPACT_SLOWMO_TIME_SCALE;
+    }
     burst(
       creature.body.position.x,
       Math.min(790, creature.body.position.y + creature.proxyHeight * 0.42),
@@ -422,7 +437,6 @@ function returnToSetup() {
   gust = null;
   resultOverlay.hidden = true;
   startOverlay.hidden = false;
-  hideGustWarning();
   resetPhysics();
   syncScore();
   syncControls();
@@ -473,6 +487,7 @@ function frame(now) {
   } else if (state === "failing") {
     failElapsed += deltaMs;
     accumulator += deltaMs;
+    updateFailureTimeScale();
 
     while (accumulator >= FIXED_STEP) {
       Engine.update(engine, FIXED_STEP);
@@ -497,6 +512,13 @@ function shouldShowResults() {
   return shouldShowFailureResults(failElapsed, firstImpactAt, impactHold, timeout);
 }
 
+function updateFailureTimeScale() {
+  const slowMoScale = reducedMotion.matches
+    ? REDUCED_IMPACT_SLOWMO_TIME_SCALE
+    : IMPACT_SLOWMO_TIME_SCALE;
+  engine.timing.timeScale = getFailureTimeScale(failElapsed, impactSlowMoEndsAt, slowMoScale);
+}
+
 function hasStackCollapsed() {
   const leftPlayArea = creatures.some(
     ({ body }) => body.position.y > FAIL_Y || body.position.x < -55 || body.position.x > WIDTH + 55,
@@ -518,9 +540,10 @@ function updatePlatformControl() {
 }
 
 function getKeyboardTargetAngle() {
-  const isCounteringGust = gust && gust.phase !== "waiting" && keyboardDirection === -gust.direction;
+  const isCounteringGust = gust && gust.phase === "active" && keyboardDirection === -gust.direction;
+  const currentForce = gust ? gust.force * 2 : 0;
   const assistedMagnitude = isCounteringGust
-    ? clamp(Math.atan(gust.force / GRAVITY_SCALE), 0.045, MAX_PLATFORM_ANGLE)
+    ? clamp(Math.atan(currentForce / GRAVITY_SCALE), 0.02, MAX_PLATFORM_ANGLE)
     : 0.09;
   return keyboardDirection * assistedMagnitude;
 }
@@ -535,47 +558,34 @@ function enforcePlatformLimits() {
 }
 
 function scheduleGust(minimumRest = 0) {
-  const timing = getGustTiming(runSeconds, random, DIFFICULTY_PROFILES[selectedDifficulty]);
+  const timing = getGustTiming(random, DIFFICULTY_PROFILES[selectedDifficulty]);
   const restSeconds = Math.max(minimumRest, timing.restSeconds);
   gust = {
     phase: "waiting",
     direction: random() > 0.5 ? 1 : -1,
-    warningAt: runSeconds + restSeconds,
-    startsAt: runSeconds + restSeconds + timing.warningSeconds,
-    endsAt: runSeconds + restSeconds + timing.warningSeconds + timing.durationSeconds,
+    startsAt: runSeconds + restSeconds,
+    endsAt: runSeconds + restSeconds + timing.durationSeconds,
     force: timing.force,
-    pressure: timing.pressure,
   };
 }
 
 function updateGustPhase() {
   if (!gust) return;
 
-  if (gust.phase === "waiting" && runSeconds >= gust.warningAt) {
-    gust.phase = "warning";
-    showGustWarning(gust.direction);
-    const pushDirection = gust.direction > 0 ? "right" : "left";
-    const leanDirection = gust.direction > 0 ? "left" : "right";
-    liveStatus.textContent = `Wind pushes ${pushDirection}. Lean ${leanDirection}.`;
-  }
-
-  if (gust.phase === "warning" && runSeconds >= gust.startsAt) {
+  if (gust.phase === "waiting" && runSeconds >= gust.startsAt) {
     gust.phase = "active";
-    gustWarning.classList.add("is-active");
-    shake = reducedMotion.matches ? 0 : 2.2;
+    const pushDirection = gust.direction > 0 ? "right" : "left";
+    liveStatus.textContent = `Wind is building and pushing ${pushDirection}.`;
   }
 
   if (gust.phase === "active" && runSeconds >= gust.endsAt) {
-    hideGustWarning();
     scheduleGust();
   }
 }
 
 function applyGustForce() {
   if (!gust || gust.phase !== "active") return;
-  const duration = Math.max(0.01, gust.endsAt - gust.startsAt);
-  const progress = clamp((runSeconds - gust.startsAt) / duration, 0, 1);
-  const pulse = getGustEnvelope(progress);
+  const pulse = getActiveGustEnvelope();
 
   for (const { body } of creatures) {
     Body.applyForce(body, body.position, {
@@ -583,6 +593,19 @@ function applyGustForce() {
       y: -0.000012 * body.mass * pulse,
     });
   }
+}
+
+function getActiveGustEnvelope() {
+  if (!gust || gust.phase !== "active") return 0;
+  const duration = Math.max(0.01, gust.endsAt - gust.startsAt);
+  const progress = clamp((runSeconds - gust.startsAt) / duration, 0, 1);
+  return getGustEnvelope(progress);
+}
+
+function getWindVisualIntensity() {
+  if (!gust || gust.phase !== "active") return 0;
+  const forceRatio = clamp(gust.force / DIFFICULTY_PROFILES.wild.forceMax, 0, 1);
+  return getActiveGustEnvelope() * (0.4 + forceRatio * 0.6);
 }
 
 function updateDangerFeedback() {
@@ -601,16 +624,6 @@ function updateDangerFeedback() {
   if (danger > 0.78 && !reducedMotion.matches) {
     shake = Math.max(shake, Math.min(3, danger * 2));
   }
-}
-
-function showGustWarning(direction) {
-  windArrow.textContent = direction > 0 ? "→" : "←";
-  leanArrow.textContent = direction > 0 ? "←" : "→";
-  gustWarning.classList.add("is-visible");
-}
-
-function hideGustWarning() {
-  gustWarning.classList.remove("is-visible", "is-active");
 }
 
 function burst(x, y, color, count) {
@@ -723,20 +736,24 @@ function drawIsland(x, y, scale, rotation) {
 }
 
 function drawWind(time) {
-  if (!gust || gust.phase !== "active") return;
+  const intensity = getWindVisualIntensity();
+  if (intensity <= 0.01) return;
   const direction = gust.direction;
+  const lineCount = 3 + Math.floor(intensity * 8);
+  const speed = 120 + intensity * 250;
+  const trailLength = 24 + intensity * 58;
   context.save();
-  context.strokeStyle = "rgba(255, 239, 210, 0.34)";
-  context.lineWidth = 3;
+  context.strokeStyle = `rgba(255, 239, 210, ${0.08 + intensity * 0.42})`;
+  context.lineWidth = 1.8 + intensity * 2.2;
   context.lineCap = "round";
 
-  for (let index = 0; index < 7; index += 1) {
-    const phase = (time * 190 + index * 83) % 520;
+  for (let index = 0; index < lineCount; index += 1) {
+    const phase = (time * speed + index * 83) % 520;
     const x = direction > 0 ? phase - 80 : WIDTH + 80 - phase;
-    const y = 210 + index * 58 + Math.sin(time * 3 + index) * 15;
+    const y = 176 + index * (510 / lineCount) + Math.sin(time * 3 + index) * 15;
     context.beginPath();
     context.moveTo(x, y);
-    context.lineTo(x + direction * (34 + index * 2), y - 4);
+    context.lineTo(x + direction * (trailLength + (index % 3) * 5), y - 4);
     context.stroke();
   }
 
@@ -980,9 +997,11 @@ function drawSaveFlash() {
 function syncScore() {
   scoreValue.textContent = formatTime(runSeconds);
   bestValue.textContent = `BEST ${formatTime(bestSeconds)}`;
-  const pressure = getDifficultyPressure(runSeconds, DIFFICULTY_PROFILES[selectedDifficulty]);
-  const windLevel = 1 + Math.min(4, Math.floor(pressure * 5));
-  windMeter.setAttribute("aria-label", `Wind level ${windLevel} of 5`);
+  const forceRatio = gust && gust.phase === "active"
+    ? clamp((gust.force * getActiveGustEnvelope()) / DIFFICULTY_PROFILES.wild.forceMax, 0, 1)
+    : 0;
+  const windLevel = Math.ceil(forceRatio * 5);
+  windMeter.setAttribute("aria-label", windLevel === 0 ? "Wind calm" : `Wind level ${windLevel} of 5`);
 
   for (const [index, bar] of windBars.entries()) {
     bar.classList.toggle("is-filled", index < windLevel);
@@ -1043,7 +1062,11 @@ function readSettings() {
     const difficulty = Object.hasOwn(DIFFICULTY_PROFILES, stored.difficulty)
       ? stored.difficulty
       : defaults.difficulty;
-    const creatureCount = clamp(Math.round(Number(stored.creatureCount) || defaults.creatureCount), 1, 5);
+    const creatureCount = clamp(
+      Math.round(Number(stored.creatureCount) || defaults.creatureCount),
+      MIN_CREATURE_COUNT,
+      MAX_CREATURE_COUNT,
+    );
     return { difficulty, creatureCount };
   } catch {
     return defaults;
@@ -1068,17 +1091,22 @@ if (new URLSearchParams(window.location.search).has("debug")) {
     getPlatformAngle: () => platform.angle,
     getSetup: () => ({ difficulty: selectedDifficulty, creatureCount: selectedCreatureCount }),
     getGustState: () => (gust ? { ...gust } : null),
+    getWindState: () => ({
+      envelope: getActiveGustEnvelope(),
+      visualIntensity: getWindVisualIntensity(),
+    }),
     getCreaturePositions: () => creatures.map(({ body }) => ({ x: body.position.x, y: body.position.y })),
     getFailureState: () => ({
       elapsed: failElapsed,
       firstImpactAt,
+      impactSlowMoEndsAt,
       timeScale: engine.timing.timeScale,
       reactions: creatures.map(({ kind, impactElapsed }) => ({ kind, impactElapsed })),
     }),
     setSetup: (difficulty, creatureCount) => {
       if (state !== "ready") return false;
       if (Object.hasOwn(DIFFICULTY_PROFILES, difficulty)) selectedDifficulty = difficulty;
-      selectedCreatureCount = clamp(Math.round(creatureCount), 1, creatureSpecs.length);
+      selectedCreatureCount = clamp(Math.round(creatureCount), MIN_CREATURE_COUNT, MAX_CREATURE_COUNT);
       updateSetup();
       return true;
     },

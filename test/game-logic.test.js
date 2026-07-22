@@ -5,6 +5,7 @@ import {
   clamp,
   createSeededRandom,
   formatTime,
+  getFailureTimeScale,
   getGustEnvelope,
   getGustTiming,
   getRequiredCounterAngle,
@@ -19,38 +20,32 @@ test("seeded random repeats the same run", () => {
   assert.deepEqual([first(), first(), first()], [second(), second(), second()]);
 });
 
-test("every difficulty ramps wind gradually through the run", () => {
-  const fixedRandom = () => 0.5;
-
+test("each gust samples independent timing and force within its profile", () => {
   for (const profile of Object.values(DIFFICULTY_PROFILES)) {
-    const early = getGustTiming(0, fixedRandom, profile);
-    const late = getGustTiming(200, fixedRandom, profile);
+    const low = getGustTiming(() => 0, profile);
+    const high = getGustTiming(() => 1, profile);
 
-    assert.ok(late.force > early.force);
-    assert.ok(late.restSeconds < early.restSeconds);
-    assert.ok(late.warningSeconds < early.warningSeconds);
-    assert.equal(early.pressure, 0);
-    assert.equal(late.pressure, 1);
+    assert.equal(low.force, profile.forceMin);
+    assert.equal(high.force, profile.forceMax);
+    assert.equal(low.restSeconds, profile.restMin);
+    assert.equal(high.restSeconds, profile.restMax);
+    assert.equal(low.durationSeconds, profile.durationMin);
+    assert.equal(high.durationSeconds, profile.durationMax);
   }
 });
 
-test("difficulty profiles have a clear force hierarchy", () => {
-  const fixedRandom = () => 0;
-  const gentle = getGustTiming(45, fixedRandom, DIFFICULTY_PROFILES.gentle);
-  const normal = getGustTiming(45, fixedRandom, DIFFICULTY_PROFILES.normal);
-  const wild = getGustTiming(45, fixedRandom, DIFFICULTY_PROFILES.wild);
-
-  assert.ok(gentle.force < normal.force);
-  assert.ok(normal.force < wild.force);
+test("difficulty force ranges do not overlap", () => {
+  assert.ok(DIFFICULTY_PROFILES.gentle.forceMax < DIFFICULTY_PROFILES.normal.forceMin);
+  assert.ok(DIFFICULTY_PROFILES.normal.forceMax < DIFFICULTY_PROFILES.wild.forceMin);
 });
 
-test("normal wind begins modestly and stays within the platform counter-angle", () => {
+test("normal wind is meaningful and stays within the platform counter-angle", () => {
   const profile = DIFFICULTY_PROFILES.normal;
-  const earlyAngle = getRequiredCounterAngle(profile.forceStart, 0.00105);
-  const lateAngle = getRequiredCounterAngle(profile.forceEnd, 0.00105);
+  const minimumAngle = getRequiredCounterAngle(profile.forceMin, 0.00105);
+  const maximumAngle = getRequiredCounterAngle(profile.forceMax, 0.00105);
 
-  assert.ok(earlyAngle < 0.12);
-  assert.ok(lateAngle < 0.46);
+  assert.ok(minimumAngle > 0.06);
+  assert.ok(maximumAngle < 0.46);
 });
 
 test("a gust eases in, holds, and eases out instead of hitting instantly", () => {
@@ -61,13 +56,13 @@ test("a gust eases in, holds, and eases out instead of hitting instantly", () =>
   assert.equal(getGustEnvelope(1), 0);
 });
 
-test("stack layout supports one through five touching creatures", () => {
+test("stack layout supports three through five touching creatures", () => {
   const specs = [78, 54, 56, 62, 50].map((proxyHeight, index) => ({
     kind: String(index),
     proxyHeight,
   }));
 
-  for (const count of [1, 3, 5]) {
+  for (const count of [3, 4, 5]) {
     const stack = layoutStack(specs, 665, count);
     assert.equal(stack.length, count);
     assert.equal(stack[0].y + stack[0].proxyHeight / 2, 665);
@@ -86,6 +81,13 @@ test("failure results wait for an impact reaction or the hard timeout", () => {
   assert.equal(shouldShowFailureResults(999, 100, 900, 2600), false);
   assert.equal(shouldShowFailureResults(1000, 100, 900, 2600), true);
   assert.equal(shouldShowFailureResults(900, 0, 900, 2600), true);
+});
+
+test("failure time scale changes only during the ground-impact window", () => {
+  assert.equal(getFailureTimeScale(80, null, 0.18), 1);
+  assert.equal(getFailureTimeScale(100, 460, 0.18), 0.18);
+  assert.equal(getFailureTimeScale(459, 460, 0.18), 0.18);
+  assert.equal(getFailureTimeScale(460, 460, 0.18), 1);
 });
 
 test("display helpers keep values bounded and readable", () => {

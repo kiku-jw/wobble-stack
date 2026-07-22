@@ -9,9 +9,9 @@ Prove whether the one-thumb loop feels readable and retryable in a browser befor
 ## Scope
 
 - Standalone portrait prototype in this repository.
-- One to five physical bodies on one controllable beam.
+- Three to five physical bodies on one controllable beam.
 - Pointer, touch, and keyboard input.
-- Telegraph-first wind gusts, survival time, best score, collapse, pause, and Retry.
+- Self-telegraphing wind gusts, survival time, best score, collapse, pause, and Retry.
 - No route, navigation item, analytics, account, backend, shop, progression, or final art.
 
 ## Milestones
@@ -36,7 +36,7 @@ Acceptance:
 
 - Play starts without a page load.
 - Drag or arrow keys tilt the beam.
-- Gusts show a warning before force is applied.
+- Gusts visibly build before reaching peak force.
 - A fallen creature ends the run and Retry resets it without navigation.
 
 Verify:
@@ -64,8 +64,8 @@ Acceptance:
 - Gentle, Normal, and Wild use explicit force curves rather than one hidden multiplier.
 - Early Normal wind needs roughly 3.5 degrees of counter-tilt; late Normal remains within the 26-degree control range.
 - Every gust eases in before reaching peak force.
-- The warning shows both wind direction and the opposite lean direction.
-- Setup supports 1–5 creatures and rebuilds a contact-safe stack before play.
+- The stage gives a readable direction cue before peak force.
+- Setup supports 3–5 creatures and rebuilds a contact-safe stack before play.
 - Best time is isolated by difficulty and creature count.
 - Retry keeps the current setup; Change Setup returns to the start controls.
 
@@ -96,6 +96,26 @@ pnpm build
 ```
 
 Then use the debug collapse trigger at 390 × 844 to capture the falling and impacted states, repeat with reduced motion, and smoke the deployed Pages build.
+
+### M6 — honest wind and impact timing
+
+Acceptance:
+
+- Every gust samples a random force inside a non-overlapping Gentle, Normal, or Wild range; elapsed run time does not increase force.
+- Normal begins within 2.2–3.8 seconds and requires visible input during the first gust.
+- Longer gusts progressively build both Canvas wind intensity and physical force without a separate direction pill.
+- Holding the correct keyboard direction keeps five creatures on the beam through a calibrated Normal gust.
+- Setup exposes only 3–5 creatures and clamps old stored values below three.
+- Failure falls at normal speed, slows briefly on first ground impact, and returns to normal speed before results.
+
+Verify:
+
+```sh
+pnpm test
+pnpm build
+```
+
+Then run the difficulty, impact, reduced-motion, and 320 × 700 checks in `TEST_PLAN.md` before verifying the deployed Pages build.
 
 ## Kill gate
 

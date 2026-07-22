@@ -38,23 +38,37 @@ The team-selection frame is explicitly deferred. It is evidence for possible fut
 ## M4 calibration decisions
 
 - `Gentle`, `Normal`, and `Wild` are three fixed profiles, not user-editable physics parameters.
-- Gravity stays `0.00105`. Early Normal wind starts at `0.000065`, requiring about 3.5 degrees of theoretical counter-tilt.
+- Gravity stays `0.00105`. Normal samples `0.000065–0.000105`; the keyboard counter target includes a calibrated stack-leverage allowance while pointer input remains analog.
 - The platform range increases to about 26 degrees and follows a bounded target angle, so the stack cannot torque the control past the player's request.
-- Gentle remains counterable at maximum wind; Normal approaches the control limit late; Wild may exceed it late by design.
+- Gentle, Normal, and Wild use non-overlapping random force ranges rather than an elapsed-time ramp.
 - Gust force uses an attack/hold/release envelope. No frame receives full force at gust start.
-- Stack position is derived from collider heights for the selected 1–5 creatures; no separate scene or prefab variants.
+- Stack position is derived from collider heights for the selected 3–5 creatures; no separate scene or prefab variants.
 - Paired low-stiffness contact links keep neighbors recognizable as a tower, while air damping removes the old post-gust launch.
-- Keyboard counter-tilt uses the current announced gust force; pointer input stays fully analog.
+- Keyboard counter-tilt uses the sampled gust force plus a calibrated leverage allowance; pointer input stays fully analog.
 - Best scores use the key `<difficulty>:<count>`. The old single best migrates to `normal:5` when present.
 
 ## M5 collapse reference lock
 
 - Primary reference: `docs/concepts/comedic-collapse.png`; preserve separated bodies, exaggerated panic, visible motion, and collapse as the punchline.
-- Motion role: slowdown exists to make the physical consequence and face change readable, not as a reusable timeline system.
+- Motion role: impact slowdown exists to make ground contact and the face change readable, not as a reusable timeline system.
 - State sequence: calm/effort → panic while airborne → dazed only after catch-floor contact → results.
 - Impact feedback: one small dust burst and brief shake per creature; no screen flash, camera zoom, new overlay, sound dependency, or particle framework.
 - Reduced motion: keep semantic face feedback, weaken shake, use near-normal physics speed, and shorten the result delay.
-- Result timing: wait briefly after the first registered impact, with a hard timeout for off-screen or missed-floor failures.
+- Result timing: fall at normal speed, slow briefly on first registered impact, return to normal speed, then wait for the face reaction; use a hard timeout for off-screen or missed-floor failures.
+
+## M6 reference lock
+
+- Primary direction: preserve the immersive coral stage and use the existing code-native wind streaks as the only directional cue.
+- Motion role: a gust starts faint and slow, then the same envelope increases both physical force and the streak count, speed, length, and opacity.
+- Reject: persistent WIND/LEAN instructions, arrow pills, sequential power creep, a tutorial pause, or new animation dependencies.
+- Difficulty: randomness lives inside fixed non-overlapping ranges, so a hard mode is immediately stronger rather than becoming stronger only after waiting.
+- Creature count: three is the smallest readable tower and the lower product boundary; one- and two-body score data is left untouched but no longer selectable.
+
+## M6 lazy-senior receipt
+
+- Lower rung: reuse the gust envelope, Canvas renderer, Matter collision event, and existing settings storage.
+- GitHub prior art: skipped because this is local physics calibration and visual state, not a reusable package or protocol.
+- New code is limited to profile sampling, impact-only time scale state, Canvas intensity mapping, and debug-only QA receipts.
 
 ## lazy-senior receipt
 
