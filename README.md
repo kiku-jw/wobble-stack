@@ -52,6 +52,7 @@ pnpm build
 - Pointer and keyboard input control one target angle for the beam.
 - Seeded, telegraphed gusts ease in and increase pressure over time.
 - The warning shows where the wind pushes and which way to lean.
+- Collapse continues in slow motion, and each creature reacts when it hits the ground.
 - Per-setup best times and the last setup are stored locally; nothing is sent anywhere.
 
 ## Visual direction

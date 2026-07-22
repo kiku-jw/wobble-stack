@@ -17,6 +17,7 @@ Assertions cover:
 - early Normal counter-angle is modest and late Normal stays inside the control limit;
 - the gust envelope ramps in and out instead of applying peak force immediately;
 - stack layouts for 1–5 creatures stay in contact with the beam and each other.
+- failure results wait for either the configured impact hold or the hard timeout.
 
 ## Browser smoke
 
@@ -24,11 +25,13 @@ Assertions cover:
 2. Press Play and confirm the five bodies settle on the beam.
 3. Drag left and right; confirm the beam follows without page scrolling.
 4. Wait for the wind cue; confirm `WIND` and the opposite `LEAN` arrow appear before the shove.
-5. Deliberately drop a body; confirm the result and Retry appear within one second.
-6. Press Retry; confirm score, bodies, beam, and hazard timing reset without navigation.
-7. Pause and resume; confirm time and physics stop while paused.
-8. Repeat input using Left/Right or A/D and Enter/Space.
-9. Check browser console for uncaught errors.
+5. Deliberately collapse the stack; confirm physics slows, bodies separate, and a face changes only after ground impact.
+6. Confirm dust appears at impact and the dazed face remains visible before the result overlay.
+7. Confirm results appear within the hard cinematic timeout even if no creature reaches the floor.
+8. Press Retry; confirm score, bodies, beam, face state, and hazard timing reset without navigation.
+9. Pause and resume; confirm time and physics stop while paused.
+10. Repeat input using Left/Right or A/D and Enter/Space.
+11. Check browser console for uncaught errors.
 
 ## Calibration matrix
 
@@ -39,6 +42,14 @@ Assertions cover:
 5. Record a best score, change one setup dimension, and confirm the displayed best changes with it.
 6. Lose a run and press Retry; confirm the selected setup is preserved.
 7. Lose a run and press Change Setup; confirm the settings return without reloading.
+
+## Collapse matrix
+
+1. Normal motion: the failure time scale is visibly slower than play and results wait for an impact reaction or the hard timeout.
+2. One creature: the single body can receive the dazed face and reach results.
+3. Five creatures: soft links release and ground reactions are tracked independently.
+4. Reduced motion: the sequence is shorter and closer to normal speed, but the impact face still appears.
+5. Retry: every creature starts the next run without a stale impact reaction.
 
 ## Visual checks
 

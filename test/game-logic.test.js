@@ -9,6 +9,7 @@ import {
   getGustTiming,
   getRequiredCounterAngle,
   layoutStack,
+  shouldShowFailureResults,
 } from "../src/game-logic.js";
 
 test("seeded random repeats the same run", () => {
@@ -77,6 +78,14 @@ test("stack layout supports one through five touching creatures", () => {
       assert.equal(upper.y + upper.proxyHeight / 2, lower.y - lower.proxyHeight / 2);
     }
   }
+});
+
+test("failure results wait for an impact reaction or the hard timeout", () => {
+  assert.equal(shouldShowFailureResults(800, null, 900, 2600), false);
+  assert.equal(shouldShowFailureResults(2600, null, 900, 2600), true);
+  assert.equal(shouldShowFailureResults(999, 100, 900, 2600), false);
+  assert.equal(shouldShowFailureResults(1000, 100, 900, 2600), true);
+  assert.equal(shouldShowFailureResults(900, 0, 900, 2600), true);
 });
 
 test("display helpers keep values bounded and readable", () => {

@@ -3,7 +3,7 @@
 ## Status
 
 - artifact type: playable demo repository
-- current phase: calibrated update published and live
+- current phase: M5 cinematic collapse verified locally and ready to publish
 - public-safe gate: passed
 - demo: https://kiku-jw.github.io/wobble-stack/
 - review status: live Pages build verified; human playtest pending
@@ -31,6 +31,11 @@
 - The public page, JavaScript bundle, and CSS returned HTTP 200 from GitHub Pages.
 - The live 390 x 844 game started successfully with zero console errors or warnings.
 - Pages run `29948112671` deployed commit `b4c0ea5`; the live build accepted Gentle with three creatures, entered play, and paused at 0.4 seconds without console errors.
+- M5 browser proof: normal collapse stayed in slow-motion failure at 0.8 seconds, registered four independent impact reactions, and exposed Retry at about 1.0 second.
+- Reduced-motion preserved crossed-eye impact faces and exposed Retry in about 0.3 seconds.
+- No-impact failure stayed cinematic at 2.3 seconds and reached the 2.6-second hard timeout without hanging.
+- A one-creature Retry rebuilt the body with a clean reaction state; five-creature impact remained legible at 320 × 700.
+- Eight deterministic tests, production build, and browser console checks passed.
 
 ## Exclusions
 

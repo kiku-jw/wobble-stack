@@ -9,9 +9,10 @@ import {
   getGustEnvelope,
   getGustTiming,
   layoutStack,
+  shouldShowFailureResults,
 } from "./game-logic.js";
 
-const { Bodies, Body, Composite, Constraint, Engine } = Matter;
+const { Bodies, Body, Composite, Constraint, Engine, Events } = Matter;
 
 const WIDTH = 390;
 const HEIGHT = 844;
@@ -21,6 +22,12 @@ const PLATFORM_TOP = 665;
 const GRAVITY_SCALE = 0.00105;
 const MAX_PLATFORM_ANGLE = 0.46;
 const FAIL_Y = 744;
+const FAILURE_TIME_SCALE = 0.26;
+const FAILURE_TIMEOUT_MS = 2600;
+const FAILURE_IMPACT_HOLD_MS = 900;
+const REDUCED_FAILURE_TIME_SCALE = 0.82;
+const REDUCED_FAILURE_TIMEOUT_MS = 1100;
+const REDUCED_FAILURE_IMPACT_HOLD_MS = 180;
 const LEGACY_BEST_SCORE_KEY = "wobble-stack-best-v1";
 const BEST_SCORES_KEY = "wobble-stack-best-v2";
 const SETTINGS_KEY = "wobble-stack-settings-v1";
@@ -57,6 +64,7 @@ const liveStatus = document.querySelector("#live-status");
 let engine;
 let platform;
 let creatures = [];
+let stackLinks = [];
 let state = "ready";
 let previousState = "ready";
 let runSeconds = 0;
@@ -71,6 +79,7 @@ let keyboardDirection = 0;
 let accumulator = 0;
 let lastFrameTime = performance.now();
 let failElapsed = 0;
+let firstImpactAt = null;
 let random = createSeededRandom(1);
 let gust = null;
 let dangerWasHigh = false;
@@ -208,6 +217,8 @@ function resetPhysics() {
   engine = Engine.create({ enableSleeping: false });
   engine.gravity.y = 1;
   engine.gravity.scale = GRAVITY_SCALE;
+  failElapsed = 0;
+  firstImpactAt = null;
 
   platform = Bodies.rectangle(CENTER_X, 676, 286, 22, {
     label: "platform",
@@ -220,7 +231,7 @@ function resetPhysics() {
 
   const activeSpecs = layoutStack(creatureSpecs, PLATFORM_TOP, selectedCreatureCount);
   creatures = activeSpecs.map((spec) => createCreature(spec));
-  const stackLinks = creatures.slice(1).flatMap((creature, index) => {
+  stackLinks = creatures.slice(1).flatMap((creature, index) => {
     const lowerCreature = creatures[index];
     const jointWidth = Math.min(lowerCreature.proxyWidth, creature.proxyWidth) * 0.18;
 
@@ -237,7 +248,7 @@ function resetPhysics() {
     }));
   });
 
-  const catchFloor = Bodies.rectangle(CENTER_X, 830, 520, 30, {
+  const catchFloor = Bodies.rectangle(CENTER_X, 805, 520, 30, {
     label: "catch-floor",
     isStatic: true,
     friction: 0.8,
@@ -251,6 +262,7 @@ function resetPhysics() {
     ...creatures.map((item) => item.body),
     ...stackLinks,
   ]);
+  Events.on(engine, "collisionStart", handleCollisionStart);
 }
 
 function createCreature(spec) {
@@ -272,7 +284,7 @@ function createCreature(spec) {
     chamfer: { radius: chamferRadius },
   });
 
-  return { ...spec, body };
+  return { ...spec, body, impactElapsed: null };
 }
 
 function startRun() {
@@ -284,6 +296,7 @@ function startRun() {
   keyboardDirection = 0;
   pointerActive = false;
   failElapsed = 0;
+  firstImpactAt = null;
   accumulator = 0;
   gust = null;
   dangerWasHigh = false;
@@ -340,11 +353,43 @@ function beginFailure() {
   targetAngle = platform.angle;
   thumbCue.classList.remove("is-visible");
   hideGustWarning();
-  engine.timing.timeScale = reducedMotion.matches ? 0.82 : 0.42;
+  for (const link of stackLinks) Composite.remove(engine.world, link);
+  stackLinks = [];
+  engine.timing.timeScale = reducedMotion.matches ? REDUCED_FAILURE_TIME_SCALE : FAILURE_TIME_SCALE;
   shake = reducedMotion.matches ? 0 : 10;
   burst(CENTER_X, 625, "#fff2b3", 12);
   liveStatus.textContent = "The stack fell.";
   syncControls();
+}
+
+function handleCollisionStart(event) {
+  if (state !== "playing" && state !== "failing") return;
+
+  for (const pair of event.pairs) {
+    const creatureBody = pair.bodyA.label === "catch-floor"
+      ? pair.bodyB
+      : pair.bodyB.label === "catch-floor"
+        ? pair.bodyA
+        : null;
+    const creature = creatures.find(({ body }) => body === creatureBody);
+
+    if (!creature || creature.impactElapsed !== null) continue;
+
+    creature.impactElapsed = state === "failing" ? failElapsed : 0;
+    const isFirstImpact = firstImpactAt === null;
+    if (isFirstImpact) firstImpactAt = creature.impactElapsed;
+    burst(
+      creature.body.position.x,
+      Math.min(790, creature.body.position.y + creature.proxyHeight * 0.42),
+      "#ffe2b0",
+      reducedMotion.matches ? 4 : 9,
+    );
+    shake = reducedMotion.matches ? 0 : Math.max(shake, 4.5);
+
+    if (isFirstImpact) {
+      liveStatus.textContent = "Impact. The creatures look dazed.";
+    }
+  }
 }
 
 function showResults() {
@@ -435,7 +480,7 @@ function frame(now) {
       accumulator -= FIXED_STEP;
     }
 
-    if (failElapsed >= 690) showResults();
+    if (shouldShowResults()) showResults();
   }
 
   updateParticles(deltaMs);
@@ -444,6 +489,12 @@ function frame(now) {
   syncScore();
   draw(now / 1000);
   requestAnimationFrame(frame);
+}
+
+function shouldShowResults() {
+  const timeout = reducedMotion.matches ? REDUCED_FAILURE_TIMEOUT_MS : FAILURE_TIMEOUT_MS;
+  const impactHold = reducedMotion.matches ? REDUCED_FAILURE_IMPACT_HOLD_MS : FAILURE_IMPACT_HOLD_MS;
+  return shouldShowFailureResults(failElapsed, firstImpactAt, impactHold, timeout);
 }
 
 function hasStackCollapsed() {
@@ -753,7 +804,7 @@ function drawCreature(creature) {
   context.shadowOffsetY = 6;
   drawCreatureShape(kind, width, height, color);
   context.shadowColor = "transparent";
-  drawFace(kind, width, height, danger, effort);
+  drawFace(kind, width, height, danger, effort, creature.impactElapsed !== null);
   context.restore();
 }
 
@@ -823,11 +874,16 @@ function drawCreatureShape(kind, width, height, color) {
   context.fill();
 }
 
-function drawFace(kind, width, height, danger, effort) {
+function drawFace(kind, width, height, danger, effort, impacted) {
   const faceY = kind === "pear" ? 5 : kind === "rabbit" ? 5 : 2;
   const eyeGap = width * 0.17;
   const eyeY = faceY - 7;
   context.fillStyle = "#fff8e9";
+
+  if (impacted) {
+    drawImpactFace(eyeGap, eyeY, faceY);
+    return;
+  }
 
   if (danger) {
     context.beginPath();
@@ -869,6 +925,32 @@ function drawFace(kind, width, height, danger, effort) {
     }
     context.stroke();
   }
+}
+
+function drawImpactFace(eyeGap, eyeY, faceY) {
+  context.beginPath();
+  context.ellipse(-eyeGap, eyeY, 7, 6, -0.12, 0, Math.PI * 2);
+  context.ellipse(eyeGap, eyeY, 7, 6, 0.12, 0, Math.PI * 2);
+  context.fill();
+
+  context.strokeStyle = "#3d2c37";
+  context.lineWidth = 2.7;
+  context.lineCap = "round";
+
+  for (const x of [-eyeGap, eyeGap]) {
+    context.beginPath();
+    context.moveTo(x - 3.5, eyeY - 3);
+    context.lineTo(x + 3.5, eyeY + 3);
+    context.moveTo(x + 3.5, eyeY - 3);
+    context.lineTo(x - 3.5, eyeY + 3);
+    context.stroke();
+  }
+
+  context.beginPath();
+  context.moveTo(-7, faceY + 14);
+  context.quadraticCurveTo(-3, faceY + 9, 1, faceY + 14);
+  context.quadraticCurveTo(4, faceY + 18, 8, faceY + 13);
+  context.stroke();
 }
 
 function drawParticles() {
@@ -987,6 +1069,12 @@ if (new URLSearchParams(window.location.search).has("debug")) {
     getSetup: () => ({ difficulty: selectedDifficulty, creatureCount: selectedCreatureCount }),
     getGustState: () => (gust ? { ...gust } : null),
     getCreaturePositions: () => creatures.map(({ body }) => ({ x: body.position.x, y: body.position.y })),
+    getFailureState: () => ({
+      elapsed: failElapsed,
+      firstImpactAt,
+      timeScale: engine.timing.timeScale,
+      reactions: creatures.map(({ kind, impactElapsed }) => ({ kind, impactElapsed })),
+    }),
     setSetup: (difficulty, creatureCount) => {
       if (state !== "ready") return false;
       if (Object.hasOwn(DIFFICULTY_PROFILES, difficulty)) selectedDifficulty = difficulty;
@@ -995,5 +1083,22 @@ if (new URLSearchParams(window.location.search).has("debug")) {
       return true;
     },
     failNow: () => beginFailure(),
+    collapseNow: () => {
+      if (state !== "playing") return false;
+      beginFailure();
+      const midpoint = (creatures.length - 1) / 2;
+      for (const [index, creature] of creatures.entries()) {
+        Body.setPosition(creature.body, {
+          x: CENTER_X + (index - midpoint) * 48,
+          y: 710 - index * 8,
+        });
+        Body.setVelocity(creature.body, {
+          x: (index - midpoint) * 0.7,
+          y: 3.4 + index * 0.25,
+        });
+        Body.setAngularVelocity(creature.body, (index - midpoint) * 0.025);
+      }
+      return true;
+    },
   };
 }

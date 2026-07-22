@@ -109,6 +109,12 @@ export function layoutStack(specs, platformTop, count) {
   });
 }
 
+export function shouldShowFailureResults(elapsedMs, firstImpactAtMs, impactHoldMs, timeoutMs) {
+  const impactReactionWasVisible =
+    firstImpactAtMs !== null && elapsedMs - firstImpactAtMs >= impactHoldMs;
+  return impactReactionWasVisible || elapsedMs >= timeoutMs;
+}
+
 export function formatTime(seconds) {
   return Math.max(0, seconds).toFixed(1);
 }

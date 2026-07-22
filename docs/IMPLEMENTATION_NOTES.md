@@ -47,8 +47,23 @@ The team-selection frame is explicitly deferred. It is evidence for possible fut
 - Keyboard counter-tilt uses the current announced gust force; pointer input stays fully analog.
 - Best scores use the key `<difficulty>:<count>`. The old single best migrates to `normal:5` when present.
 
+## M5 collapse reference lock
+
+- Primary reference: `docs/concepts/comedic-collapse.png`; preserve separated bodies, exaggerated panic, visible motion, and collapse as the punchline.
+- Motion role: slowdown exists to make the physical consequence and face change readable, not as a reusable timeline system.
+- State sequence: calm/effort → panic while airborne → dazed only after catch-floor contact → results.
+- Impact feedback: one small dust burst and brief shake per creature; no screen flash, camera zoom, new overlay, sound dependency, or particle framework.
+- Reduced motion: keep semantic face feedback, weaken shake, use near-normal physics speed, and shorten the result delay.
+- Result timing: wait briefly after the first registered impact, with a hard timeout for off-screen or missed-floor failures.
+
 ## lazy-senior receipt
 
 - Lower rung: browser Canvas + one small established physics dependency.
 - GitHub prior art: `liabru/matter-js` is MIT-licensed, active, and purpose-built; adoption = add dependency.
 - New code is limited to the game loop, input, drawing, and visible state transitions.
+
+## M5 lazy-senior receipt
+
+- Lower rung: existing `Matter.Events`, Canvas face primitives, and the current particle loop.
+- GitHub prior art: skipped because this is a repo-local visual state and no reusable widget or protocol is being introduced.
+- New code is limited to one collision receipt, one dazed-face branch, result timing, and debug-only QA access.

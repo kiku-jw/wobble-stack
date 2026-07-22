@@ -78,6 +78,25 @@ pnpm build
 
 Then run the browser matrix in `TEST_PLAN.md` and verify the deployed GitHub Pages build.
 
+### M5 — cinematic collapse
+
+Acceptance:
+
+- Failure releases the soft stack links and continues physics at a visibly slower rate.
+- Each creature keeps its panic face while falling and switches to a distinct dazed face only after touching the catch floor.
+- Ground contact emits a restrained dust burst and keeps the reaction visible before results appear.
+- A hard timeout prevents the cinematic from blocking Retry when no body reaches the floor.
+- Reduced-motion shortens the sequence and uses near-normal physics speed while preserving the face reaction.
+
+Verify:
+
+```sh
+pnpm test
+pnpm build
+```
+
+Then use the debug collapse trigger at 390 × 844 to capture the falling and impacted states, repeat with reduced motion, and smoke the deployed Pages build.
+
 ## Kill gate
 
 This prototype earns a native greybox only if several fresh players voluntarily press Retry and can explain why they lost. Visual polish alone is not a pass.

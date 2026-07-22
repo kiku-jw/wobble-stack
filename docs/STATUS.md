@@ -4,8 +4,8 @@ Updated: 2026-07-22
 
 ## Current state
 
-- Phase: calibrated public build
-- Current milestone: M4 — readable wind and configurable runs live
+- Phase: verified release candidate
+- Current milestone: M5 — cinematic collapse complete locally
 - Blockers: none
 
 ## Completed
@@ -32,7 +32,14 @@ Updated: 2026-07-22
 - Settings, scoped best scores, Retry persistence, Change Setup, pause, reduced motion, and 320 × 700 layout passed browser checks with no console errors.
 - Seven deterministic logic tests and the Vite production build pass.
 - GitHub Pages run `29948112671` built and deployed commit `b4c0ea5`; the live setup, three-creature Gentle run, pause state, and bundled assets were re-verified with no browser console errors.
+- Failure now releases the soft stack links and continues Matter.js physics at `0.26` time scale; reduced-motion uses `0.82`.
+- Catch-floor collisions switch each creature independently from panic to a dazed crossed-eye face and emit a small dust burst.
+- Results wait 900 ms after the first normal-motion impact, 180 ms with reduced motion, or use a 2600/1100 ms hard timeout when no impact arrives.
+- Browser QA captured distinct falling and impacted frames at 390 × 844 and a legible five-creature impact frame at 320 × 700.
+- One- and five-creature collapse, Retry reaction reset, reduced motion, no-impact timeout, and zero-console-error checks passed.
+- Eight deterministic logic tests and the Vite production build pass.
 
 ## Next
 
-- Put the calibrated build in front of fresh players.
+- Publish M5 through GitHub Pages and re-run the live collapse smoke.
+- Then put the updated build in front of fresh players.
