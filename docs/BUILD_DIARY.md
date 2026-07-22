@@ -3,7 +3,7 @@
 ## Status
 
 - artifact type: playable demo repository
-- current phase: M7 locally calibrated; release verification in progress
+- current phase: M7 published and live
 - public-safe gate: passed
 - demo: https://kiku-jw.github.io/wobble-stack/
 - review status: live Pages build verified; human playtest pending
@@ -50,6 +50,7 @@
 - Pointer input held at the equivalent `0.0873 rad` counter-angle survived `11.48 s`; the beam reached the requested angle and the browser console stayed clear.
 - A second seeded gust pushing the opposite direction stayed in `playing` through its `7.81 s` end with the matching counter-key. Pause produced a zero clock delta, impact timing remained `1 → 0.18 → 1`, all five reactions registered, and Retry restarted at `0 s` with the same setup.
 - Eleven deterministic tests, the Vite production build, and whitespace validation pass locally.
+- Pages run `29956303847` deployed commit `972fb44`; the live first Normal gust matched the local seed and correct keyboard tilt survived through the `7.57 s` gust end to `11.48 s`, with zero console errors.
 - Eight deterministic tests, production build, and browser console checks passed.
 - Pages run `29949106957` deployed commit `5404501`; the live 390 × 844 collapse registered multiple dazed faces at 0.8 seconds and exposed Retry with zero console errors.
 

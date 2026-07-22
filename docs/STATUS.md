@@ -5,7 +5,7 @@ Updated: 2026-07-22
 ## Current state
 
 - Phase: calibrated public build
-- Current milestone: M7 — meaningful counter-tilt in release verification
+- Current milestone: M7 — meaningful counter-tilt live
 - Blockers: none
 
 ## Completed
@@ -50,6 +50,7 @@ Updated: 2026-07-22
 - Pointer input at the same calculated counter-angle reaches 11.48 seconds, within the same outcome tier as keyboard input.
 - The opposite-direction seeded gust also stayed upright through its 7.81-second end; Pause held time exactly, impact used `1 → 0.18 → 1`, all five reactions registered, and Retry reset the run.
 - Eleven deterministic logic tests and the Vite production build pass locally with no browser console errors.
+- GitHub Pages run `29956303847` built and deployed commit `972fb44`; the live deterministic Normal counter-tilt survived the complete 7.57-second gust and failed only at 11.48 seconds, with zero console errors.
 
 ## Next
 
