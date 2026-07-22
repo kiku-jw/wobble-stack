@@ -5,7 +5,7 @@ Updated: 2026-07-22
 ## Current state
 
 - Phase: calibrated public build
-- Current milestone: M4 — readable wind and configurable runs complete locally
+- Current milestone: M4 — readable wind and configurable runs live
 - Blockers: none
 
 ## Completed
@@ -31,8 +31,8 @@ Updated: 2026-07-22
 - Holding the instructed arrow through that gust kept all five figures upright and recovered to near-center by 11.9 s.
 - Settings, scoped best scores, Retry persistence, Change Setup, pause, reduced motion, and 320 × 700 layout passed browser checks with no console errors.
 - Seven deterministic logic tests and the Vite production build pass.
+- GitHub Pages run `29948112671` built and deployed commit `b4c0ea5`; the live setup, three-creature Gentle run, pause state, and bundled assets were re-verified with no browser console errors.
 
 ## Next
 
-- Publish M4 through GitHub Pages and re-run the live smoke.
-- Then put the calibrated build in front of fresh players.
+- Put the calibrated build in front of fresh players.

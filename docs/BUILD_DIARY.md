@@ -3,7 +3,7 @@
 ## Status
 
 - artifact type: playable demo repository
-- current phase: calibrated update ready to publish
+- current phase: calibrated update published and live
 - public-safe gate: passed
 - demo: https://kiku-jw.github.io/wobble-stack/
 - review status: live Pages build verified; human playtest pending
@@ -30,6 +30,7 @@
 - Holding the instructed keyboard direction kept all five figures upright and recovered the tower by 11.9 seconds.
 - The public page, JavaScript bundle, and CSS returned HTTP 200 from GitHub Pages.
 - The live 390 x 844 game started successfully with zero console errors or warnings.
+- Pages run `29948112671` deployed commit `b4c0ea5`; the live build accepted Gentle with three creatures, entered play, and paused at 0.4 seconds without console errors.
 
 ## Exclusions
 
