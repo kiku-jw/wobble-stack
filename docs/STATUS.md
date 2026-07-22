@@ -4,8 +4,8 @@ Updated: 2026-07-22
 
 ## Current state
 
-- Phase: calibrated local build; publication pending
-- Current milestone: M6 — honest wind and impact timing
+- Phase: calibrated public build
+- Current milestone: M6 — honest wind and impact timing live
 - Blockers: none
 
 ## Completed
@@ -43,6 +43,7 @@ Updated: 2026-07-22
 - Eight deterministic logic tests and the Vite production build pass.
 - GitHub Pages run `29949106957` deployed commit `5404501`; the live five-creature collapse stayed in slow motion at 0.8 s, showed independent impact reactions, reached Retry, and logged no console errors.
 - Nine deterministic logic tests and the Vite production build pass for M6.
+- GitHub Pages run `29953856192` built and deployed commit `c4ffa84`; the live 390 × 844 build clamped two creatures to three, scheduled Normal at 3.37 seconds with random force `0.0000919`, removed the arrow pill, slowed only on impact, returned to normal physics before results, and logged no console errors.
 
 ## Next
 

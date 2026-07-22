@@ -3,7 +3,7 @@
 ## Status
 
 - artifact type: playable demo repository
-- current phase: M6 calibrated locally; publication pending
+- current phase: M6 published and live
 - public-safe gate: passed
 - demo: https://kiku-jw.github.io/wobble-stack/
 - review status: live Pages build verified; human playtest pending
@@ -41,6 +41,7 @@
 - A stored or debug count below three clamped to three and disabled the minus control; the old one- and two-body best-score keys remain untouched.
 - The arrow pill no longer exists in the DOM; the wind envelope drove measured visual intensity from `0.013` near onset to `0.808` at Normal peak.
 - Nine deterministic tests, production build, and browser console checks pass with zero errors.
+- Pages run `29953856192` deployed commit `c4ffa84`; live debug smoke confirmed the 3-creature floor, random Normal timing/force, missing arrow pill, `1 → 0.18 → 1` failure time scale, and zero console errors.
 - Eight deterministic tests, production build, and browser console checks passed.
 - Pages run `29949106957` deployed commit `5404501`; the live 390 × 844 collapse registered multiple dazed faces at 0.8 seconds and exposed Retry with zero console errors.
 
