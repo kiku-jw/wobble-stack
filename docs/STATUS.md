@@ -4,8 +4,8 @@ Updated: 2026-07-22
 
 ## Current state
 
-- Phase: verified browser prototype
-- Current milestone: M3 — browser proof complete
+- Phase: published browser prototype
+- Current milestone: GitHub Pages proof complete
 - Blockers: none
 
 ## Completed
@@ -19,6 +19,8 @@ Updated: 2026-07-22
 - Layout inspected at 320 × 700, 390 × 844, and 1280 × 900.
 - Reduced-motion and touch-action behavior verified; browser console remained clean.
 - Unit tests and production build passed.
+- Public repository metadata, MIT license, topics, preview assets, and README published.
+- GitHub Pages build and deploy jobs passed; the live game loaded its HTML, JavaScript, and CSS with HTTP 200 and no console errors.
 
 ## Next
 
