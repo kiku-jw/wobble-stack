@@ -4,8 +4,8 @@ Updated: 2026-07-22
 
 ## Current state
 
-- Phase: verified release candidate
-- Current milestone: M5 — cinematic collapse complete locally
+- Phase: calibrated public build
+- Current milestone: M5 — cinematic collapse live
 - Blockers: none
 
 ## Completed
@@ -38,8 +38,8 @@ Updated: 2026-07-22
 - Browser QA captured distinct falling and impacted frames at 390 × 844 and a legible five-creature impact frame at 320 × 700.
 - One- and five-creature collapse, Retry reaction reset, reduced motion, no-impact timeout, and zero-console-error checks passed.
 - Eight deterministic logic tests and the Vite production build pass.
+- GitHub Pages run `29949106957` deployed commit `5404501`; the live five-creature collapse stayed in slow motion at 0.8 s, showed independent impact reactions, reached Retry, and logged no console errors.
 
 ## Next
 
-- Publish M5 through GitHub Pages and re-run the live collapse smoke.
-- Then put the updated build in front of fresh players.
+- Put the updated build in front of fresh players.
