@@ -9,6 +9,7 @@ import {
   getGustEnvelope,
   getGustTiming,
   getRequiredCounterAngle,
+  getWindTravelSpeed,
   layoutStack,
   shouldShowFailureResults,
 } from "../src/game-logic.js";
@@ -54,6 +55,17 @@ test("a gust eases in, holds, and eases out instead of hitting instantly", () =>
   assert.equal(getGustEnvelope(0.5), 1);
   assert.ok(getGustEnvelope(0.9) < getGustEnvelope(0.7));
   assert.equal(getGustEnvelope(1), 0);
+});
+
+test("wind streak travel speed increases with visual intensity", () => {
+  const speeds = [0, 0.05, 0.4, 0.8, 1].map(getWindTravelSpeed);
+
+  assert.equal(speeds[0], 0);
+  for (let index = 1; index < speeds.length; index += 1) {
+    assert.ok(speeds[index] > speeds[index - 1]);
+  }
+  assert.equal(getWindTravelSpeed(-1), 0);
+  assert.equal(getWindTravelSpeed(2), getWindTravelSpeed(1));
 });
 
 test("stack layout supports three through five touching creatures", () => {

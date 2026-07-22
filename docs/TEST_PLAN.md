@@ -16,6 +16,7 @@ Assertions cover:
 - the complete Gentle force range is below Normal, and Normal is below Wild;
 - Normal force is meaningful but stays inside the control limit;
 - the gust envelope ramps in and out instead of applying peak force immediately;
+- wind streak travel speed increases monotonically with visual intensity;
 - stack layouts for 3–5 creatures stay in contact with the beam and each other;
 - failure results wait for either the configured impact hold or the hard timeout.
 
@@ -25,6 +26,7 @@ Assertions cover:
 2. Press Play and confirm the five bodies settle on the beam.
 3. Drag left and right; confirm the beam follows without page scrolling.
 4. Wait for the first wind streaks; confirm they move with the push and increase in number, speed, opacity, and force without an arrow pill.
+   Compare equal time windows during attack: horizontal distance must be smallest near onset, larger while building, and largest at peak.
 5. Deliberately collapse the stack; confirm bodies fall at normal speed, slow only on first ground impact, and a face changes on impact.
 6. Confirm dust appears at impact and the dazed face remains visible before the result overlay.
 7. Confirm results appear within the hard cinematic timeout even if no creature reaches the floor.

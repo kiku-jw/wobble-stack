@@ -8,6 +8,7 @@ import {
   getFailureTimeScale,
   getGustEnvelope,
   getGustTiming,
+  getWindTravelSpeed,
   layoutStack,
   shouldShowFailureResults,
 } from "./game-logic.js";
@@ -89,6 +90,7 @@ let saveFlash = 0;
 let shake = 0;
 let particles = [];
 let runCount = 0;
+let windTravel = 0;
 
 const creatureSpecs = [
   { kind: "pear", x: 195, y: 626, width: 82, height: 84, proxyWidth: 68, proxyHeight: 78, color: "#93bf67" },
@@ -307,6 +309,7 @@ function startRun() {
   saveFlash = 0;
   shake = 0;
   particles = [];
+  windTravel = 0;
   engine.timing.timeScale = 1;
   state = "playing";
   previousState = "playing";
@@ -499,6 +502,7 @@ function frame(now) {
   }
 
   updateParticles(deltaMs);
+  updateWindTravel(deltaMs);
   saveFlash = Math.max(0, saveFlash - deltaMs / 1000);
   shake = Math.max(0, shake - deltaMs * 0.022);
   syncScore();
@@ -606,6 +610,12 @@ function getWindVisualIntensity() {
   if (!gust || gust.phase !== "active") return 0;
   const forceRatio = clamp(gust.force / DIFFICULTY_PROFILES.wild.forceMax, 0, 1);
   return getActiveGustEnvelope() * (0.4 + forceRatio * 0.6);
+}
+
+function updateWindTravel(deltaMs) {
+  if (state !== "playing") return;
+  const speed = getWindTravelSpeed(getWindVisualIntensity());
+  windTravel = (windTravel + speed * (deltaMs / 1000)) % 520;
 }
 
 function updateDangerFeedback() {
@@ -740,7 +750,6 @@ function drawWind(time) {
   if (intensity <= 0.01) return;
   const direction = gust.direction;
   const lineCount = 3 + Math.floor(intensity * 8);
-  const speed = 120 + intensity * 250;
   const trailLength = 24 + intensity * 58;
   context.save();
   context.strokeStyle = `rgba(255, 239, 210, ${0.08 + intensity * 0.42})`;
@@ -748,7 +757,7 @@ function drawWind(time) {
   context.lineCap = "round";
 
   for (let index = 0; index < lineCount; index += 1) {
-    const phase = (time * speed + index * 83) % 520;
+    const phase = (windTravel + index * 83) % 520;
     const x = direction > 0 ? phase - 80 : WIDTH + 80 - phase;
     const y = 176 + index * (510 / lineCount) + Math.sin(time * 3 + index) * 15;
     context.beginPath();
@@ -1094,6 +1103,8 @@ if (new URLSearchParams(window.location.search).has("debug")) {
     getWindState: () => ({
       envelope: getActiveGustEnvelope(),
       visualIntensity: getWindVisualIntensity(),
+      travel: windTravel,
+      travelSpeed: getWindTravelSpeed(getWindVisualIntensity()),
     }),
     getCreaturePositions: () => creatures.map(({ body }) => ({ x: body.position.x, y: body.position.y })),
     getFailureState: () => ({

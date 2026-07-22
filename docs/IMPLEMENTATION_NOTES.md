@@ -70,6 +70,12 @@ The team-selection frame is explicitly deferred. It is evidence for possible fut
 - GitHub prior art: skipped because this is local physics calibration and visual state, not a reusable package or protocol.
 - New code is limited to profile sampling, impact-only time scale state, Canvas intensity mapping, and debug-only QA receipts.
 
+## M6 wind-speed regression fix
+
+- Root cause: `time * changingSpeed` used absolute animation time, so the derivative included the speed change itself and produced an exaggerated burst during attack.
+- Fix: horizontal travel is integrated once per frame as `distance += speed(intensity) × deltaTime`; drawing reads the accumulated distance.
+- The visual speed mapping is monotonic and bounded. Gust force, envelope timing, difficulty ranges, and player control are unchanged.
+
 ## lazy-senior receipt
 
 - Lower rung: browser Canvas + one small established physics dependency.

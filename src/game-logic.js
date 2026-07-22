@@ -72,6 +72,11 @@ export function getGustEnvelope(progress) {
   return smoothstep((1 - bounded) / 0.25);
 }
 
+export function getWindTravelSpeed(intensity) {
+  const bounded = clamp(intensity, 0, 1);
+  return bounded === 0 ? 0 : 55 + bounded * 315;
+}
+
 export function getRequiredCounterAngle(force, gravityScale) {
   return Math.atan(force / gravityScale);
 }
