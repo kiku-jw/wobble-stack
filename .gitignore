@@ -2,3 +2,26 @@ node_modules/
 dist/
 .playwright-cli/
 .DS_Store
+
+# Unity project state
+ios/WobbleStack/[Ll]ibrary/
+ios/WobbleStack/[Tt]emp/
+ios/WobbleStack/[Oo]bj/
+ios/WobbleStack/[Bb]uild/
+ios/WobbleStack/[Bb]uilds/
+ios/WobbleStack/[Ll]ogs/
+ios/WobbleStack/[Uu]ser[Ss]ettings/
+ios/WobbleStack/MemoryCaptures/
+ios/WobbleStack/Recordings/
+ios/WobbleStack/.utmp/
+*.csproj
+*.sln
+*.suo
+*.user
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db

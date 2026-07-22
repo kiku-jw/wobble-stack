@@ -1,0 +1,24 @@
+{
+  "name": "WobbleStack.Runtime.PlayMode.Tests",
+  "rootNamespace": "WobbleStack.Runtime.Tests",
+  "references": [
+    "WobbleStack.Domain",
+    "WobbleStack.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

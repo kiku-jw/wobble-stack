@@ -1,0 +1,17 @@
+{
+  "name": "WobbleStack.Runtime",
+  "rootNamespace": "WobbleStack.Runtime",
+  "references": [
+    "WobbleStack.Domain",
+    "Unity.ugui"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
