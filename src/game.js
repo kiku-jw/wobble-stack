@@ -5,6 +5,7 @@ import {
   clamp,
   createSeededRandom,
   formatTime,
+  getEffectiveGustAcceleration,
   getFailureTimeScale,
   getGustEnvelope,
   getGustTiming,
@@ -22,6 +23,7 @@ const FIXED_STEP = 1000 / 60;
 const PLATFORM_TOP = 665;
 const GRAVITY_SCALE = 0.00105;
 const MAX_PLATFORM_ANGLE = 0.46;
+const COUNTER_TILT_AUTHORITY = 0.72;
 const FAIL_Y = 744;
 const MIN_CREATURE_COUNT = 3;
 const MAX_CREATURE_COUNT = 5;
@@ -545,7 +547,7 @@ function updatePlatformControl() {
 
 function getKeyboardTargetAngle() {
   const isCounteringGust = gust && gust.phase === "active" && keyboardDirection === -gust.direction;
-  const currentForce = gust ? gust.force * 2 : 0;
+  const currentForce = gust ? gust.force : 0;
   const assistedMagnitude = isCounteringGust
     ? clamp(Math.atan(currentForce / GRAVITY_SCALE), 0.02, MAX_PLATFORM_ANGLE)
     : 0.09;
@@ -590,10 +592,18 @@ function updateGustPhase() {
 function applyGustForce() {
   if (!gust || gust.phase !== "active") return;
   const pulse = getActiveGustEnvelope();
+  const horizontalAcceleration = getEffectiveGustAcceleration(
+    gust.force,
+    gust.direction,
+    pulse,
+    platform.angle,
+    GRAVITY_SCALE,
+    COUNTER_TILT_AUTHORITY,
+  );
 
   for (const { body } of creatures) {
     Body.applyForce(body, body.position, {
-      x: gust.direction * gust.force * body.mass * pulse,
+      x: horizontalAcceleration * body.mass,
       y: -0.000012 * body.mass * pulse,
     });
   }

@@ -76,6 +76,20 @@ The team-selection frame is explicitly deferred. It is evidence for possible fut
 - Fix: horizontal travel is integrated once per frame as `distance += speed(intensity) × deltaTime`; drawing reads the accumulated distance.
 - The visual speed mapping is monotonic and bounded. Gust force, envelope timing, difficulty ranges, and player control are unchanged.
 
+## M7 counter-tilt calibration
+
+- Root cause: wind applied a mass-proportional force to every creature, while beam angle acted mainly through the bottom contact. Tilting therefore added stack shear without giving the upper bodies a comparable counter-force.
+- Fix: during an active gust, the beam angle contributes a mass-proportional horizontal acceleration to every creature. Correct tilt cancels 72% of the sampled wind acceleration at the calculated counter-angle; wrong tilt adds the same amount.
+- The remaining 28% keeps countering analog and imperfect. Excess tilt can reverse the drift, so the control is not a binary wind-cancel button.
+- Keyboard counter-angle no longer doubles sampled force. Pointer input remains fully analog and uses the same platform angle and force path.
+- Wind profiles, gust timing and envelope, gravity, collision bodies, constraints, and failure sequencing are unchanged.
+
+## M7 lazy-senior receipt
+
+- Lower rung: reuse Matter.js body forces, the existing gust envelope, and the already bounded platform angle.
+- GitHub prior art: skipped because this is repo-local feel calibration, not a reusable physics package or protocol.
+- New code is one pure acceleration helper, one authority constant, its call site, and deterministic tests; no dependency or new state machine was added.
+
 ## lazy-senior receipt
 
 - Lower rung: browser Canvas + one small established physics dependency.

@@ -81,6 +81,22 @@ export function getRequiredCounterAngle(force, gravityScale) {
   return Math.atan(force / gravityScale);
 }
 
+export function getEffectiveGustAcceleration(
+  force,
+  direction,
+  envelope,
+  platformAngle,
+  gravityScale,
+  counterAuthority,
+) {
+  const activeEnvelope = clamp(envelope, 0, 1);
+  if (activeEnvelope === 0) return 0;
+
+  const windAcceleration = Math.max(0, force) * Math.sign(direction);
+  const platformAcceleration = Math.tan(platformAngle) * gravityScale * counterAuthority;
+  return (windAcceleration + platformAcceleration) * activeEnvelope;
+}
+
 export function layoutStack(specs, platformTop, count) {
   const selected = specs.slice(0, clamp(Math.round(count), 1, specs.length));
   let bottom = platformTop;

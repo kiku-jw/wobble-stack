@@ -5,7 +5,7 @@ Updated: 2026-07-22
 ## Current state
 
 - Phase: calibrated public build
-- Current milestone: M6 — honest wind and impact timing live
+- Current milestone: M7 — meaningful counter-tilt in release verification
 - Blockers: none
 
 ## Completed
@@ -45,6 +45,11 @@ Updated: 2026-07-22
 - Nine deterministic logic tests and the Vite production build pass for M6.
 - GitHub Pages run `29953856192` built and deployed commit `c4ffa84`; the live 390 × 844 build clamped two creatures to three, scheduled Normal at 3.37 seconds with random force `0.0000919`, removed the arrow pill, slowed only on impact, returned to normal physics before results, and logged no console errors.
 - Wind-speed regression fix: Canvas streak travel now integrates frame-by-frame distance instead of multiplying a changing speed by absolute time. Local browser samples increased from about 69 px/s near onset to 213 px/s while building and 279 px/s at peak; Pause held travel at a zero delta for 500 ms. GitHub Pages run `29954743370` deployed commit `52930eb`; live equal-window travel increased `18.6 → 65.7 → 77.4 px` with zero console errors.
+- Counter-tilt now contributes a bounded horizontal counter-acceleration to every creature during a gust, matching the wind's mass-proportional force instead of helping only through the bottom contact.
+- The deterministic first Normal gust now fails at 9.00 seconds with no input, 11.78 seconds with the correct keyboard tilt, and 7.22 seconds with the wrong tilt; the correct tilt survives the full gust.
+- Pointer input at the same calculated counter-angle reaches 11.48 seconds, within the same outcome tier as keyboard input.
+- The opposite-direction seeded gust also stayed upright through its 7.81-second end; Pause held time exactly, impact used `1 → 0.18 → 1`, all five reactions registered, and Retry reset the run.
+- Eleven deterministic logic tests and the Vite production build pass locally with no browser console errors.
 
 ## Next
 

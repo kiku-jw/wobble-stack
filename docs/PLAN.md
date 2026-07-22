@@ -117,6 +117,25 @@ pnpm build
 
 Then run the difficulty, impact, reduced-motion, and 320 × 700 checks in `TEST_PLAN.md` before verifying the deployed Pages build.
 
+### M7 — meaningful counter-tilt
+
+Acceptance:
+
+- The same deterministic Normal gust produces a clear outcome order: correct counter-tilt, neutral beam, wrong tilt.
+- Correct counter-tilt survives the full first gust and materially outlasts doing nothing.
+- Beam angle changes the horizontal acceleration applied to the whole stack, not only the bottom contact body.
+- Pointer and keyboard input reach equivalent counter-angles and outcomes.
+- Wind timing, difficulty ranges, pause, collapse, impact slow motion, 3–5 setup, and Retry remain unchanged.
+
+Verify:
+
+```sh
+pnpm test
+pnpm build
+```
+
+Then record the deterministic three-strategy matrix and smoke pointer input, pause, collapse, Retry, and the deployed Pages build.
+
 ## Kill gate
 
 This prototype earns a native greybox only if several fresh players voluntarily press Retry and can explain why they lost. Visual polish alone is not a pass.

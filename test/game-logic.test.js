@@ -5,6 +5,7 @@ import {
   clamp,
   createSeededRandom,
   formatTime,
+  getEffectiveGustAcceleration,
   getFailureTimeScale,
   getGustEnvelope,
   getGustTiming,
@@ -47,6 +48,44 @@ test("normal wind is meaningful and stays within the platform counter-angle", ()
 
   assert.ok(minimumAngle > 0.06);
   assert.ok(maximumAngle < 0.46);
+});
+
+test("counter-tilt changes the effective gust acceleration for the whole stack", () => {
+  const force = 0.00009;
+  const gravityScale = 0.00105;
+  const authority = 0.72;
+  const counterAngle = getRequiredCounterAngle(force, gravityScale);
+  const neutral = getEffectiveGustAcceleration(force, -1, 1, 0, gravityScale, authority);
+  const correct = getEffectiveGustAcceleration(
+    force,
+    -1,
+    1,
+    counterAngle,
+    gravityScale,
+    authority,
+  );
+  const wrong = getEffectiveGustAcceleration(
+    force,
+    -1,
+    1,
+    -counterAngle,
+    gravityScale,
+    authority,
+  );
+  const rightwardCorrect = getEffectiveGustAcceleration(
+    force,
+    1,
+    1,
+    -counterAngle,
+    gravityScale,
+    authority,
+  );
+
+  assert.equal(neutral, -force);
+  assert.ok(Math.abs(correct) < Math.abs(neutral) * 0.3);
+  assert.ok(Math.abs(wrong) > Math.abs(neutral) * 1.7);
+  assert.ok(Math.abs(rightwardCorrect + correct) < Number.EPSILON);
+  assert.equal(getEffectiveGustAcceleration(force, -1, 0, counterAngle, gravityScale, authority), 0);
 });
 
 test("a gust eases in, holds, and eases out instead of hitting instantly", () => {

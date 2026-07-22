@@ -3,7 +3,7 @@
 ## Status
 
 - artifact type: playable demo repository
-- current phase: M6 published and live
+- current phase: M7 locally calibrated; release verification in progress
 - public-safe gate: passed
 - demo: https://kiku-jw.github.io/wobble-stack/
 - review status: live Pages build verified; human playtest pending
@@ -45,6 +45,11 @@
 - Wind-speed regression QA measured equal 250 ms windows at about 17 px near onset, 53 px while building, and 70 px at peak (`69 → 213 → 279 px/s`). The fix changes only Canvas travel integration; gust physics and timing are untouched.
 - Pause held accumulated wind travel at exactly zero delta across 500 ms; 10 deterministic tests, production build, and browser console checks passed.
 - Pages run `29954743370` deployed commit `52930eb`; live 390 × 844 sampling measured `18.6 → 65.7 → 77.4 px` across equal 250 ms windows (`91 → 283 → 310 px/s`) while the game remained playable and the console stayed clean.
+- M7 pre-fix baseline on the same deterministic Normal gust was inverted: neutral failed at 8.97 seconds, the intended keyboard counter failed at 7.85 seconds, and the wrong direction failed at 8.05 seconds.
+- After whole-stack counter-acceleration calibration, the same gust produced the intended hierarchy: neutral `9.00 s`, correct keyboard `11.78 s`, wrong keyboard `7.22 s`. Correct input survived the gust ending at `7.57 s`.
+- Pointer input held at the equivalent `0.0873 rad` counter-angle survived `11.48 s`; the beam reached the requested angle and the browser console stayed clear.
+- A second seeded gust pushing the opposite direction stayed in `playing` through its `7.81 s` end with the matching counter-key. Pause produced a zero clock delta, impact timing remained `1 → 0.18 → 1`, all five reactions registered, and Retry restarted at `0 s` with the same setup.
+- Eleven deterministic tests, the Vite production build, and whitespace validation pass locally.
 - Eight deterministic tests, production build, and browser console checks passed.
 - Pages run `29949106957` deployed commit `5404501`; the live 390 × 844 collapse registered multiple dazed faces at 0.8 seconds and exposed Retry with zero console errors.
 
