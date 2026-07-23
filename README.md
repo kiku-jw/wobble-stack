@@ -22,14 +22,16 @@ The public GitHub Pages build remains the lightweight Matter.js prototype. The
 production iPhone client now lives in `ios/WobbleStack`: a Unity 6 vertical
 slice with clay character art, deterministic gusts, three difficulty profiles,
 three-to-five-creature setups, pause/results/Retry flows, local best scores,
-impact slow motion, changing impact faces, generated sound, haptic hooks,
-reduced motion, safe areas, and a finished app icon.
+impact slow motion, calm/panic/impact expressions, generated sound, haptic
+hooks, reduced motion, safe areas, and a finished app icon.
 
 ## Controls
 
-- **Touch or mouse:** press anywhere in the game and move left or right.
-- **Keyboard:** use Left/Right or A/D.
-- **Goal:** lean opposite the wind and keep every creature on the beam as each gust builds.
+- **iPhone:** hold the left or right half of the screen on the side the wind
+  comes from. Release to return the beam toward neutral.
+- **Web prototype:** drag left/right with touch or mouse, or use Left/Right or
+  A/D.
+- **Goal:** keep every creature on the beam as each visible gust builds.
 - **Pause:** use the button in the top-right corner or press Escape.
 
 Before each run you can choose Gentle, Normal, or Wild wind and a stack of three
@@ -86,11 +88,10 @@ UNITY="/Applications/Unity/Hub/Editor/6000.3.19f1/Unity.app/Contents/MacOS/Unity
 ```
 
 `Wobble Stack/Build Mac Smoke` creates a local executable for desktop smoke
-testing. `Wobble Stack/Build iOS Development` exports an Xcode project with the
-matching Unity iOS Build Support module. The current export compiles with Xcode
-`26.6` as an unsigned Debug arm64 `iphoneos` app. Device testing still requires
-a connected iPhone and a signing team; TestFlight requires Apple Developer
-Program and App Store Connect access.
+testing. `Wobble Stack/Build iOS Device` exports a non-Development Xcode project
+with the matching Unity iOS Build Support module. The current arm64 build is
+signed, installed, and launch-verified on the development iPhone. TestFlight
+still requires Apple Developer Program and App Store Connect access.
 
 Detailed product, art, architecture, and test decisions live in [`docs/ios`](docs/ios/PRD.md).
 
@@ -104,9 +105,9 @@ top of this README are rendered from the current Unity build.
   <img src="docs/concepts/comedic-collapse.png" width="300" alt="Concept art showing the creature tower collapsing" />
 </p>
 
-The next gate is a physical iPhone test: stable feel and frame pacing, correct
-safe areas and haptics, fresh-player comprehension, and voluntary Retry. Meta
-systems stay out until that evidence exists.
+The next gate is the second physical iPhone feel test: first-gust survival,
+source-side control comprehension, collision trust, frame pacing, safe areas,
+haptics, and voluntary Retry. Meta systems stay out until that evidence exists.
 
 ## License
 

@@ -11,6 +11,8 @@ Source direction:
 Assets:
 
 - `sunset-stage.png`: empty portrait clay landscape for the gameplay background.
+- `characters-calm-chroma.png`: matching calm ready-state expressions for all
+  five characters over `#FF00FF` chroma.
 - `characters-chroma.png`: five isolated character sprites in pear, cube, bird, rabbit, jelly order over `#FF00FF` chroma.
 - `characters-impact-chroma.png`: matching post-impact expressions for all five characters over `#FF00FF` chroma.
 - `props-ui-chroma.png`: beam, fulcrum, crown, toy plates, dust, and impact stars over `#FF00FF` chroma.

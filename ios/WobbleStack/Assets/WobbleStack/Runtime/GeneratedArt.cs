@@ -56,6 +56,12 @@ namespace WobbleStack.Runtime
             return GetCharacterSprite("character", texture, kind);
         }
 
+        public static Sprite CalmCharacter(CharacterKind kind)
+        {
+            Texture2D texture = Resources.Load<Texture2D>("WobbleStack/Art/characters-calm-chroma");
+            return GetCharacterSprite("character-calm", texture, kind);
+        }
+
         public static Sprite ImpactCharacter(CharacterKind kind)
         {
             Texture2D texture = Resources.Load<Texture2D>("WobbleStack/Art/characters-impact-chroma");

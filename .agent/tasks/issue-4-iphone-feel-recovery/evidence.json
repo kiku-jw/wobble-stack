@@ -1,0 +1,78 @@
+{
+  "task": "issue-4-iphone-feel-recovery",
+  "status": "PENDING_OWNER_PLAYTEST",
+  "collected": "2026-07-23",
+  "receipts": {
+    "unity": "6000.3.19f1",
+    "editmode": { "result": "PASS", "passed": 10, "failed": 0 },
+    "playmode": { "result": "PASS", "passed": 9, "failed": 0 },
+    "mac_smoke": "PASS",
+    "portrait_capture_count": 4,
+    "ios_export": "PASS_NON_DEVELOPMENT",
+    "signed_build": "PASS",
+    "device_install": "PASS",
+    "device_launch": "PASS"
+  },
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "proof": [
+        "PlayMode full-gust matrix across all difficulties, directions, and 3/5 creatures",
+        "PlayMode correct/neutral/wrong drift ordering"
+      ]
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "proof": [
+        "EditMode held-side and center-dead-zone coverage",
+        "Runtime source-side instruction and direction prompt"
+      ]
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "proof": [
+        "EditMode preview timing",
+        "PlayMode cyan color and direction",
+        "Metal gameplay capture"
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "proof": [
+        "PlayMode rounded-beam and compact-contact assertions",
+        "Metal start and gameplay captures"
+      ]
+    },
+    {
+      "id": "AC5",
+      "status": "PASS",
+      "proof": [
+        "PlayMode calm/wind/impact sprite transition",
+        "Four inspected portrait captures"
+      ]
+    },
+    {
+      "id": "AC6",
+      "status": "PASS",
+      "proof": [
+        "BuildOptions.None iOS export",
+        "Signed arm64 build and strict codesign verification",
+        "CoreDevice install and launch"
+      ]
+    },
+    {
+      "id": "AC7",
+      "status": "PASS_WITH_OWNER_GATE",
+      "proof": [
+        "10/10 EditMode",
+        "9/9 PlayMode",
+        "Mac smoke and four Metal captures",
+        "Owner physical-feel judgment remains pending"
+      ]
+    }
+  ]
+}

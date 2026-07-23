@@ -63,7 +63,7 @@ namespace WobbleStack.Editor
             Debug.Log($"Mac smoke build created at {outputPath}");
         }
 
-        [MenuItem("Wobble Stack/Build iOS Development")]
+        [MenuItem("Wobble Stack/Build iOS Device")]
         public static void BuildIosDevelopment()
         {
             ConfigureProject();
@@ -81,13 +81,15 @@ namespace WobbleStack.Editor
                 scenes = new[] { GameScenePath },
                 locationPathName = IosBuildDirectory,
                 target = BuildTarget.iOS,
-                options = BuildOptions.Development
+                // Keep the batch entry-point name for compatibility, but never
+                // ship Unity's in-game Development Console to device playtests.
+                options = BuildOptions.None
             };
 
             BuildReport report = BuildPipeline.BuildPlayer(options);
             if (report.summary.result != BuildResult.Succeeded)
             {
-                throw new BuildFailedException("iOS development build failed.");
+                throw new BuildFailedException("iOS device build failed.");
             }
 
             Debug.Log($"iOS Xcode project created at {IosBuildDirectory}");

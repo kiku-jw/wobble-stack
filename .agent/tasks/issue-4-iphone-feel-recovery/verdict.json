@@ -1,0 +1,12 @@
+{
+  "task": "issue-4-iphone-feel-recovery",
+  "status": "PENDING_OWNER_PLAYTEST",
+  "verified_revision": null,
+  "findings": [],
+  "automated_verdict": "PASS",
+  "delivery_verdict": "PASS",
+  "residual_risks": [
+    "Physical control feel and voluntary Retry require owner playtest.",
+    "Stable frame pacing, touch latency, haptics, safe areas, and interruption behavior require physical-device observation."
+  ]
+}

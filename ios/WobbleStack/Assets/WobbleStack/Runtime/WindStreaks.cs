@@ -5,7 +5,7 @@ namespace WobbleStack.Runtime
 {
     internal sealed class WindStreaks : MonoBehaviour
     {
-        private const int StreakCount = 14;
+        private const int StreakCount = 20;
         private readonly List<LineRenderer> _lines = new List<LineRenderer>();
         private readonly List<float> _offsets = new List<float>();
         private readonly List<float> _heights = new List<float>();
@@ -46,8 +46,8 @@ namespace WobbleStack.Runtime
 
         public void Refresh(float time)
         {
-            float speed = Mathf.Lerp(1.8f, 9.5f, _intensity);
-            float visibleThreshold = _intensity * StreakCount;
+            float speed = Mathf.Lerp(1.15f, 10.5f, _intensity);
+            float visibleThreshold = Mathf.Lerp(3f, StreakCount, _intensity);
 
             for (int index = 0; index < _lines.Count; index += 1)
             {
@@ -61,13 +61,13 @@ namespace WobbleStack.Runtime
 
                 float travel = Mathf.Repeat(_offsets[index] + (time * speed * 0.08f), 1f);
                 float x = Mathf.Lerp(-7f, 7f, _direction > 0 ? travel : 1f - travel);
-                float length = Mathf.Lerp(0.6f, 2.1f, _intensity);
-                float width = Mathf.Lerp(0.025f, 0.085f, _intensity);
-                float alpha = Mathf.Lerp(0.12f, 0.55f, _intensity);
+                float length = Mathf.Lerp(0.9f, 2.8f, _intensity);
+                float width = Mathf.Lerp(0.03f, 0.11f, _intensity);
+                float alpha = Mathf.Lerp(0.22f, 0.72f, _intensity);
                 line.startWidth = width;
                 line.endWidth = width * 0.3f;
-                line.startColor = new Color(1f, 0.96f, 0.78f, alpha);
-                line.endColor = new Color(1f, 0.96f, 0.78f, 0f);
+                line.startColor = new Color(0.48f, 0.9f, 1f, alpha);
+                line.endColor = new Color(0.62f, 0.94f, 1f, 0f);
                 Vector3 start = new Vector3(x, _heights[index], -0.2f);
                 Vector3 end = start - new Vector3(_direction * length, 0.14f, 0f);
                 line.SetPosition(0, start);

@@ -3,8 +3,10 @@ namespace WobbleStack.Domain
     public static class WobbleStackRules
     {
         public const float GravityScale = 0.00105f;
-        public const float MaxPlatformAngle = 0.46f;
-        public const float CounterAuthority = 0.72f;
+        public const float MaxPlatformAngle = 0.08f;
+        public const float ControlLeverage = 2.2f;
+        public const float FirstGustRestSeconds = 2.8f;
+        public const float WindPreviewSeconds = 1.3f;
         public const int MinCreatureCount = 3;
         public const int MaxCreatureCount = 5;
 
@@ -12,10 +14,10 @@ namespace WobbleStack.Domain
             DifficultyId.Gentle,
             "Gentle",
             "Light gusts · room to recover",
-            0.000025f,
-            0.00005f,
-            3.2f,
-            5f,
+            0.00003f,
+            0.000055f,
+            2.8f,
+            4.2f,
             3.6f,
             4.6f);
 
@@ -24,9 +26,9 @@ namespace WobbleStack.Domain
             "Normal",
             "Random gusts · real pressure",
             0.000065f,
-            0.000105f,
+            0.000095f,
             2.2f,
-            3.8f,
+            3.6f,
             3.8f,
             5f);
 
@@ -34,10 +36,10 @@ namespace WobbleStack.Domain
             DifficultyId.Wild,
             "Wild",
             "Heavy gusts · little recovery",
-            0.00011f,
+            0.000105f,
             0.000135f,
-            1.3f,
-            2.6f,
+            1.8f,
+            3f,
             4f,
             5.4f);
 
@@ -83,7 +85,33 @@ namespace WobbleStack.Domain
 
         public static float GetRequiredCounterAngle(float force, float gravityScale)
         {
-            return MathUtility.Atan(force / gravityScale);
+            if (gravityScale <= 0f)
+            {
+                return 0f;
+            }
+
+            return MathUtility.Atan(MathUtility.Abs(force) / (gravityScale * ControlLeverage));
+        }
+
+        public static int GetControlDirection(float normalizedScreenX)
+        {
+            float centered = (Clamp(normalizedScreenX, 0f, 1f) * 2f) - 1f;
+            if (MathUtility.Abs(centered) <= 0.08f)
+            {
+                return 0;
+            }
+
+            return centered < 0f ? -1 : 1;
+        }
+
+        public static float GetWindPreviewEnvelope(float secondsUntilGust)
+        {
+            if (secondsUntilGust <= 0f || secondsUntilGust >= WindPreviewSeconds)
+            {
+                return 0f;
+            }
+
+            return SmoothStep(1f - (secondsUntilGust / WindPreviewSeconds));
         }
 
         public static float GetGustEnvelope(float progress)
@@ -106,10 +134,7 @@ namespace WobbleStack.Domain
         public static float GetEffectiveGustAcceleration(
             float force,
             int direction,
-            float envelope,
-            float platformAngle,
-            float gravityScale,
-            float counterAuthority)
+            float envelope)
         {
             float activeEnvelope = Clamp(envelope, 0f, 1f);
             if (activeEnvelope == 0f)
@@ -118,8 +143,7 @@ namespace WobbleStack.Domain
             }
 
             float windAcceleration = force < 0f ? 0f : force * Sign(direction);
-            float platformAcceleration = MathUtility.Tan(platformAngle) * gravityScale * counterAuthority;
-            return (windAcceleration + platformAcceleration) * activeEnvelope;
+            return windAcceleration * activeEnvelope;
         }
 
         public static bool CanTransition(GamePhase from, GamePhase to)
@@ -163,11 +187,6 @@ namespace WobbleStack.Domain
         public static float Atan(float value)
         {
             return System.Convert.ToSingle(System.Math.Atan(value));
-        }
-
-        public static float Tan(float value)
-        {
-            return System.Convert.ToSingle(System.Math.Tan(value));
         }
 
         public static float Abs(float value)

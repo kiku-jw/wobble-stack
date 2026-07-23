@@ -55,6 +55,18 @@ namespace WobbleStack.Domain.Tests
         }
 
         [Test]
+        public void FirstGustLeavesTimeForAVisibleWarning()
+        {
+            foreach (DifficultyId difficulty in new[] { DifficultyId.Gentle, DifficultyId.Normal, DifficultyId.Wild })
+            {
+                GustSample gust = new GustScheduler(1u, difficulty).Next(0f);
+
+                Assert.That(gust.RestSeconds, Is.GreaterThanOrEqualTo(WobbleStackRules.FirstGustRestSeconds));
+                Assert.That(gust.RestSeconds, Is.GreaterThan(WobbleStackRules.WindPreviewSeconds));
+            }
+        }
+
+        [Test]
         public void GustEnvelopeEasesInHoldsAndEasesOut()
         {
             float start = WobbleStackRules.GetGustEnvelope(0f);
@@ -73,71 +85,51 @@ namespace WobbleStack.Domain.Tests
         }
 
         [Test]
-        public void CounterTiltImprovesLeftwardAndRightwardGusts()
+        public void WindPreviewBuildsBeforePhysicalForceStarts()
+        {
+            float absent = WobbleStackRules.GetWindPreviewEnvelope(WobbleStackRules.WindPreviewSeconds + 0.1f);
+            float early = WobbleStackRules.GetWindPreviewEnvelope(WobbleStackRules.WindPreviewSeconds * 0.8f);
+            float late = WobbleStackRules.GetWindPreviewEnvelope(WobbleStackRules.WindPreviewSeconds * 0.2f);
+            float active = WobbleStackRules.GetWindPreviewEnvelope(0f);
+
+            Assert.That(absent, Is.EqualTo(0f));
+            Assert.That(early, Is.GreaterThan(0f));
+            Assert.That(late, Is.GreaterThan(early));
+            Assert.That(active, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void GustAccelerationFollowsDirectionAndEnvelope()
         {
             float force = 0.00009f;
-            float counterAngle = WobbleStackRules.GetRequiredCounterAngle(force, WobbleStackRules.GravityScale);
 
-            float leftNeutral = WobbleStackRules.GetEffectiveGustAcceleration(
-                force,
-                -1,
-                1f,
-                0f,
-                WobbleStackRules.GravityScale,
-                WobbleStackRules.CounterAuthority);
-            float leftCorrect = WobbleStackRules.GetEffectiveGustAcceleration(
-                force,
-                -1,
-                1f,
-                counterAngle,
-                WobbleStackRules.GravityScale,
-                WobbleStackRules.CounterAuthority);
-            float leftWrong = WobbleStackRules.GetEffectiveGustAcceleration(
-                force,
-                -1,
-                1f,
-                -counterAngle,
-                WobbleStackRules.GravityScale,
-                WobbleStackRules.CounterAuthority);
-            float rightNeutral = WobbleStackRules.GetEffectiveGustAcceleration(
-                force,
-                1,
-                1f,
-                0f,
-                WobbleStackRules.GravityScale,
-                WobbleStackRules.CounterAuthority);
-            float rightCorrect = WobbleStackRules.GetEffectiveGustAcceleration(
-                force,
-                1,
-                1f,
-                -counterAngle,
-                WobbleStackRules.GravityScale,
-                WobbleStackRules.CounterAuthority);
-            float rightWrong = WobbleStackRules.GetEffectiveGustAcceleration(
-                force,
-                1,
-                1f,
-                counterAngle,
-                WobbleStackRules.GravityScale,
-                WobbleStackRules.CounterAuthority);
-
-            Assert.That(leftNeutral, Is.EqualTo(-force).Within(0.0000001f));
-            Assert.That(rightNeutral, Is.EqualTo(force).Within(0.0000001f));
-            Assert.That(System.Math.Abs(leftCorrect), Is.LessThan(System.Math.Abs(leftNeutral)));
-            Assert.That(System.Math.Abs(rightCorrect), Is.LessThan(System.Math.Abs(rightNeutral)));
-            Assert.That(System.Math.Abs(leftWrong), Is.GreaterThan(System.Math.Abs(leftNeutral)));
-            Assert.That(System.Math.Abs(rightWrong), Is.GreaterThan(System.Math.Abs(rightNeutral)));
-            Assert.That(System.Math.Abs(leftCorrect), Is.LessThan(System.Math.Abs(leftWrong)));
-            Assert.That(System.Math.Abs(rightCorrect), Is.LessThan(System.Math.Abs(rightWrong)));
             Assert.That(
-                WobbleStackRules.GetEffectiveGustAcceleration(
-                    force,
-                    0,
-                    1f,
-                    0f,
-                    WobbleStackRules.GravityScale,
-                    WobbleStackRules.CounterAuthority),
-                Is.EqualTo(0f));
+                WobbleStackRules.GetEffectiveGustAcceleration(force, -1, 1f),
+                Is.EqualTo(-force).Within(0.0000001f));
+            Assert.That(
+                WobbleStackRules.GetEffectiveGustAcceleration(force, 1, 1f),
+                Is.EqualTo(force).Within(0.0000001f));
+            Assert.That(
+                WobbleStackRules.GetEffectiveGustAcceleration(force, 1, 0.5f),
+                Is.EqualTo(force * 0.5f).Within(0.0000001f));
+            Assert.That(WobbleStackRules.GetEffectiveGustAcceleration(force, 0, 1f), Is.EqualTo(0f));
+            Assert.That(WobbleStackRules.GetEffectiveGustAcceleration(force, 1, 0f), Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void TouchControlSelectsTheHeldSideAndCoversEveryDifficulty()
+        {
+            Assert.That(WobbleStackRules.GetControlDirection(0.5f), Is.EqualTo(0));
+            Assert.That(WobbleStackRules.GetControlDirection(0f), Is.EqualTo(-1));
+            Assert.That(WobbleStackRules.GetControlDirection(1f), Is.EqualTo(1));
+
+            foreach (DifficultyId difficulty in new[] { DifficultyId.Gentle, DifficultyId.Normal, DifficultyId.Wild })
+            {
+                DifficultyProfile profile = WobbleStackRules.GetDifficultyProfile(difficulty);
+                float required = WobbleStackRules.GetRequiredCounterAngle(profile.ForceMax, WobbleStackRules.GravityScale);
+
+                Assert.That(required, Is.LessThanOrEqualTo(WobbleStackRules.MaxPlatformAngle));
+            }
         }
 
         [Test]
