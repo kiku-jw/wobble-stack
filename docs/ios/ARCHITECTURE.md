@@ -36,4 +36,4 @@ Use Unity `6000.3.19f1` as a nested production client at `ios/WobbleStack`. The 
 
 ## Known build constraint
 
-Unity iOS Build Support and full Xcode are absent. Editor implementation and automated validation can proceed; Xcode project export, signing, TestFlight, and physical-device proof cannot honestly complete until those tools are installed.
+Unity iOS Build Support is installed for `6000.3.19f1`, but full Xcode is still absent. Editor implementation and automated validation can proceed; signing, TestFlight, and physical-device proof cannot honestly complete until Xcode is installed.

@@ -1,20 +1,20 @@
 # iPhone status
 
-Updated: 2026-07-22
+Updated: 2026-07-23
 
 ## Current
 
 - Phase: M1 verified; M2 physical-iPhone proof waiting.
 - Canonical task: `kiku-jw/wobble-stack#4`.
-- Next actor: Owner, to install the missing Apple/Unity toolchain.
-- Blocker for device delivery: Unity iOS Build Support and full Xcode are not installed.
+- Next actor: Owner, to install full Xcode.
+- Blocker for device delivery: full Xcode is not installed.
 
 ## Verified inputs
 
 - Public web prototype establishes the game loop and deterministic calibration harness.
 - Same-seed web outcomes after the latest physics fix: neutral `9.00 s`, correct `11.78 s`, wrong `7.22 s`.
 - Three concept frames establish gameplay, collapse, team, character, environment, and UI direction.
-- Unity `6000.3.19f1` and `6000.5.2f1` are installed; neither currently includes iOS support.
+- Unity `6000.3.19f1` and `6000.5.2f1` are installed; `6000.3.19f1` now includes iOS support.
 
 ## Verified in-repository
 
@@ -28,4 +28,4 @@ Updated: 2026-07-22
 
 ## Next verified outcome
 
-Install Unity iOS Build Support plus full Xcode, export the generated Xcode project, and pass the physical-iPhone device and fresh-player gates. The product is not release-ready until that happens.
+Export the generated Xcode project, install full Xcode, and pass the physical-iPhone device and fresh-player gates. The product is not release-ready until that happens.

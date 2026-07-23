@@ -36,7 +36,7 @@ Current automated captures cover start, active counter-tilt, airborne collapse w
 
 ## Device gate
 
-Blocked until Unity iOS Build Support and full Xcode are installed:
+Blocked until full Xcode is installed:
 
 - Development build on a physical iPhone.
 - Stable 60 fps target on the selected baseline device.

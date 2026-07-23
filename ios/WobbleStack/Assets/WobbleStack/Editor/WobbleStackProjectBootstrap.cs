@@ -67,8 +67,10 @@ namespace WobbleStack.Editor
         public static void BuildIosDevelopment()
         {
             ConfigureProject();
-            string iOsSupportPath = Path.Combine(EditorApplication.applicationContentsPath, "PlaybackEngines", "iOSSupport");
-            if (!Directory.Exists(iOsSupportPath))
+            string bundledSupportPath = Path.Combine(EditorApplication.applicationContentsPath, "PlaybackEngines", "iOSSupport");
+            string hubSupportPath = Path.GetFullPath(
+                Path.Combine(EditorApplication.applicationContentsPath, "..", "..", "PlaybackEngines", "iOSSupport"));
+            if (!Directory.Exists(bundledSupportPath) && !Directory.Exists(hubSupportPath))
             {
                 throw new BuildFailedException("Unity iOS Build Support is not installed for this editor.");
             }

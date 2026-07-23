@@ -15,5 +15,5 @@
 ## Tooling constraint
 
 - Active developer directory is Command Line Tools, not Xcode.
-- Installed Unity editors lack `PlaybackEngines/iOSSupport`.
-- Do not claim an IPA, TestFlight build, or physical-device pass until both constraints are removed and read back.
+- Unity `6000.3.19f1` now has `PlaybackEngines/iOSSupport`; `BuildIosDevelopment` can export the Xcode project.
+- Do not claim an IPA, TestFlight build, or physical-device pass until full Xcode is installed and read back.
