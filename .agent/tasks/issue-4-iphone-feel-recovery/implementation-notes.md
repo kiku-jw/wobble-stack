@@ -31,7 +31,8 @@
   model is named by wind source rather than destination. The implementation and
   first-run hint use the same source-side contract.
 
-## Residual owner gate
+## Owner verdict
 
-- The second physical playtest must judge feel; automation only proves bounded
-  mechanics and presentation invariants.
+- The second physical playtest rejected the binary control and constrained
+  fallability; automation had proved only bounded mechanics and presentation
+  invariants.

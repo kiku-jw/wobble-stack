@@ -15,8 +15,9 @@ Use Unity `6000.3.19f1` as a nested production client at `ios/WobbleStack`. The 
 - `Domain`: deterministic gust schedule, preview/envelope math, control bounds,
   score keys, and game-state transitions. No Unity scene dependencies where
   practical.
-- `Gameplay`: source-side hold control, Rigidbody2D stack, wind force, support
-  joints, collapse, impact receipts, and reset.
+- `Gameplay`: signed touch control with force-calibrated beam authority,
+  unconstrained Rigidbody2D stack, wind force, collapse, impact receipts, and
+  reset.
 - `Presentation`: calm/wind/impact character sprites, crown, cyan wind streaks,
   dust, camera shake, synthesized audio, UI, and accessibility motion scale.
 - `Platform`: local persistence, safe area, haptics, audio interruption, and iOS build settings.
@@ -28,15 +29,21 @@ Use Unity `6000.3.19f1` as a nested production client at `ios/WobbleStack`. The 
 - Physics timestep: `1/60` with interpolation on visible bodies.
 - Beam: kinematic Rigidbody2D with a rounded horizontal capsule matching the
   visible beam and following a bounded target angle.
-- Creatures: dynamic Rigidbody2D bodies with measured silhouette colliders. A
-  flat-bottom pear anchors the tower, a bounded friction joint grips the beam,
-  and contact-point hinges keep neighbors close while still allowing wobble.
-  These constraints are removed on failure so the collapse remains physical.
+- Creatures: dynamic Rigidbody2D bodies with measured flat-contact silhouette
+  colliders, free rotation, and no joint, tether, beam grip, or hidden
+  stabilization. Small initial separation lets the solver settle without
+  explosive overlap.
 - Wind: deterministic sampled gust plus a smooth attack/hold/release envelope
   and a 1.3-second visual preview before force.
-- Counter-tilt: holding the side the wind comes from drives a bounded
-  tower-feedback controller. The beam counters the gust through its actual
-  contacts; the runtime does not add a second artificial platform force.
+- Counter-tilt: normalized touch position maps continuously to signed control
+  amount, including before the gust. Touching toward an end raises that same
+  end. The sampled gust strength calibrates the useful angle range, so a
+  constant outer-side hold can survive without pixel-perfect thumb placement.
+  The player still owns side and amount; the runtime never reads tower state to
+  choose an angle and adds no artificial platform force.
+- Fallability: contact friction is low enough for strong gusts to matter, while
+  higher creatures receive more wind exposure and a small off-center torque.
+  Correct tilt counters through actual beam and creature contacts.
 
 ## Art pipeline
 

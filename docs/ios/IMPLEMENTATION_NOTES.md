@@ -34,6 +34,40 @@
 - The iOS menu export is non-Development, removing Unity's in-game development
   console and watermark from device playtests.
 
+## 2026-07-23 — second device-test recovery
+
+- The first recovery was rejected on-device: binary source-side input obscured
+  the beam/thumb relationship, and the grip plus contact hinges made collapse
+  effectively impossible.
+- Removed the tower-feedback controller, base grip, neighbor hinges, and every
+  rotation lock. Dynamic creatures are now connected only by collisions.
+- Restored continuous direct manipulation with a larger visible range: touch
+  position maps to beam angle before, during, and after a gust; the touched end
+  rises.
+- Replaced rounded-bottom creature capsules with measured flat-contact
+  polygons. A tiny initial separation keeps the free tower stable through the
+  teaching window without adding hidden constraints.
+- Reduced contact friction and applied progressively stronger, slightly
+  off-center wind forces higher in the tower. Neutral and wrong input now
+  collapse under the maximum Wild gust.
+- Updated the first-run hint to explain the physical effect, then name the end
+  to raise during the cyan wind preview.
+
+## 2026-07-23 — third device-test recovery
+
+- The direct-angle build was still rejected on-device: the automated proof fed
+  an exact changing angle that a thumb could not reproduce, so the first gust
+  still blew the tower away during real play.
+- Touch now owns a signed control amount. Known gust strength and phase
+  calibrate only the available beam authority; there is no tower-state
+  feedback and no automatic choice of side.
+- The response saturates inside the outer quarter of the screen and keeps a
+  small visible teaching angle, so the player does not need to pin a finger to
+  the bezel or guess whether the beam moved.
+- The physics matrix now holds one constant human-like screen position for the
+  full gust. That input completes every maximum first-gust case, while neutral
+  and wrong input still collapse under maximum Wild wind.
+
 ## Tooling constraint
 
 - Active developer directory is `/Applications/Xcode.app/Contents/Developer`; Xcode `26.6` is licensed and its first-launch setup is complete.
@@ -47,5 +81,5 @@
 - Do not claim an archive or distributable IPA until that separate build is
   produced and verified.
 - Do not claim a TestFlight build until Apple Developer Program and App Store Connect access complete that distribution gate.
-- Do not claim the physical-feel gate until the owner completes the second
-  playtest.
+- Do not claim the physical-feel gate until the owner accepts the newly
+  calibrated constant-hold build.

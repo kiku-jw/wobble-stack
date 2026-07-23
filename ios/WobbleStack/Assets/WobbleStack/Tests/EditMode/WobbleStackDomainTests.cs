@@ -117,11 +117,22 @@ namespace WobbleStack.Domain.Tests
         }
 
         [Test]
-        public void TouchControlSelectsTheHeldSideAndCoversEveryDifficulty()
+        public void TouchControlContinuouslyRaisesTheTouchedEndAndCoversEveryDifficulty()
         {
-            Assert.That(WobbleStackRules.GetControlDirection(0.5f), Is.EqualTo(0));
-            Assert.That(WobbleStackRules.GetControlDirection(0f), Is.EqualTo(-1));
-            Assert.That(WobbleStackRules.GetControlDirection(1f), Is.EqualTo(1));
+            float farLeft = WobbleStackRules.GetControlAmount(0f);
+            float left = WobbleStackRules.GetControlAmount(0.25f);
+            float center = WobbleStackRules.GetControlAmount(0.5f);
+            float right = WobbleStackRules.GetControlAmount(0.75f);
+            float farRight = WobbleStackRules.GetControlAmount(1f);
+
+            Assert.That(farLeft, Is.EqualTo(-1f).Within(0.000001f));
+            Assert.That(farLeft, Is.LessThan(left));
+            Assert.That(left, Is.LessThan(center));
+            Assert.That(center, Is.EqualTo(0f));
+            Assert.That(center, Is.LessThan(right));
+            Assert.That(right, Is.LessThan(farRight));
+            Assert.That(farRight, Is.EqualTo(1f).Within(0.000001f));
+            Assert.That(left, Is.EqualTo(-right).Within(0.000001f));
 
             foreach (DifficultyId difficulty in new[] { DifficultyId.Gentle, DifficultyId.Normal, DifficultyId.Wild })
             {

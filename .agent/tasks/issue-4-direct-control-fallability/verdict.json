@@ -1,0 +1,12 @@
+{
+  "task": "issue-4-direct-control-fallability",
+  "status": "PENDING_OWNER_PLAYTEST",
+  "verified_revision": null,
+  "findings": [],
+  "automated_verdict": "PASS",
+  "delivery_verdict": "PASS",
+  "residual_risks": [
+    "Constant-hold physical control feel and voluntary Retry require owner playtest.",
+    "Stable frame pacing, touch latency, haptics, safe areas, and interruption behavior require physical-device observation."
+  ]
+}

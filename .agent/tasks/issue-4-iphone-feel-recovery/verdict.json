@@ -1,12 +1,16 @@
 {
   "task": "issue-4-iphone-feel-recovery",
-  "status": "PENDING_OWNER_PLAYTEST",
-  "verified_revision": null,
-  "findings": [],
+  "status": "REJECTED_BY_OWNER",
+  "verified_revision": "3130df5",
+  "findings": [
+    "Binary source-side control was less understandable on the physical iPhone.",
+    "Beam response did not read as direct thumb control.",
+    "The base grip and neighbor hinges prevented meaningful fallability."
+  ],
   "automated_verdict": "PASS",
   "delivery_verdict": "PASS",
   "residual_risks": [
-    "Physical control feel and voluntary Retry require owner playtest.",
+    "A direct-control, unconstrained replacement requires another owner playtest.",
     "Stable frame pacing, touch latency, haptics, safe areas, and interruption behavior require physical-device observation."
   ]
 }

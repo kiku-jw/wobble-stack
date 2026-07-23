@@ -3,8 +3,8 @@ namespace WobbleStack.Domain
     public static class WobbleStackRules
     {
         public const float GravityScale = 0.00105f;
-        public const float MaxPlatformAngle = 0.08f;
-        public const float ControlLeverage = 2.2f;
+        public const float MaxPlatformAngle = 0.24f;
+        public const float CounterWindExposure = 1.45f;
         public const float FirstGustRestSeconds = 2.8f;
         public const float WindPreviewSeconds = 1.3f;
         public const int MinCreatureCount = 3;
@@ -90,18 +90,21 @@ namespace WobbleStack.Domain
                 return 0f;
             }
 
-            return MathUtility.Atan(MathUtility.Abs(force) / (gravityScale * ControlLeverage));
+            return MathUtility.Atan((MathUtility.Abs(force) * CounterWindExposure) / gravityScale);
         }
 
-        public static int GetControlDirection(float normalizedScreenX)
+        public static float GetControlAmount(float normalizedScreenX)
         {
             float centered = (Clamp(normalizedScreenX, 0f, 1f) * 2f) - 1f;
-            if (MathUtility.Abs(centered) <= 0.08f)
+            float magnitude = MathUtility.Abs(centered);
+            const float deadZone = 0.04f;
+            if (magnitude <= deadZone)
             {
-                return 0;
+                return 0f;
             }
 
-            return centered < 0f ? -1 : 1;
+            float remapped = (magnitude - deadZone) / (1f - deadZone);
+            return centered < 0f ? -remapped : remapped;
         }
 
         public static float GetWindPreviewEnvelope(float secondsUntilGust)

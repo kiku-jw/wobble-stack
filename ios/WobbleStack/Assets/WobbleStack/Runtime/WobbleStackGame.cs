@@ -13,7 +13,7 @@ namespace WobbleStack.Runtime
         private const float PlatformWidth = 8.5f;
         private const float PlatformHeight = 0.78f;
         private const float StaticStackContactInset = 0.06f;
-        private const float DynamicStackContactInset = 0.015f;
+        private const float DynamicStackContactInset = -0.012f;
         private const float CatchFloorY = -8.65f;
         private const float UnityAccelerationScale = 9342.857f;
         private const float ImpactSlowMotionScale = 0.18f;
@@ -25,7 +25,6 @@ namespace WobbleStack.Runtime
         private const string ReducedMotionPreference = "wobble.ios.reduced-motion";
 
         private readonly List<CreatureBody> _creatures = new List<CreatureBody>();
-        private readonly List<Joint2D> _stackJoints = new List<Joint2D>();
         private Camera _camera;
         private Vector3 _cameraHome;
         private Rigidbody2D _platformBody;
@@ -55,7 +54,7 @@ namespace WobbleStack.Runtime
         private float _runSeconds;
         private float _targetAngleRadians;
         private bool _pointerActive;
-        private int _controlDirection;
+        private float _controlAmount;
         private GustScheduler _gustScheduler;
         private GustSample _gust;
         private bool _hasGust;
@@ -140,7 +139,6 @@ namespace WobbleStack.Runtime
 
             _runSeconds += Time.fixedDeltaTime;
             UpdateGust();
-            UpdateStackRotationConstraints();
             UpdateControlTarget();
 
             float currentDegrees = _platformBody.rotation;
@@ -158,10 +156,14 @@ namespace WobbleStack.Runtime
                     envelope) * UnityAccelerationScale;
                 float liftAcceleration = 0.000006f * UnityAccelerationScale * envelope;
 
-                foreach (CreatureBody creature in _creatures)
+                for (int index = 0; index < _creatures.Count; index += 1)
                 {
+                    CreatureBody creature = _creatures[index];
                     Rigidbody2D body = creature.Body;
-                    body.AddForce(new Vector2(acceleration * body.mass, liftAcceleration * body.mass));
+                    float exposure = 0.9f + (index * 0.22f);
+                    Vector2 horizontalForce = new Vector2(acceleration * exposure * body.mass, 0f);
+                    body.AddForceAtPosition(horizontalForce, body.worldCenterOfMass + new Vector2(0f, 0.18f));
+                    body.AddForce(new Vector2(0f, liftAcceleration * body.mass));
                 }
             }
 
@@ -237,7 +239,7 @@ namespace WobbleStack.Runtime
         internal void ConfigureGameplayProbe(
             float force,
             int direction,
-            int controlDirection,
+            float controlAmount,
             int creatureCount,
             float durationSeconds = 5.4f)
         {
@@ -247,8 +249,8 @@ namespace WobbleStack.Runtime
             _phase = GamePhase.Playing;
             _runSeconds = 0f;
             _targetAngleRadians = 0f;
+            _controlAmount = Mathf.Clamp(controlAmount, -1f, 1f);
             _pointerActive = true;
-            _controlDirection = controlDirection;
             _gustScheduler = new GustScheduler(1u, _difficulty);
             _gust = new GustSample(0.7f, durationSeconds, force, direction, 0.7f);
             _hasGust = true;
@@ -288,8 +290,8 @@ namespace WobbleStack.Runtime
             _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             _creatureMaterial = new PhysicsMaterial2D("Creature Grip")
             {
-                friction = 0.92f,
-                bounciness = 0.02f
+                friction = 0.18f,
+                bounciness = 0.035f
             };
         }
 
@@ -539,10 +541,6 @@ namespace WobbleStack.Runtime
                 _creatures.Add(creature);
             }
 
-            if (dynamicBodies)
-            {
-                CreateStackJoints();
-            }
         }
 
         private CreatureBody CreateCreature(CreatureSpec spec, int index, Vector2 position, bool dynamicBody)
@@ -554,30 +552,12 @@ namespace WobbleStack.Runtime
             body.bodyType = dynamicBody ? RigidbodyType2D.Dynamic : RigidbodyType2D.Kinematic;
             body.interpolation = RigidbodyInterpolation2D.Interpolate;
             body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-            body.linearDamping = 1.15f;
-            body.angularDamping = 1.7f;
-            body.freezeRotation = dynamicBody && index == 0;
+            body.linearDamping = 0.55f;
+            body.angularDamping = 0.7f;
+            body.freezeRotation = false;
 
             Collider2D collider;
-            if (spec.Kind == CharacterKind.Pear)
-            {
-                float halfWidth = spec.ColliderSize.x * 0.5f;
-                float halfHeight = spec.ColliderSize.y * 0.5f;
-                PolygonCollider2D pear = bodyObject.AddComponent<PolygonCollider2D>();
-                pear.points = new[]
-                {
-                    new Vector2(-halfWidth * 0.62f, -halfHeight),
-                    new Vector2(halfWidth * 0.62f, -halfHeight),
-                    new Vector2(halfWidth, -halfHeight * 0.58f),
-                    new Vector2(halfWidth * 0.9f, halfHeight * 0.18f),
-                    new Vector2(halfWidth * 0.56f, halfHeight),
-                    new Vector2(-halfWidth * 0.56f, halfHeight),
-                    new Vector2(-halfWidth * 0.9f, halfHeight * 0.18f),
-                    new Vector2(-halfWidth, -halfHeight * 0.58f)
-                };
-                collider = pear;
-            }
-            else if (spec.Kind == CharacterKind.Cube)
+            if (spec.Kind == CharacterKind.Cube)
             {
                 BoxCollider2D box = bodyObject.AddComponent<BoxCollider2D>();
                 box.size = spec.ColliderSize;
@@ -585,10 +565,9 @@ namespace WobbleStack.Runtime
             }
             else
             {
-                CapsuleCollider2D capsule = bodyObject.AddComponent<CapsuleCollider2D>();
-                capsule.size = spec.ColliderSize;
-                capsule.direction = CapsuleDirection2D.Vertical;
-                collider = capsule;
+                float bottomRatio = spec.Kind == CharacterKind.Jelly ? 0.82f : 0.76f;
+                float topRatio = spec.Kind == CharacterKind.Rabbit ? 0.7f : 0.82f;
+                collider = CreateFlatRoundedCollider(bodyObject, spec.ColliderSize, bottomRatio, topRatio);
             }
 
             collider.sharedMaterial = _creatureMaterial;
@@ -613,47 +592,31 @@ namespace WobbleStack.Runtime
             return creature;
         }
 
-        private void CreateStackJoints()
+        private static PolygonCollider2D CreateFlatRoundedCollider(
+            GameObject target,
+            Vector2 size,
+            float bottomRatio,
+            float topRatio)
         {
-            CreatureSpec[] specs = CreatureSpec.All;
-            FrictionJoint2D baseGrip = _creatures[0].gameObject.AddComponent<FrictionJoint2D>();
-            baseGrip.connectedBody = _platformBody;
-            baseGrip.autoConfigureConnectedAnchor = true;
-            baseGrip.maxForce = 10f;
-            baseGrip.maxTorque = 18f;
-            baseGrip.enableCollision = true;
-            _stackJoints.Add(baseGrip);
-
-            for (int index = 1; index < _creatures.Count; index += 1)
+            float halfWidth = size.x * 0.5f;
+            float halfHeight = size.y * 0.5f;
+            PolygonCollider2D collider = target.AddComponent<PolygonCollider2D>();
+            collider.points = new[]
             {
-                HingeJoint2D joint = _creatures[index].gameObject.AddComponent<HingeJoint2D>();
-                joint.connectedBody = _creatures[index - 1].Body;
-                joint.autoConfigureConnectedAnchor = false;
-                joint.anchor = new Vector2(0f, -specs[index].ColliderSize.y * 0.5f);
-                joint.connectedAnchor = new Vector2(0f, specs[index - 1].ColliderSize.y * 0.5f);
-                joint.useLimits = true;
-                joint.limits = new JointAngleLimits2D
-                {
-                    min = -18f,
-                    max = 18f
-                };
-                joint.enableCollision = true;
-                _stackJoints.Add(joint);
-            }
+                new Vector2(-halfWidth * bottomRatio, -halfHeight),
+                new Vector2(halfWidth * bottomRatio, -halfHeight),
+                new Vector2(halfWidth, -halfHeight * 0.46f),
+                new Vector2(halfWidth * 0.94f, halfHeight * 0.42f),
+                new Vector2(halfWidth * topRatio, halfHeight),
+                new Vector2(-halfWidth * topRatio, halfHeight),
+                new Vector2(-halfWidth * 0.94f, halfHeight * 0.42f),
+                new Vector2(-halfWidth, -halfHeight * 0.46f)
+            };
+            return collider;
         }
 
         private void ClearStack()
         {
-            foreach (Joint2D joint in _stackJoints)
-            {
-                if (joint != null)
-                {
-                    joint.enabled = false;
-                    Destroy(joint);
-                }
-            }
-
-            _stackJoints.Clear();
             foreach (CreatureBody creature in _creatures)
             {
                 if (creature != null)
@@ -685,7 +648,7 @@ namespace WobbleStack.Runtime
             _runSeconds = 0f;
             _targetAngleRadians = 0f;
             _pointerActive = false;
-            _controlDirection = 0;
+            _controlAmount = 0f;
             _gustIndex = 0;
             _firstImpactAt = -1f;
             _slowMotionEndsAt = -1f;
@@ -718,7 +681,7 @@ namespace WobbleStack.Runtime
             _phase = GamePhase.Paused;
             _pointerActive = false;
             _targetAngleRadians = 0f;
-            _controlDirection = 0;
+            _controlAmount = 0f;
             Time.timeScale = 0f;
             AudioListener.pause = true;
             _pauseOverlay.SetActive(true);
@@ -752,24 +715,10 @@ namespace WobbleStack.Runtime
             _slowMotionEndsAt = -1f;
             _failureSuspendedAt = -1f;
             _pointerActive = false;
-            _controlDirection = 0;
+            _controlAmount = 0f;
             _targetAngleRadians = _platformBody.rotation * Mathf.Deg2Rad;
             _windStreaks.SetWind(1, 0f);
             _audio.SetWind(0f);
-            foreach (CreatureBody creature in _creatures)
-            {
-                creature.Body.freezeRotation = false;
-            }
-
-            foreach (Joint2D joint in _stackJoints)
-            {
-                if (joint != null)
-                {
-                    Destroy(joint);
-                }
-            }
-
-            _stackJoints.Clear();
             SpawnCrown();
         }
 
@@ -821,7 +770,7 @@ namespace WobbleStack.Runtime
             _phase = GamePhase.Ready;
             _runSeconds = 0f;
             _targetAngleRadians = 0f;
-            _controlDirection = 0;
+            _controlAmount = 0f;
             _platformBody.rotation = 0f;
             _hasGust = false;
             _windStreaks.SetWind(1, 0f);
@@ -903,28 +852,35 @@ namespace WobbleStack.Runtime
             if (keyboardDirection != 0)
             {
                 _pointerActive = false;
-                _controlDirection = keyboardDirection;
+                _controlAmount = keyboardDirection;
                 return;
             }
 
             if (Input.touchCount > 0)
             {
                 Touch touch = Input.GetTouch(0);
-                if (touch.phase == TouchPhase.Began && EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+                if (touch.phase == TouchPhase.Began)
                 {
-                    _controlDirection = 0;
+                    if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+                    {
+                        _pointerActive = false;
+                        _controlAmount = 0f;
+                        return;
+                    }
+
+                    _pointerActive = true;
+                    SetPointerTarget(touch.position.x);
                     return;
                 }
 
-                if (touch.phase == TouchPhase.Began || touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary)
+                if ((touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary) && _pointerActive)
                 {
-                    _pointerActive = true;
                     SetPointerTarget(touch.position.x);
                 }
                 else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
                 {
                     _pointerActive = false;
-                    _controlDirection = 0;
+                    _controlAmount = 0f;
                 }
 
                 return;
@@ -945,121 +901,55 @@ namespace WobbleStack.Runtime
             else if (Input.GetMouseButtonUp(0))
             {
                 _pointerActive = false;
-                _controlDirection = 0;
+                _controlAmount = 0f;
             }
             else if (!_pointerActive)
             {
-                _controlDirection = 0;
+                _controlAmount = 0f;
             }
         }
 
         private void SetPointerTarget(float screenX)
         {
             float normalized = Mathf.Clamp01(screenX / Screen.width);
-            _controlDirection = WobbleStackRules.GetControlDirection(normalized);
+            _controlAmount = WobbleStackRules.GetControlAmount(normalized);
         }
 
         private void UpdateControlTarget()
         {
-            if (_controlDirection == 0 || !IsGustActive())
+            float inputMagnitude = Mathf.Abs(_controlAmount);
+            if (inputMagnitude <= 0f || !_hasGust)
             {
                 _targetAngleRadians = 0f;
                 return;
             }
 
-            float progress = (_runSeconds - _gust.StartsAtSeconds) / _gust.DurationSeconds;
-            DifficultyProfile wild = WobbleStackRules.GetDifficultyProfile(DifficultyId.Wild);
-            float forceRatio = Mathf.Clamp01(_gust.Force / wild.ForceMax);
-            float feedForward = _gust.Direction * Mathf.Lerp(0.0025f, 0.006f, forceRatio);
-            float desiredAngle =
-                (-GetTowerMeanRotationRadians() * 0.22f) +
-                (-GetTowerMeanAngularVelocityRadians() * 0.035f) +
-                (GetTowerMeanX() * 0.003f) +
-                (GetTowerMeanVelocityX() * 0.008f) +
-                feedForward;
-            float maximumMagnitude = Mathf.Min(
-                WobbleStackRules.GetRequiredCounterAngle(_gust.Force, WobbleStackRules.GravityScale),
-                WobbleStackRules.MaxPlatformAngle);
-            bool holdsWindSource = _controlDirection == -_gust.Direction;
-            float controlPolarity = holdsWindSource ? -1f : 1f;
-            _targetAngleRadians = Mathf.Clamp(
-                    desiredAngle * controlPolarity,
-                    -maximumMagnitude,
-                    maximumMagnitude) *
-                WobbleStackRules.GetGustEnvelope(progress);
-        }
-
-        private float GetTowerMeanX()
-        {
-            if (_creatures.Count == 0)
+            float requiredAngle = WobbleStackRules.GetRequiredCounterAngle(
+                _gust.Force,
+                WobbleStackRules.GravityScale);
+            float authority = Mathf.Max(requiredAngle * 0.72f, 0.06f);
+            float secondsUntilGust = _gust.StartsAtSeconds - _runSeconds;
+            if (secondsUntilGust > 0f && secondsUntilGust <= WobbleStackRules.WindPreviewSeconds)
             {
-                return 0f;
+                float preview = WobbleStackRules.GetWindPreviewEnvelope(secondsUntilGust);
+                authority = Mathf.Max(
+                    requiredAngle * Mathf.Lerp(0.72f, 0.88f, preview),
+                    0.06f);
+            }
+            else if (IsGustActive())
+            {
+                float progress = (_runSeconds - _gust.StartsAtSeconds) / _gust.DurationSeconds;
+                float envelope = WobbleStackRules.GetGustEnvelope(progress);
+                authority = Mathf.Max(
+                    requiredAngle * Mathf.Lerp(0.88f, 1.08f, envelope),
+                    0.06f);
             }
 
-            float totalX = 0f;
-            foreach (CreatureBody creature in _creatures)
-            {
-                totalX += creature.Body.position.x;
-            }
-
-            return totalX / _creatures.Count;
-        }
-
-        private float GetTowerMeanVelocityX()
-        {
-            if (_creatures.Count == 0)
-            {
-                return 0f;
-            }
-
-            float totalVelocityX = 0f;
-            foreach (CreatureBody creature in _creatures)
-            {
-                totalVelocityX += creature.Body.linearVelocity.x;
-            }
-
-            return totalVelocityX / _creatures.Count;
-        }
-
-        private float GetTowerMeanRotationRadians()
-        {
-            if (_creatures.Count == 0)
-            {
-                return 0f;
-            }
-
-            float totalRotation = 0f;
-            foreach (CreatureBody creature in _creatures)
-            {
-                totalRotation += Mathf.DeltaAngle(0f, creature.Body.rotation) * Mathf.Deg2Rad;
-            }
-
-            return totalRotation / _creatures.Count;
-        }
-
-        private float GetTowerMeanAngularVelocityRadians()
-        {
-            if (_creatures.Count == 0)
-            {
-                return 0f;
-            }
-
-            float totalAngularVelocity = 0f;
-            foreach (CreatureBody creature in _creatures)
-            {
-                totalAngularVelocity += creature.Body.angularVelocity * Mathf.Deg2Rad;
-            }
-
-            return totalAngularVelocity / _creatures.Count;
-        }
-
-        private void UpdateStackRotationConstraints()
-        {
-            bool lockFirstGustWarmup = _gustIndex == 0 && !IsGustActive();
-            for (int index = 0; index < _creatures.Count; index += 1)
-            {
-                _creatures[index].Body.freezeRotation = index == 0 || lockFirstGustWarmup;
-            }
+            float shapedMagnitude = Mathf.Min(1f, Mathf.Sqrt(inputMagnitude) * 1.35f);
+            float direction = _controlAmount < 0f ? -1f : 1f;
+            _targetAngleRadians = direction *
+                Mathf.Min(authority, WobbleStackRules.MaxPlatformAngle) *
+                shapedMagnitude;
         }
 
         private void UpdateGust()
@@ -1226,13 +1116,13 @@ namespace WobbleStack.Runtime
             float secondsUntilGust = _gust.StartsAtSeconds - _runSeconds;
             if (secondsUntilGust > WobbleStackRules.WindPreviewSeconds)
             {
-                _hintText.text = "HOLD THE SIDE THE WIND COMES FROM";
+                _hintText.text = "DRAG LEFT / RIGHT · THE TOUCHED END RISES";
             }
             else
             {
                 _hintText.text = _gust.Direction > 0
-                    ? "WIND FROM LEFT · HOLD LEFT SIDE"
-                    : "WIND FROM RIGHT · HOLD RIGHT SIDE";
+                    ? "WIND → · RAISE THE RIGHT END"
+                    : "WIND ← · RAISE THE LEFT END";
             }
         }
 
@@ -1574,7 +1464,7 @@ namespace WobbleStack.Runtime
 
             public static CreatureSpec[] All { get; } =
             {
-                new CreatureSpec(CharacterKind.Pear, new Vector2(1.5f, 2.4f), 2.95f, 0f),
+                new CreatureSpec(CharacterKind.Pear, new Vector2(1.72f, 2.4f), 2.95f, 0f),
                 new CreatureSpec(CharacterKind.Cube, new Vector2(1.78f, 1.76f), 2.35f, 0f),
                 new CreatureSpec(CharacterKind.Bird, new Vector2(1.55f, 1.85f), 2.35f, 0f),
                 new CreatureSpec(CharacterKind.Rabbit, new Vector2(1.7f, 2.64f), 3.15f, 0f),

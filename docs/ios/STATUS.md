@@ -4,9 +4,10 @@ Updated: 2026-07-23
 
 ## Current
 
-- Phase: M2 signed device build installed; second physical-feel test waiting.
+- Phase: M2 constant-hold control recovery; physical-feel retest waiting.
 - Canonical task: `kiku-jw/wobble-stack#4`.
-- Next actor: Owner, to test the recovery build already launched on the iPhone.
+- Next actor: Owner, to test the launched constant-hold recovery build on the
+  iPhone.
 - Blocker: none for another local iteration. App Store distribution remains a
   separate Apple Developer Program gate.
 
@@ -24,21 +25,25 @@ Updated: 2026-07-23
 
 - Complete Ready → Playing → Paused/Failing → Results → Retry state flow.
 - Deterministic gust model with distinct Gentle, Normal, and Wild force bands.
-- Source-side hold control completes the strongest first gust across all three
-  difficulties, both directions, and three/five-creature towers.
+- Constant outer-side input moves the beam during the teaching window and
+  completes the strongest first gust across all three difficulties, both
+  directions, and three/five-creature towers without a changing test angle.
 - Three-to-five creature setup, local per-setup best scores, reduced motion, and safe-area UI.
-- Rounded beam collision, compact supported stacks, base grip, bounded contact
-  hinges, and free collapse after support failure.
+- Rounded beam collision, compact flat-contact silhouettes, free rotation, and
+  a jointless physical stack.
 - Calm, wind/panic, and impact-expression atlases plus a 1024 px app icon.
 - Impact-only slow motion, flying crown, dust/stars, procedural wind and feedback audio, and iOS haptic hooks.
-- Unity batch compile, `10/10` EditMode tests, `9/9` PlayMode tests, Mac smoke
+- Maximum Wild wind collapses neutral and wrong input; a constant correct hold
+  completes it.
+- Unity batch compile, `10/10` EditMode tests, `12/12` PlayMode tests, Mac smoke
   build, and four Metal-rendered portrait captures.
 - Unity exports a non-Development Xcode project. Xcode produced a valid signed
   arm64 app, and CoreDevice confirmed install and launch on the paired iPhone.
 
 ## Next verified outcome
 
-Pass the owner playtest for first-gust feel, control comprehension, beam-end
-collisions, expression readability, visible wind direction, clean presentation,
-and voluntary Retry. Install and launch receipts prove delivery, not subjective
+Pass the owner playtest for constant-hold first-gust survival, understandable
+beam/thumb correspondence, believable fallability, beam-end collisions,
+expression readability, visible wind direction, clean presentation, and
+voluntary Retry. Install and launch receipts prove delivery, not subjective
 feel, performance, or App Store readiness.

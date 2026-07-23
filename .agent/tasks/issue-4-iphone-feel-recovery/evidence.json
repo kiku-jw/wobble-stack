@@ -1,6 +1,6 @@
 {
   "task": "issue-4-iphone-feel-recovery",
-  "status": "PENDING_OWNER_PLAYTEST",
+  "status": "REJECTED_BY_OWNER",
   "collected": "2026-07-23",
   "receipts": {
     "unity": "6000.3.19f1",
@@ -12,6 +12,14 @@
     "signed_build": "PASS",
     "device_install": "PASS",
     "device_launch": "PASS"
+  },
+  "owner_result": {
+    "status": "REJECTED",
+    "findings": [
+      "Binary source-side control was less understandable.",
+      "Beam movement did not feel directly connected to the thumb.",
+      "Support constraints made meaningful collapse effectively impossible."
+    ]
   },
   "criteria": [
     {
@@ -66,12 +74,12 @@
     },
     {
       "id": "AC7",
-      "status": "PASS_WITH_OWNER_GATE",
+      "status": "REJECTED_BY_OWNER",
       "proof": [
         "10/10 EditMode",
         "9/9 PlayMode",
         "Mac smoke and four Metal captures",
-        "Owner physical-feel judgment remains pending"
+        "Owner rejected control clarity and fallability on the physical iPhone"
       ]
     }
   ]

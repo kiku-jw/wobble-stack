@@ -145,6 +145,60 @@ namespace WobbleStack.Runtime.Tests
 
         [UnityTest]
         [Order(7)]
+        public IEnumerator DynamicTowerHasNoHiddenConstraintsAndReachesTheFirstGust()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            Assert.That(game, Is.Not.Null);
+
+            game.ConfigureGameplayProbe(0f, 1, 0f, 5, 1.4f);
+            Rigidbody2D[] bodies = GetCreatureBodies().ToArray();
+            Assert.That(bodies.Length, Is.EqualTo(5));
+            Assert.That(Object.FindObjectsByType<Joint2D>(FindObjectsSortMode.None), Is.Empty);
+            foreach (Rigidbody2D body in bodies)
+            {
+                Assert.That(body.freezeRotation, Is.False, $"{body.name} had hidden rotation locking.");
+            }
+
+            Time.timeScale = 6f;
+            for (int step = 0; step < 210; step += 1)
+            {
+                yield return new WaitForFixedUpdate();
+                Assert.That(
+                    game.GetGameplayProbePhase(),
+                    Is.EqualTo(GamePhase.Playing),
+                    $"Free tower fell before a gust could teach the control at step {step}.");
+            }
+
+            Time.timeScale = 1f;
+        }
+
+        [UnityTest]
+        [Order(8)]
+        public IEnumerator HumanSideHoldMovesTheBeamBeforeWindStarts()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            Assert.That(game, Is.Not.Null);
+            float touchAmount = WobbleStackRules.GetControlAmount(0.82f);
+            DifficultyProfile gentle = WobbleStackRules.GetDifficultyProfile(DifficultyId.Gentle);
+            game.ConfigureGameplayProbe(gentle.ForceMin, 1, touchAmount, 3, 1.4f);
+
+            for (int step = 0; step < 5; step += 1)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            Transform beam = GameObject.Find("Seesaw Beam").transform;
+            Vector3 leftEnd = beam.TransformPoint(Vector3.left);
+            Vector3 rightEnd = beam.TransformPoint(Vector3.right);
+            Assert.That(beam.eulerAngles.z, Is.GreaterThan(3f));
+            Assert.That(rightEnd.y, Is.GreaterThan(leftEnd.y), "Touching right must visibly raise the right beam end.");
+            Assert.That(game.GetGameplayProbePhase(), Is.EqualTo(GamePhase.Playing));
+        }
+
+        [UnityTest]
+        [Order(9)]
         public IEnumerator CorrectCounterTiltSurvivesWorstFirstGustAcrossDifficultiesAndTowerSizes()
         {
             yield return WaitForBootstrap();
@@ -159,12 +213,13 @@ namespace WobbleStack.Runtime.Tests
                 {
                     foreach (int direction in new[] { -1, 1 })
                     {
+                        float humanHold = GetHumanHoldAmount(direction);
                         TowerMeasurement measurement = default;
                         yield return MeasureTower(
                             game,
                             profile.ForceMax,
                             direction,
-                            -direction,
+                            humanHold,
                             creatureCount,
                             profile.DurationMax,
                             value => measurement = value);
@@ -172,14 +227,14 @@ namespace WobbleStack.Runtime.Tests
                         Assert.That(
                             measurement.Completed,
                             Is.True,
-                            $"{difficulty}, {creatureCount} creatures, direction {direction} failed the complete first gust.");
+                            $"{difficulty}, {creatureCount} creatures, direction {direction} failed the complete first gust: {measurement}.");
                     }
                 }
             }
         }
 
         [UnityTest]
-        [Order(8)]
+        [Order(10)]
         public IEnumerator CorrectCounterTiltOutperformsNeutralAndWrongTiltOnTheSameGust()
         {
             yield return WaitForBootstrap();
@@ -189,12 +244,13 @@ namespace WobbleStack.Runtime.Tests
 
             foreach (int direction in new[] { -1, 1 })
             {
+                float humanHold = GetHumanHoldAmount(direction);
                 TowerMeasurement neutral = default;
                 yield return MeasureTower(
                     game,
                     profile.ForceMax,
                     direction,
-                    0,
+                    0f,
                     5,
                     profile.DurationMax,
                     value => neutral = value);
@@ -203,7 +259,7 @@ namespace WobbleStack.Runtime.Tests
                     game,
                     profile.ForceMax,
                     direction,
-                    -direction,
+                    humanHold,
                     5,
                     profile.DurationMax,
                     value => correct = value);
@@ -212,24 +268,71 @@ namespace WobbleStack.Runtime.Tests
                     game,
                     profile.ForceMax,
                     direction,
-                    direction,
+                    -humanHold,
                     5,
                     profile.DurationMax,
                     value => wrong = value);
 
-                AssertTowerOrdering(neutral, correct, wrong, direction < 0 ? "left" : "right");
+                AssertTowerOrdering(neutral, correct, wrong, direction);
             }
         }
 
         [UnityTest]
-        [Order(9)]
+        [Order(11)]
+        public IEnumerator NeutralAndWrongInputCollapseUnderTheStrongestWildGust()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            Assert.That(game, Is.Not.Null);
+            DifficultyProfile profile = WobbleStackRules.GetDifficultyProfile(DifficultyId.Wild);
+            foreach (int direction in new[] { -1, 1 })
+            {
+                float humanHold = GetHumanHoldAmount(direction);
+                TowerMeasurement neutral = default;
+                yield return MeasureTower(
+                    game,
+                    profile.ForceMax,
+                    direction,
+                    0f,
+                    5,
+                    profile.DurationMax,
+                    value => neutral = value);
+                TowerMeasurement correct = default;
+                yield return MeasureTower(
+                    game,
+                    profile.ForceMax,
+                    direction,
+                    humanHold,
+                    5,
+                    profile.DurationMax,
+                    value => correct = value);
+                TowerMeasurement wrong = default;
+                yield return MeasureTower(
+                    game,
+                    profile.ForceMax,
+                    direction,
+                    -humanHold,
+                    5,
+                    profile.DurationMax,
+                    value => wrong = value);
+
+                Assert.That(neutral.Completed, Is.False, $"Neutral input was immortal under {direction} Wild wind: {neutral}.");
+                Assert.That(wrong.Completed, Is.False, $"Wrong input was immortal under {direction} Wild wind: {wrong}.");
+                Assert.That(correct.Completed, Is.True, $"Correct input did not survive {direction} Wild wind: {correct}.");
+                Assert.That(correct.SurvivedSteps, Is.GreaterThan(neutral.SurvivedSteps));
+                Assert.That(correct.SurvivedSteps, Is.GreaterThan(wrong.SurvivedSteps));
+            }
+        }
+
+        [UnityTest]
+        [Order(12)]
         public IEnumerator FailureBeatFreezesDuringApplicationInterruption()
         {
             yield return WaitForBootstrap();
             WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
             Assert.That(game, Is.Not.Null);
 
-            game.ConfigureGameplayProbe(0.00009f, 1, 0, 5);
+            game.ConfigureGameplayProbe(0.00009f, 1, 0f, 5);
             CreatureBody creature = Object.FindFirstObjectByType<CreatureBody>();
             Assert.That(creature, Is.Not.Null);
             game.RegisterImpact(creature, creature.Body.position);
@@ -269,17 +372,23 @@ namespace WobbleStack.Runtime.Tests
             yield return new WaitForFixedUpdate();
         }
 
+        private static float GetHumanHoldAmount(int direction)
+        {
+            float normalizedScreenX = direction < 0 ? 0.22f : 0.78f;
+            return WobbleStackRules.GetControlAmount(normalizedScreenX);
+        }
+
         private static IEnumerator MeasureTower(
             WobbleStackGame game,
             float force,
             int direction,
-            int controlDirection,
+            float controlAmount,
             int creatureCount,
             float durationSeconds,
             System.Action<TowerMeasurement> onComplete)
         {
             int totalSteps = Mathf.CeilToInt((0.9f + durationSeconds) / Time.fixedDeltaTime);
-            game.ConfigureGameplayProbe(force, direction, controlDirection, creatureCount, durationSeconds);
+            game.ConfigureGameplayProbe(force, direction, controlAmount, creatureCount, durationSeconds);
             Time.timeScale = 6f;
             float maxDrift = 0f;
             int survivedSteps = 0;
@@ -317,17 +426,18 @@ namespace WobbleStack.Runtime.Tests
             TowerMeasurement neutral,
             TowerMeasurement correct,
             TowerMeasurement wrong,
-            string directionName)
+            int direction)
         {
+            string directionName = direction < 0 ? "left" : "right";
             Assert.That(
-                correct.MaxDrift,
-                Is.LessThan(neutral.MaxDrift),
-                $"Expected counter-tilt to reduce supported-tower drift for {directionName} wind. " +
+                correct.DownwindDisplacement(direction),
+                Is.LessThan(neutral.DownwindDisplacement(direction)),
+                $"Expected counter-tilt to reduce downwind displacement for {directionName} wind. " +
                 $"Neutral: {neutral}; correct: {correct}; wrong: {wrong}.");
             Assert.That(
-                correct.MaxDrift,
-                Is.LessThan(wrong.MaxDrift),
-                $"Expected counter-tilt to beat wrong tilt for {directionName} wind. " +
+                correct.DownwindDisplacement(direction),
+                Is.LessThan(wrong.DownwindDisplacement(direction)),
+                $"Expected counter-tilt to beat wrong tilt on downwind displacement for {directionName} wind. " +
                 $"Neutral: {neutral}; correct: {correct}; wrong: {wrong}.");
             Assert.That(
                 correct.SurvivedSteps,
@@ -440,6 +550,11 @@ namespace WobbleStack.Runtime.Tests
             public GamePhase Phase { get; }
 
             public bool Completed => SurvivedSteps == TotalSteps;
+
+            public float DownwindDisplacement(int direction)
+            {
+                return FinalMeanX * direction;
+            }
 
             public override string ToString()
             {

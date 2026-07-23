@@ -6,9 +6,9 @@ Ship a portrait, one-thumb iPhone game whose core pleasure is rescuing a stack o
 
 ## Player promise
 
-In seconds, the player understands: hold the side the wind comes from, watch
-five personalities panic, recover at the last moment, and immediately want one
-cleaner run.
+In seconds, the player understands: drag the beam, raise the end the wind is
+pushing toward, watch five personalities panic, recover at the last moment,
+and immediately want one cleaner run.
 
 ## First App Store candidate
 
@@ -30,8 +30,8 @@ cleaner run.
 ## Core loop
 
 1. Choose wind and stack size.
-2. Hold the half of the screen on the side the wind comes from.
-3. Read the gust as it builds and counter-tilt without overcorrecting.
+2. Drag toward the end named by the wind prompt; the touched beam end rises.
+3. Hold through the gust, then release or reverse when the direction changes.
 4. Survive, recover, and accumulate score.
 5. Collapse with a short comic impact beat.
 6. Retry immediately or change setup.
