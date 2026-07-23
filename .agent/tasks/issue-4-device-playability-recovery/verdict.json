@@ -1,0 +1,14 @@
+{
+  "task": "issue-4-device-playability-recovery",
+  "status": "PASS_WITH_OWNER_GATE",
+  "verified_revision": "CURRENT_SOURCE_PENDING_PUBLICATION",
+  "findings": [
+    "Beam tilt now changes effective gust acceleration for every creature.",
+    "Correct input damps only current downwind velocity and cannot pull through recovery.",
+    "Delayed moderate and early strong constant holds complete the maximum first-gust matrix.",
+    "Neutral and wrong input remain fallible under maximum Wild wind."
+  ],
+  "automated_verdict": "PASS",
+  "delivery_verdict": "INSTALLED_AND_LAUNCHED",
+  "owner_verdict": "PENDING_PHYSICAL_RETEST"
+}

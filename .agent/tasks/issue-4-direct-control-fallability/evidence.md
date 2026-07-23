@@ -2,6 +2,10 @@
 
 Collected: 2026-07-23
 Unity: `6000.3.19f1`
+Owner result: **REJECTED**. The constant-hold automation passed, but the fourth
+physical iPhone check still could not survive a gust normally with the beam.
+This is historical automation evidence for `989dee5`, not current playability
+proof.
 
 | Criterion | Status | Proof |
 | --- | --- | --- |
@@ -10,7 +14,7 @@ Unity: `6000.3.19f1`
 | AC3 | PASS | The full matrix holds one constant screen position at 22%/78% width and completes maximum first gusts for Gentle/Normal/Wild, both directions, and three/five creatures. Correct input reduces downwind displacement on Normal. `NeutralAndWrongInputCollapseUnderTheStrongestWildGust` verifies bounded real failure while the same constant correct hold completes. |
 | AC4 | PASS | Runtime hint says the touched end rises, then names the end to raise. The Metal gameplay capture shows a visibly tilted beam, a single direction prompt, and cyan wind. |
 | AC5 | PASS | Rounded beam/compact contacts and calm/wind/impact expressions remain covered by PlayMode tests and four inspected portrait captures. The iOS export remains `BuildOptions.None`. |
-| AC6 | PASS WITH OWNER GATE | Final suites pass `10/10` EditMode and `12/12` PlayMode. Mac smoke/captures, non-Development iOS export, signed build, strict signature verification, device install, and launch pass. Physical feel and voluntary Retry remain unclaimed. |
+| AC6 | REJECTED BY OWNER | Final suites passed `10/10` EditMode and `12/12` PlayMode and delivery succeeded, but the physical playability gate failed. |
 
 ## Final receipts
 
@@ -21,8 +25,7 @@ Unity: `6000.3.19f1`
 - iOS: non-Development export, signed arm64 build, strict signature check,
   paired-device install, and launch succeeded.
 
-## Residual gate
+## Owner verdict
 
-The owner must judge direct thumb feel, whether recovery reads without
-explanation, whether collapse feels believable rather than arbitrary, and
-whether another Retry is desirable.
+The device gate failed. The replacement task must prove delayed, imprecise
+human correction rather than another favorable pre-held input.

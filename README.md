@@ -28,8 +28,8 @@ hooks, reduced motion, safe areas, and a finished app icon.
 ## Controls
 
 - **iPhone:** drag and hold the end named by the wind prompt. The touched end
-  rises; the outer quarter already gives full useful authority, so there is no
-  need to reach the bezel. Release to return toward neutral.
+  rises; a moderate same-side hold is enough, so there is no need to reach the
+  bezel or chase an exact angle. Release to return toward neutral.
 - **Web prototype:** drag left/right with touch or mouse, or use Left/Right or
   A/D.
 - **Goal:** keep every creature on the beam as each visible gust builds.
@@ -106,10 +106,10 @@ top of this README are rendered from the current Unity build.
   <img src="docs/concepts/comedic-collapse.png" width="300" alt="Concept art showing the creature tower collapsing" />
 </p>
 
-The next gate is another physical iPhone feel test: constant-hold first-gust
-survival, believable collapse when input is absent or wrong, frame pacing, safe
-areas, haptics, and voluntary Retry. Meta systems stay out until that evidence
-exists.
+The next gate is another physical iPhone feel test: delayed imprecise
+first-gust recovery, believable collapse when input is absent or wrong, frame
+pacing, safe areas, haptics, and voluntary Retry. Meta systems stay out until
+that evidence exists.
 
 ## License
 

@@ -8,9 +8,9 @@
 - PlayMode tests cover scene bootstrap, count controls, beam/collider alignment,
   compact contacts, expression progression, cyan wind direction, direct
   pre-gust beam motion, absence of hidden joints/locks, stable free warmup,
-  full first gusts, bounded Wild collapse, input ordering, and
-  interruption-safe failure.
-- Current receipt: `10/10` EditMode and `12/12` PlayMode tests pass on Unity
+  delayed imprecise recovery, full first gusts, bounded Wild collapse, input
+  ordering, and interruption-safe failure.
+- Current receipt: `12/12` EditMode and `13/13` PlayMode tests pass on Unity
   `6000.3.19f1`.
 
 ## Deterministic physics matrix
@@ -26,6 +26,9 @@ For the same seed and Normal gust:
 5. Repeat with three and five creatures.
 6. On the maximum Wild gust, neutral and wrong input both collapse while
    correct input completes the gust.
+7. Separately start neutral, allow `0.35 s` of physical wind, then apply one
+   unchanged touch at 32%/68% width. Repeat maximum Gentle/Normal/Wild gusts in
+   both directions with three and five creatures.
 
 ## Interaction matrix
 
@@ -63,8 +66,8 @@ The remaining owner gate is another physical playtest:
 
 - Dragging and holding the indicated outer side visibly raises that end before
   wind begins.
-- One constant correct hold survives the first gust on Gentle, Normal, and
-  Wild without chasing a changing angle.
+- A delayed moderate hold and an early strong hold both survive the first gust
+  on Gentle, Normal, and Wild without chasing a changing angle.
 - The touched-end instruction is understood without explanation.
 - Neutral/wrong play still produces a believable collapse.
 - Characters sit close, trust the beam ends, and change expressions clearly.

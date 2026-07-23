@@ -153,7 +153,13 @@ namespace WobbleStack.Runtime
                 float acceleration = WobbleStackRules.GetEffectiveGustAcceleration(
                     _gust.Force,
                     _gust.Direction,
-                    envelope) * UnityAccelerationScale;
+                    envelope,
+                    _platformBody.rotation * Mathf.Deg2Rad,
+                    WobbleStackRules.GravityScale,
+                    WobbleStackRules.CounterTiltAuthority) * UnityAccelerationScale;
+                float requiredAngle = WobbleStackRules.GetRequiredCounterAngle(
+                    _gust.Force,
+                    WobbleStackRules.GravityScale);
                 float liftAcceleration = 0.000006f * UnityAccelerationScale * envelope;
 
                 for (int index = 0; index < _creatures.Count; index += 1)
@@ -161,7 +167,15 @@ namespace WobbleStack.Runtime
                     CreatureBody creature = _creatures[index];
                     Rigidbody2D body = creature.Body;
                     float exposure = 0.9f + (index * 0.22f);
-                    Vector2 horizontalForce = new Vector2(acceleration * exposure * body.mass, 0f);
+                    float dampingAcceleration = WobbleStackRules.GetCounterTiltDampingAcceleration(
+                        body.linearVelocity.x,
+                        _gust.Direction,
+                        _platformBody.rotation * Mathf.Deg2Rad,
+                        requiredAngle,
+                        envelope,
+                        WobbleStackRules.CounterTiltVelocityDamping);
+                    float horizontalAcceleration = (acceleration * exposure) + dampingAcceleration;
+                    Vector2 horizontalForce = new Vector2(horizontalAcceleration * body.mass, 0f);
                     body.AddForceAtPosition(horizontalForce, body.worldCenterOfMass + new Vector2(0f, 0.18f));
                     body.AddForce(new Vector2(0f, liftAcceleration * body.mass));
                 }
@@ -267,6 +281,11 @@ namespace WobbleStack.Runtime
         internal GamePhase GetGameplayProbePhase()
         {
             return _phase;
+        }
+
+        internal void SetGameplayProbeControlAmount(float controlAmount)
+        {
+            _controlAmount = Mathf.Clamp(controlAmount, -1f, 1f);
         }
 
         internal float GetGameplayProbeMaxDrift()

@@ -38,12 +38,16 @@ Use Unity `6000.3.19f1` as a nested production client at `ios/WobbleStack`. The 
 - Counter-tilt: normalized touch position maps continuously to signed control
   amount, including before the gust. Touching toward an end raises that same
   end. The sampled gust strength calibrates the useful angle range, so a
-  constant outer-side hold can survive without pixel-perfect thumb placement.
-  The player still owns side and amount; the runtime never reads tower state to
-  choose an angle and adds no artificial platform force.
+  moderate same-side hold can survive without pixel-perfect thumb placement.
+  Beam angle directly changes effective gust acceleration for every creature.
+  A bounded correct-tilt damper opposes only current downwind velocity; it is
+  zero for calm air, neutral/wrong tilt, and a body already recovering upwind.
+  The player still owns side and amount, and the runtime never chooses a side
+  or position-corrects the tower.
 - Fallability: contact friction is low enough for strong gusts to matter, while
   higher creatures receive more wind exposure and a small off-center torque.
-  Correct tilt counters through actual beam and creature contacts.
+  Neutral and wrong input receive no damping and still collapse under maximum
+  Wild gusts.
 
 ## Art pipeline
 

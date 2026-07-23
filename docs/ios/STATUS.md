@@ -4,10 +4,9 @@ Updated: 2026-07-23
 
 ## Current
 
-- Phase: M2 constant-hold control recovery; physical-feel retest waiting.
+- Phase: M2 delayed human-input recovery; physical-feel retest waiting.
 - Canonical task: `kiku-jw/wobble-stack#4`.
-- Next actor: Owner, to test the launched constant-hold recovery build on the
-  iPhone.
+- Next actor: Owner, to test the launched replacement build on the iPhone.
 - Blocker: none for another local iteration. App Store distribution remains a
   separate Apple Developer Program gate.
 
@@ -25,9 +24,12 @@ Updated: 2026-07-23
 
 - Complete Ready → Playing → Paused/Failing → Results → Retry state flow.
 - Deterministic gust model with distinct Gentle, Normal, and Wild force bands.
-- Constant outer-side input moves the beam during the teaching window and
-  completes the strongest first gust across all three difficulties, both
-  directions, and three/five-creature towers without a changing test angle.
+- Early strong input and a delayed moderate input both complete the strongest
+  first gust across all three difficulties, both directions, and
+  three/five-creature towers without a changing test angle.
+- Correct tilt directly weakens gust acceleration for every creature and
+  damps only motion currently traveling downwind. It never chooses the side or
+  pulls a recovering body back.
 - Three-to-five creature setup, local per-setup best scores, reduced motion, and safe-area UI.
 - Rounded beam collision, compact flat-contact silhouettes, free rotation, and
   a jointless physical stack.
@@ -35,15 +37,16 @@ Updated: 2026-07-23
 - Impact-only slow motion, flying crown, dust/stars, procedural wind and feedback audio, and iOS haptic hooks.
 - Maximum Wild wind collapses neutral and wrong input; a constant correct hold
   completes it.
-- Unity batch compile, `10/10` EditMode tests, `12/12` PlayMode tests, Mac smoke
-  build, and four Metal-rendered portrait captures.
+- Unity batch compile, `12/12` EditMode tests, `13/13` PlayMode tests, Mac smoke
+  build, and an inspected Metal gameplay capture pass for the replacement
+  source.
 - Unity exports a non-Development Xcode project. Xcode produced a valid signed
   arm64 app, and CoreDevice confirmed install and launch on the paired iPhone.
 
 ## Next verified outcome
 
-Pass the owner playtest for constant-hold first-gust survival, understandable
-beam/thumb correspondence, believable fallability, beam-end collisions,
-expression readability, visible wind direction, clean presentation, and
-voluntary Retry. Install and launch receipts prove delivery, not subjective
-feel, performance, or App Store readiness.
+Pass the owner playtest for delayed imprecise first-gust survival,
+understandable beam/thumb correspondence, believable fallability, beam-end
+collisions, expression readability, visible wind direction, clean
+presentation, and voluntary Retry. Install and launch receipts prove delivery,
+not subjective feel, performance, or App Store readiness.

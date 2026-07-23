@@ -199,6 +199,39 @@ namespace WobbleStack.Runtime.Tests
 
         [UnityTest]
         [Order(9)]
+        public IEnumerator DelayedImpreciseCorrectionSurvivesFirstGustMatrix()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            Assert.That(game, Is.Not.Null);
+
+            foreach (DifficultyId difficulty in new[] { DifficultyId.Gentle, DifficultyId.Normal, DifficultyId.Wild })
+            {
+                DifficultyProfile profile = WobbleStackRules.GetDifficultyProfile(difficulty);
+                foreach (int creatureCount in new[] { 3, 5 })
+                {
+                    foreach (int direction in new[] { -1, 1 })
+                    {
+                        TowerMeasurement measurement = default;
+                        yield return MeasureDelayedTower(
+                            game,
+                            profile.ForceMax,
+                            direction,
+                            creatureCount,
+                            profile.DurationMax,
+                            value => measurement = value);
+
+                        Assert.That(
+                            measurement.Completed,
+                            Is.True,
+                            $"{difficulty}, {creatureCount} creatures, direction {direction} did not survive a delayed imprecise correction: {measurement}.");
+                    }
+                }
+            }
+        }
+
+        [UnityTest]
+        [Order(10)]
         public IEnumerator CorrectCounterTiltSurvivesWorstFirstGustAcrossDifficultiesAndTowerSizes()
         {
             yield return WaitForBootstrap();
@@ -234,7 +267,7 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(10)]
+        [Order(11)]
         public IEnumerator CorrectCounterTiltOutperformsNeutralAndWrongTiltOnTheSameGust()
         {
             yield return WaitForBootstrap();
@@ -278,7 +311,7 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(11)]
+        [Order(12)]
         public IEnumerator NeutralAndWrongInputCollapseUnderTheStrongestWildGust()
         {
             yield return WaitForBootstrap();
@@ -325,7 +358,7 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(12)]
+        [Order(13)]
         public IEnumerator FailureBeatFreezesDuringApplicationInterruption()
         {
             yield return WaitForBootstrap();
@@ -420,6 +453,56 @@ namespace WobbleStack.Runtime.Tests
                 totalSteps,
                 game.GetGameplayProbePhase());
             onComplete(measurement);
+        }
+
+        private static IEnumerator MeasureDelayedTower(
+            WobbleStackGame game,
+            float force,
+            int direction,
+            int creatureCount,
+            float durationSeconds,
+            System.Action<TowerMeasurement> onComplete)
+        {
+            int totalSteps = Mathf.CeilToInt((0.9f + durationSeconds) / Time.fixedDeltaTime);
+            int reactionSteps = Mathf.CeilToInt((0.7f + 0.35f) / Time.fixedDeltaTime);
+            float normalizedScreenX = direction < 0 ? 0.32f : 0.68f;
+            float impreciseHold = WobbleStackRules.GetControlAmount(normalizedScreenX);
+            game.ConfigureGameplayProbe(force, direction, 0f, creatureCount, durationSeconds);
+            Time.timeScale = 6f;
+            float maxDrift = 0f;
+            int survivedSteps = 0;
+            for (int step = 0; step < totalSteps; step += 1)
+            {
+                if (step == reactionSteps)
+                {
+                    game.SetGameplayProbeControlAmount(impreciseHold);
+                }
+
+                yield return new WaitForFixedUpdate();
+                maxDrift = Mathf.Max(maxDrift, game.GetGameplayProbeMaxDrift());
+                if (game.GetGameplayProbePhase() != GamePhase.Playing)
+                {
+                    break;
+                }
+
+                survivedSteps += 1;
+            }
+
+            Time.timeScale = 1f;
+            List<Rigidbody2D> bodies = GetCreatureBodies();
+            float finalMeanX = 0f;
+            foreach (Rigidbody2D body in bodies)
+            {
+                finalMeanX += body.position.x;
+            }
+
+            finalMeanX = bodies.Count == 0 ? 0f : finalMeanX / bodies.Count;
+            onComplete(new TowerMeasurement(
+                maxDrift,
+                finalMeanX,
+                survivedSteps,
+                totalSteps,
+                game.GetGameplayProbePhase()));
         }
 
         private static void AssertTowerOrdering(

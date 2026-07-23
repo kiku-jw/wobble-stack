@@ -1,6 +1,6 @@
 {
   "task": "issue-4-direct-control-fallability",
-  "status": "PENDING_OWNER_PLAYTEST",
+  "status": "REJECTED_BY_OWNER",
   "collected": "2026-07-23",
   "receipts": {
     "unity": "6000.3.19f1",
@@ -61,14 +61,18 @@
     },
     {
       "id": "AC6",
-      "status": "PASS_WITH_OWNER_GATE",
+      "status": "REJECTED_BY_OWNER",
       "proof": [
         "10/10 EditMode",
         "12/12 PlayMode",
         "Mac smoke and four Metal captures",
         "Signed device install and launch",
-        "Owner physical-feel judgment remains pending"
+        "Owner could not survive a gust normally on the physical iPhone"
       ]
     }
-  ]
+  ],
+  "owner_result": {
+    "status": "REJECTED",
+    "finding": "Constant-hold automation did not translate into survivable device play."
+  }
 }

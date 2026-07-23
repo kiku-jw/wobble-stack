@@ -1,12 +1,15 @@
 {
   "task": "issue-4-direct-control-fallability",
-  "status": "PENDING_OWNER_PLAYTEST",
-  "verified_revision": null,
-  "findings": [],
+  "status": "REJECTED_BY_OWNER",
+  "verified_revision": "989dee5",
+  "findings": [
+    "The constant-hold test began with favorable input before physical force.",
+    "The owner still could not survive a gust normally on the physical iPhone."
+  ],
   "automated_verdict": "PASS",
   "delivery_verdict": "PASS",
   "residual_risks": [
-    "Constant-hold physical control feel and voluntary Retry require owner playtest.",
+    "A delayed imprecise-input replacement requires another physical playtest.",
     "Stable frame pacing, touch latency, haptics, safe areas, and interruption behavior require physical-device observation."
   ]
 }

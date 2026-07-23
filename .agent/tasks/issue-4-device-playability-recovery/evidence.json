@@ -1,0 +1,70 @@
+{
+  "task": "issue-4-device-playability-recovery",
+  "status": "PASS_WITH_OWNER_GATE",
+  "collected": "2026-07-23",
+  "receipts": {
+    "unity": "6000.3.19f1",
+    "editmode": { "result": "PASS", "passed": 12, "failed": 0 },
+    "playmode": { "result": "PASS", "passed": 13, "failed": 0 },
+    "web": { "tests": "PASS_11_OF_11", "build": "PASS" },
+    "mac_smoke": "PASS",
+    "metal_capture": "PASS_1179_X_2556",
+    "ios_export": "PASS_NON_DEVELOPMENT",
+    "signed_arm64_build": "PASS",
+    "signature_verification": "PASS",
+    "device_install": "PASS",
+    "device_launch": "PASS"
+  },
+  "criteria": [
+    {
+      "id": "AC1",
+      "status": "PASS",
+      "proof": [
+        "Red effective-gust assertion on the rejected behavior",
+        "Correct and wrong tilt acceleration assertions",
+        "Downwind-only damping symmetry and zero-condition assertions"
+      ]
+    },
+    {
+      "id": "AC2",
+      "status": "PASS",
+      "proof": [
+        "Neutral start",
+        "0.35 second physical-wind delay",
+        "One unchanged 32/68 percent touch",
+        "Maximum Gentle Normal Wild matrix for both directions and 3/5 creatures"
+      ]
+    },
+    {
+      "id": "AC3",
+      "status": "PASS",
+      "proof": [
+        "Maximum Wild neutral and wrong collapse",
+        "Correct input survives and outlasts both",
+        "Zero Joint2D components and free creature rotation",
+        "No positional auto-balancing or automatic side choice"
+      ]
+    },
+    {
+      "id": "AC4",
+      "status": "PASS",
+      "proof": [
+        "Touched-end PlayMode movement assertion",
+        "Release-to-neutral runtime behavior",
+        "Inspected Metal capture with matching prompt tilt and cyan wind"
+      ]
+    },
+    {
+      "id": "AC5",
+      "status": "PASS_WITH_OWNER_GATE",
+      "proof": [
+        "12/12 EditMode and 13/13 PlayMode",
+        "Mac smoke and Metal capture",
+        "Non-Development iOS export",
+        "Signed arm64 build and strict signature verification",
+        "Paired-device install and active launch"
+      ]
+    }
+  ],
+  "owner_gate": "Physical control feel and voluntary Retry remain unclaimed."
+}

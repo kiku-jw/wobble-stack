@@ -68,6 +68,23 @@
   full gust. That input completes every maximum first-gust case, while neutral
   and wrong input still collapse under maximum Wild wind.
 
+## 2026-07-23 — fourth device-test recovery
+
+- The constant pre-held proof was rejected on-device: it did not cover a normal
+  delayed reaction or imprecise thumb placement.
+- Beam angle now directly changes effective gust acceleration for every
+  creature instead of relying on the bottom contact to transmit all authority.
+- Scalar counter-force was unstable across real input strength: too little
+  still lost the Wild/five case downwind, while too much could reverse a strong
+  hold. The final helper only damps velocity that is currently moving with the
+  wind, only while the player has the correct tilt.
+- The helper becomes zero for calm air, neutral/wrong tilt, or a creature
+  already moving back upwind. It cannot pull the tower through recovery, choose
+  the correct side, or make neutral play immortal.
+- The new human proof starts neutral, lets wind act for `0.35 s`, then holds one
+  unchanged touch at 32%/68% width. It completes the maximum first-gust matrix
+  alongside the earlier strong 22%/78% hold proof.
+
 ## Tooling constraint
 
 - Active developer directory is `/Applications/Xcode.app/Contents/Developer`; Xcode `26.6` is licensed and its first-launch setup is complete.
@@ -82,4 +99,4 @@
   produced and verified.
 - Do not claim a TestFlight build until Apple Developer Program and App Store Connect access complete that distribution gate.
 - Do not claim the physical-feel gate until the owner accepts the newly
-  calibrated constant-hold build.
+  calibrated delayed-correction build.

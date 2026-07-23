@@ -117,6 +117,88 @@ namespace WobbleStack.Domain.Tests
         }
 
         [Test]
+        public void BeamTiltDirectlyCountersOrAmplifiesTheWind()
+        {
+            float force = 0.00009f;
+            float angle = WobbleStackRules.GetRequiredCounterAngle(
+                force,
+                WobbleStackRules.GravityScale);
+            float neutral = WobbleStackRules.GetEffectiveGustAcceleration(
+                force,
+                1,
+                1f,
+                0f,
+                WobbleStackRules.GravityScale,
+                WobbleStackRules.CounterTiltAuthority);
+            float correct = WobbleStackRules.GetEffectiveGustAcceleration(
+                force,
+                1,
+                1f,
+                angle,
+                WobbleStackRules.GravityScale,
+                WobbleStackRules.CounterTiltAuthority);
+            float wrong = WobbleStackRules.GetEffectiveGustAcceleration(
+                force,
+                1,
+                1f,
+                -angle,
+                WobbleStackRules.GravityScale,
+                WobbleStackRules.CounterTiltAuthority);
+
+            Assert.That(neutral, Is.EqualTo(force).Within(0.0000001f));
+            Assert.That(correct, Is.GreaterThan(0f));
+            Assert.That(correct < 0f ? -correct : correct, Is.LessThan(force * 0.8f));
+            Assert.That(wrong, Is.GreaterThan(force * 1.2f));
+        }
+
+        [Test]
+        public void CorrectTiltDampsOnlyDownwindMotion()
+        {
+            float requiredAngle = 0.12f;
+            float downwind = WobbleStackRules.GetCounterTiltDampingAcceleration(
+                2f,
+                1,
+                requiredAngle,
+                requiredAngle,
+                1f,
+                WobbleStackRules.CounterTiltVelocityDamping);
+            float alreadyRecovering = WobbleStackRules.GetCounterTiltDampingAcceleration(
+                -2f,
+                1,
+                requiredAngle,
+                requiredAngle,
+                1f,
+                WobbleStackRules.CounterTiltVelocityDamping);
+            float wrongTilt = WobbleStackRules.GetCounterTiltDampingAcceleration(
+                2f,
+                1,
+                -requiredAngle,
+                requiredAngle,
+                1f,
+                WobbleStackRules.CounterTiltVelocityDamping);
+            float leftWind = WobbleStackRules.GetCounterTiltDampingAcceleration(
+                -2f,
+                -1,
+                -requiredAngle,
+                requiredAngle,
+                1f,
+                WobbleStackRules.CounterTiltVelocityDamping);
+            float calm = WobbleStackRules.GetCounterTiltDampingAcceleration(
+                2f,
+                1,
+                requiredAngle,
+                requiredAngle,
+                0f,
+                WobbleStackRules.CounterTiltVelocityDamping);
+
+            Assert.That(downwind, Is.LessThan(0f));
+            Assert.That(alreadyRecovering, Is.EqualTo(0f));
+            Assert.That(wrongTilt, Is.EqualTo(0f));
+            Assert.That(leftWind, Is.GreaterThan(0f));
+            Assert.That(calm, Is.EqualTo(0f));
+        }
+
+        [Test]
         public void TouchControlContinuouslyRaisesTheTouchedEndAndCoversEveryDifficulty()
         {
             float farLeft = WobbleStackRules.GetControlAmount(0f);
