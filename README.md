@@ -19,8 +19,8 @@ thumb create a satisfying cycle of calm, wobble, panic, save, collapse, and
 instant retry?
 
 The public GitHub Pages build remains the lightweight Matter.js prototype. The
-production iPhone client now lives in `ios/WobbleStack`: a Unity 6 vertical
-slice with clay character art, deterministic gusts, three difficulty profiles,
+current iPhone vertical slice lives in `ios/WobbleStack`: a Unity 6 build with
+clay character art, deterministic gusts, three difficulty profiles,
 three-to-five-creature setups, pause/results/Retry flows, local best scores,
 impact slow motion, calm/panic/impact expressions, generated sound, haptic
 hooks, reduced motion, safe areas, and a finished app icon.
