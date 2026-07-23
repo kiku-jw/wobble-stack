@@ -86,9 +86,11 @@ UNITY="/Applications/Unity/Hub/Editor/6000.3.19f1/Unity.app/Contents/MacOS/Unity
 ```
 
 `Wobble Stack/Build Mac Smoke` creates a local executable for desktop smoke
-testing. `Wobble Stack/Build iOS Development` exports an Xcode project once the
-matching Unity iOS Build Support module is installed. Signing, device testing,
-and TestFlight still require full Xcode and an Apple development team.
+testing. `Wobble Stack/Build iOS Development` exports an Xcode project with the
+matching Unity iOS Build Support module. The current export compiles with Xcode
+`26.6` as an unsigned Debug arm64 `iphoneos` app. Device testing still requires
+a connected iPhone and a signing team; TestFlight requires Apple Developer
+Program and App Store Connect access.
 
 Detailed product, art, architecture, and test decisions live in [`docs/ios`](docs/ios/PRD.md).
 

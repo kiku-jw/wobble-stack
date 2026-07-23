@@ -14,6 +14,10 @@
 
 ## Tooling constraint
 
-- Active developer directory is Command Line Tools, not Xcode.
-- Unity `6000.3.19f1` now has `PlaybackEngines/iOSSupport`; `BuildIosDevelopment` can export the Xcode project.
-- Do not claim an IPA, TestFlight build, or physical-device pass until full Xcode is installed and read back.
+- Active developer directory is `/Applications/Xcode.app/Contents/Developer`; Xcode `26.6` is licensed and its first-launch setup is complete.
+- Unity `6000.3.19f1` has `PlaybackEngines/iOSSupport`; `BuildIosDevelopment` exports the Xcode project.
+- The iOS `26.5` platform runtime is installed and available. Xcode compiles the exported Debug configuration for generic `iphoneos` with code signing disabled.
+- The verified output is an unsigned arm64 app bundle with bundle identifier `dev.kikuai.wobblestack` and minimum iOS version `15.0`.
+- Do not claim a signed IPA until Apple development credentials and signing complete.
+- Do not claim a TestFlight build until Apple Developer Program and App Store Connect access complete that distribution gate.
+- Do not claim a physical-device pass until the Development build runs on a connected iPhone.

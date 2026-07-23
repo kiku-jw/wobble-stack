@@ -36,7 +36,9 @@ Current automated captures cover start, active counter-tilt, airborne collapse w
 
 ## Device gate
 
-Blocked until full Xcode is installed:
+Toolchain foundation complete: full Xcode is selected, the iOS platform runtime is available, Unity exports the Xcode project, and its unsigned Debug `iphoneos` configuration compiles successfully.
+
+The remaining gate requires a connected physical iPhone and code signing:
 
 - Development build on a physical iPhone.
 - Stable 60 fps target on the selected baseline device.

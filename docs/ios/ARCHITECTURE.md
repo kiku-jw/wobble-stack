@@ -34,6 +34,6 @@ Use Unity `6000.3.19f1` as a nested production client at `ios/WobbleStack`. The 
 - Generated assets inherit from user-owned concept frames and are stored with a generation manifest.
 - Runtime uses one shared soft-light material only if the default sprite material cannot preserve the target look.
 
-## Known build constraint
+## Build boundary
 
-Unity iOS Build Support is installed for `6000.3.19f1`, but full Xcode is still absent. Editor implementation and automated validation can proceed; signing, TestFlight, and physical-device proof cannot honestly complete until Xcode is installed.
+Unity iOS Build Support is installed for `6000.3.19f1`, Xcode `26.6` is configured, and the exported project compiles as an unsigned Debug arm64 `iphoneos` app. Physical-device proof still requires a connected iPhone and a signing team; TestFlight requires Apple Developer Program and App Store Connect access.
