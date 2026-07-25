@@ -101,28 +101,110 @@ namespace WobbleStack.Runtime.Tests
 
         [UnityTest]
         [Order(5)]
-        public IEnumerator FacesProgressFromCalmToWindToImpact()
+        public IEnumerator ArticulatedFacesProgressFromCalmToWindToImpact()
         {
             yield return WaitForBootstrap();
 
             CreatureBody creature = Object.FindFirstObjectByType<CreatureBody>();
             Assert.That(creature, Is.Not.Null);
-            SpriteRenderer renderer = creature.GetComponentInChildren<SpriteRenderer>();
-            Assert.That(renderer.sprite.name, Does.StartWith("character-calm-"));
+            CreatureRig rig = creature.Rig;
+            Assert.That(rig, Is.Not.Null);
+            Assert.That(rig.Emotion, Is.EqualTo(CreatureEmotion.Calm));
+            Assert.That(rig.SecondaryPartCount, Is.GreaterThanOrEqualTo(4));
+            Assert.That(rig.GetMouthSpriteName(), Does.StartWith("face-"));
 
             creature.SetWind(0.32f);
             yield return null;
-            Assert.That(renderer.sprite.name, Does.StartWith("character-"));
-            Assert.That(renderer.sprite.name, Does.Not.Contain("calm"));
-            Assert.That(renderer.sprite.name, Does.Not.Contain("impact"));
+            Assert.That(rig.Emotion, Is.Not.EqualTo(CreatureEmotion.Calm));
+            Assert.That(rig.Emotion, Is.Not.EqualTo(CreatureEmotion.Impact));
+
+            rig.ShowFallReaction();
+            yield return null;
+            Assert.That(rig.Emotion, Is.EqualTo(CreatureEmotion.Panic));
 
             creature.ShowImpactReaction();
             yield return null;
-            Assert.That(renderer.sprite.name, Does.StartWith("character-impact-"));
+            Assert.That(rig.Emotion, Is.EqualTo(CreatureEmotion.Impact));
+            Assert.That(rig.GetMouthSpriteName(), Is.EqualTo("face-DazedMouth"));
         }
 
         [UnityTest]
         [Order(6)]
+        public IEnumerator FiveCharactersHaveDistinctRigsAndDenseVisibleContacts()
+        {
+            yield return WaitForBootstrap();
+
+            List<CreatureBody> creatures = GetCreatureComponents();
+            Assert.That(creatures.Count, Is.EqualTo(5));
+            Assert.That(GetCreatureByKind(creatures, CharacterKind.Pear).Rig.SecondaryPartCount, Is.EqualTo(8));
+            Assert.That(GetCreatureByKind(creatures, CharacterKind.Cube).Rig.SecondaryPartCount, Is.EqualTo(4));
+            Assert.That(GetCreatureByKind(creatures, CharacterKind.Bird).Rig.SecondaryPartCount, Is.EqualTo(8));
+            Assert.That(GetCreatureByKind(creatures, CharacterKind.Rabbit).Rig.SecondaryPartCount, Is.EqualTo(6));
+            Assert.That(GetCreatureByKind(creatures, CharacterKind.Jelly).Rig.SecondaryPartCount, Is.EqualTo(5));
+
+            creatures.Sort((left, right) => left.Body.position.y.CompareTo(right.Body.position.y));
+            for (int index = 1; index < creatures.Count; index += 1)
+            {
+                Bounds lower = GetVisualBounds(creatures[index - 1]);
+                Bounds upper = GetVisualBounds(creatures[index]);
+                float visualGap = upper.min.y - lower.max.y;
+                Assert.That(
+                    visualGap,
+                    Is.InRange(-1.6f, 0.04f),
+                    $"Articulated silhouettes {index - 1}/{index} did not read as a dense stack.");
+            }
+        }
+
+        [UnityTest]
+        [Order(7)]
+        public IEnumerator PersonalityThresholdsAndBlinkSchedulesDiffer()
+        {
+            yield return WaitForBootstrap();
+
+            List<CreatureBody> creatures = GetCreatureComponents();
+            CreatureBody pear = GetCreatureByKind(creatures, CharacterKind.Pear);
+            CreatureBody cube = GetCreatureByKind(creatures, CharacterKind.Cube);
+            CreatureBody rabbit = GetCreatureByKind(creatures, CharacterKind.Rabbit);
+            pear.SetWind(0.5f);
+            cube.SetWind(0.5f);
+            rabbit.SetWind(0.5f);
+            Assert.That(pear.Rig.Emotion, Is.EqualTo(CreatureEmotion.Effort));
+            Assert.That(cube.Rig.Emotion, Is.EqualTo(CreatureEmotion.Panic));
+            Assert.That(rabbit.Rig.Emotion, Is.EqualTo(CreatureEmotion.Effort));
+
+            HashSet<int> blinkBuckets = new HashSet<int>();
+            foreach (CreatureBody creature in creatures)
+            {
+                blinkBuckets.Add(Mathf.RoundToInt(creature.Rig.GetNextBlinkAtProbe() * 20f));
+            }
+
+            Assert.That(blinkBuckets.Count, Is.GreaterThanOrEqualTo(3));
+        }
+
+        [UnityTest]
+        [Order(8)]
+        public IEnumerator EarsLeavesAndWingsLagBehindPhysicalMotion()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            game.ConfigureGameplayProbe(0f, 1, 0f, 5, 1.4f);
+            CreatureBody rabbit = GetCreatureByKind(GetCreatureComponents(), CharacterKind.Rabbit);
+            float before = rabbit.Rig.GetSecondaryMotionProbe();
+            rabbit.Body.angularVelocity = 85f;
+            rabbit.SetWind(0.82f);
+
+            for (int step = 0; step < 14; step += 1)
+            {
+                yield return new WaitForFixedUpdate();
+                yield return null;
+            }
+
+            float after = rabbit.Rig.GetSecondaryMotionProbe();
+            Assert.That(Mathf.Abs(Mathf.DeltaAngle(before, after)), Is.GreaterThan(3f));
+        }
+
+        [UnityTest]
+        [Order(9)]
         public IEnumerator WindStreaksAreCoolBlueAndShowTheirTravelDirection()
         {
             yield return WaitForBootstrap();
@@ -152,8 +234,8 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(7)]
-        public IEnumerator RollingVehicleUsesOneWheelJointAndCreaturesStayFree()
+        [Order(10)]
+        public IEnumerator RollingVehicleUsesOneWheelJointAndOnlyWeakCreatureGrips()
         {
             yield return WaitForBootstrap();
             WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
@@ -163,14 +245,42 @@ namespace WobbleStack.Runtime.Tests
             Rigidbody2D[] bodies = GetCreatureBodies().ToArray();
             Assert.That(bodies.Length, Is.EqualTo(5));
             Joint2D[] joints = Object.FindObjectsByType<Joint2D>(FindObjectsSortMode.None);
-            Assert.That(joints.Length, Is.EqualTo(1));
-            Assert.That(joints[0], Is.InstanceOf<WheelJoint2D>());
-            Assert.That(joints[0].gameObject.name, Is.EqualTo("Seesaw Beam"));
-            Assert.That(joints[0].connectedBody.gameObject.name, Is.EqualTo("Star Wheel"));
+            int wheelJointCount = 0;
+            int weakGripCount = 0;
+            foreach (Joint2D joint in joints)
+            {
+                if (joint is WheelJoint2D wheelJoint)
+                {
+                    wheelJointCount += 1;
+                    Assert.That(wheelJoint.gameObject.name, Is.EqualTo("Seesaw Beam"));
+                    Assert.That(wheelJoint.connectedBody.gameObject.name, Is.EqualTo("Star Wheel"));
+                    continue;
+                }
+
+                Assert.That(
+                    joint,
+                    Is.InstanceOf<DistanceJoint2D>(),
+                    "Only the wheel joint and authored weak hand grips are permitted.");
+                if (!(joint is DistanceJoint2D grip))
+                {
+                    continue;
+                }
+
+                Assert.That(grip.maxDistanceOnly, Is.True);
+                Assert.That(grip.enabled, Is.False, "A creature grip may not stabilize the calm tower.");
+                weakGripCount += 1;
+            }
+
+            Assert.That(wheelJointCount, Is.EqualTo(1));
+            Assert.That(weakGripCount, Is.EqualTo(4));
             foreach (Rigidbody2D body in bodies)
             {
                 Assert.That(body.freezeRotation, Is.False, $"{body.name} had hidden rotation locking.");
-                Assert.That(body.GetComponents<Joint2D>(), Is.Empty, $"{body.name} had a hidden creature joint.");
+                foreach (Joint2D joint in body.GetComponents<Joint2D>())
+                {
+                    Assert.That(joint, Is.InstanceOf<DistanceJoint2D>());
+                    Assert.That(joint.enabled, Is.False);
+                }
             }
 
             Time.timeScale = 6f;
@@ -187,7 +297,51 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(8)]
+        [Order(11)]
+        public IEnumerator WeakVisibleGripActivatesAndReleasesWithoutBecomingATether()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            game.ConfigureGameplayProbe(
+                WobbleStackRules.GustForceMax,
+                1,
+                0.8f,
+                5,
+                WobbleStackRules.GustDurationMax);
+            List<CreatureBody> creatures = GetCreatureComponents();
+            CreatureBody observed = null;
+            bool released = false;
+
+            Time.timeScale = 4f;
+            for (int step = 0; step < 220; step += 1)
+            {
+                yield return new WaitForFixedUpdate();
+                foreach (CreatureBody creature in creatures)
+                {
+                    if (observed == null && creature.HasActiveGrip)
+                    {
+                        observed = creature;
+                    }
+                    else if (observed == creature && !creature.HasActiveGrip)
+                    {
+                        released = true;
+                    }
+                }
+
+                if (released || game.GetGameplayProbePhase() != GamePhase.Playing)
+                {
+                    break;
+                }
+            }
+
+            Time.timeScale = 1f;
+            Assert.That(observed, Is.Not.Null, "No character visibly attempted a weak grip during danger.");
+            Assert.That(observed.GripWasUsed, Is.True);
+            Assert.That(released || !observed.HasGripJoint, Is.True, "The grip never released or broke.");
+        }
+
+        [UnityTest]
+        [Order(12)]
         public IEnumerator RelativeDriveRollsTheGroundedWheelBeforeWindStarts()
         {
             yield return WaitForBootstrap();
@@ -220,7 +374,7 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(9)]
+        [Order(13)]
         public IEnumerator StarWheelStaysGroundedThroughAStrongFiveFriendCatch()
         {
             yield return WaitForBootstrap();
@@ -246,7 +400,7 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(10)]
+        [Order(14)]
         public IEnumerator CameraFollowsHorizontalWheelTravel()
         {
             yield return WaitForBootstrap();
@@ -268,7 +422,7 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(11)]
+        [Order(15)]
         public IEnumerator DelayedBroadCatchGestureSurvivesStrongestGustMatrix()
         {
             yield return WaitForBootstrap();
@@ -297,7 +451,7 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(12)]
+        [Order(16)]
         public IEnumerator SteadyWheelCatchSurvivesStrongestGustAcrossTowerSizes()
         {
             yield return WaitForBootstrap();
@@ -328,7 +482,7 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(13)]
+        [Order(17)]
         public IEnumerator CorrectWheelTravelOutperformsNeutralAndWrongTravelOnTheSameGust()
         {
             yield return WaitForBootstrap();
@@ -370,7 +524,7 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(14)]
+        [Order(18)]
         public IEnumerator NeutralAndWrongInputCollapseUnderTheStrongestGust()
         {
             yield return WaitForBootstrap();
@@ -416,7 +570,7 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(15)]
+        [Order(19)]
         public IEnumerator FailureBeatFreezesDuringApplicationInterruption()
         {
             yield return WaitForBootstrap();
@@ -428,6 +582,11 @@ namespace WobbleStack.Runtime.Tests
             Assert.That(creature, Is.Not.Null);
             game.RegisterImpact(creature, creature.Body.position);
             Assert.That(game.GetGameplayProbePhase(), Is.EqualTo(GamePhase.Failing));
+            foreach (CreatureBody fallingCreature in GetCreatureComponents())
+            {
+                Assert.That(fallingCreature.IsFalling, Is.True);
+                Assert.That(fallingCreature.Rig.Emotion, Is.EqualTo(CreatureEmotion.Panic));
+            }
 
             game.SendMessage("OnApplicationPause", true);
             Assert.That(Time.timeScale, Is.EqualTo(0f));
@@ -618,6 +777,46 @@ namespace WobbleStack.Runtime.Tests
 
             creatures.Sort((left, right) => string.CompareOrdinal(left.gameObject.name, right.gameObject.name));
             return creatures;
+        }
+
+        private static List<CreatureBody> GetCreatureComponents()
+        {
+            CreatureBody[] all = Object.FindObjectsByType<CreatureBody>(FindObjectsSortMode.None);
+            List<CreatureBody> creatures = new List<CreatureBody>(all);
+            creatures.Sort((left, right) => string.CompareOrdinal(left.gameObject.name, right.gameObject.name));
+            return creatures;
+        }
+
+        private static CreatureBody GetCreatureByKind(
+            List<CreatureBody> creatures,
+            CharacterKind kind)
+        {
+            foreach (CreatureBody creature in creatures)
+            {
+                if (creature.Kind == kind)
+                {
+                    return creature;
+                }
+            }
+
+            Assert.Fail($"Could not find articulated creature {kind}.");
+            return null;
+        }
+
+        private static Bounds GetVisualBounds(CreatureBody creature)
+        {
+            SpriteRenderer[] renderers = creature.GetComponentsInChildren<SpriteRenderer>();
+            Assert.That(renderers.Length, Is.GreaterThan(0));
+            Bounds bounds = renderers[0].bounds;
+            for (int index = 1; index < renderers.Length; index += 1)
+            {
+                if (renderers[index].enabled && renderers[index].gameObject.activeInHierarchy)
+                {
+                    bounds.Encapsulate(renderers[index].bounds);
+                }
+            }
+
+            return bounds;
         }
 
         private static List<Collider2D> GetCreatureColliders()

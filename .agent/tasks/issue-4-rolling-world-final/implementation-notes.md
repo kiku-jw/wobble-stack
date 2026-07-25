@@ -31,3 +31,30 @@
   the unscaled circle collider.
 - Rolling-core result: `13/13` EditMode, `15/15` PlayMode, Mac smoke build, and
   inspected start/playing Metal captures.
+
+## Articulated-character receipt
+
+- Generated five blank-body rig sheets plus one shared face vocabulary instead
+  of adding skeletal animation, Spine, or another runtime package. Explicit
+  sprite crops and pivots keep the source sheets immutable.
+- Native child transforms plus `SmoothDampAngle` won the lazy-senior ladder:
+  acceleration, angular velocity, wind, contact, falling speed, and impact
+  drive appendage lag. The result needs no Animator graph or imported rigging
+  framework.
+- Collider dimensions now follow the torso rather than the complete painted
+  silhouette. Feet and accents overlap neighboring bodies while physical
+  torsos stay in dense contact.
+- Every upper creature receives one disabled `DistanceJoint2D` hand grip. A
+  grip can only activate during wind plus measured separation danger, is
+  max-distance-only, short-lived, low-force, staggered, and breakable. The
+  strongest catch matrix still rejects neutral and wrong play.
+- Personality is encoded in distinct thresholds, mouth/brow choices,
+  irregular blink and gaze schedules, and secondary-motion response: Pear
+  braces, Cube worries and reaches, Bird overreacts, Rabbit clings with delayed
+  ears, and Jelly remains cheerful or regal longest.
+- Failure releases grips, adds a small physically bounded separation impulse,
+  drives falling stretch and appendage flail, then switches to dazed impact
+  faces. Dust puffs, colored toy chips, crown, gravity arcs, impact-only slow
+  motion, haptic/audio hooks, and squash make the collapse readable.
+- Articulation result: `13/13` EditMode, `19/19` PlayMode, Mac smoke build, and
+  inspected calm-stack and collapse Metal captures.

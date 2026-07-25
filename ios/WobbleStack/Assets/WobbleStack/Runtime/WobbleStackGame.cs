@@ -18,7 +18,7 @@ namespace WobbleStack.Runtime
         private const float PlatformWidth = 8.5f;
         private const float PlatformHeight = 0.78f;
         private const float StaticStackContactInset = 0.06f;
-        private const float DynamicStackContactInset = 0.018f;
+        private const float DynamicStackContactInset = 0.05f;
         private const float RoadLength = 180f;
         private const float RoadCenterX = 70f;
         private const float PointerTravelFraction = 0.28f;
@@ -29,7 +29,7 @@ namespace WobbleStack.Runtime
         private const float UnityAccelerationScale = 9342.857f;
         private const float ImpactSlowMotionScale = 0.18f;
         private const float ImpactSlowMotionSeconds = 0.36f;
-        private const float FailureResultHoldSeconds = 0.9f;
+        private const float FailureResultHoldSeconds = 1.15f;
         private const float FailureHardTimeoutSeconds = 2.6f;
         private const string CreatureCountPreference = "wobble.ios.creature-count";
         private const string ReducedMotionPreference = "wobble.ios.reduced-motion";
@@ -110,10 +110,7 @@ namespace WobbleStack.Runtime
             else if (HasArgument("--wobble-capture-playing"))
             {
                 PreparePlayingCapture();
-                for (int step = 0; step < 140; step += 1)
-                {
-                    yield return new WaitForFixedUpdate();
-                }
+                yield return new WaitForSecondsRealtime(2.6f);
             }
 
             UpdateCameraRig();
@@ -638,6 +635,10 @@ namespace WobbleStack.Runtime
                 _creatures.Add(creature);
             }
 
+            for (int index = 1; index < _creatures.Count; index += 1)
+            {
+                _creatures[index].ConfigureLowerNeighbor(_creatures[index - 1], index);
+            }
         }
 
         private void ResetVehicle(bool dynamicBodies)
@@ -706,22 +707,13 @@ namespace WobbleStack.Runtime
             collider.sharedMaterial = _creatureMaterial;
             body.useAutoMass = true;
 
-            GameObject visualObject = new GameObject("Visual");
-            visualObject.transform.SetParent(bodyObject.transform, false);
-            SpriteRenderer renderer = visualObject.AddComponent<SpriteRenderer>();
-            renderer.sprite = GeneratedArt.CalmCharacter(spec.Kind);
-            renderer.material = GeneratedArt.ChromaMaterial;
-            renderer.sortingOrder = 30 + index;
-            FitHeight(visualObject.transform, renderer.sprite, spec.VisualHeight);
-            visualObject.transform.localPosition = new Vector3(0f, spec.VisualOffsetY, 0f);
+            CreatureRig rig = bodyObject.AddComponent<CreatureRig>();
+            rig.Initialize(spec.Kind, 30 + (index * 12), index * 1.37f);
             CreatureBody creature = bodyObject.AddComponent<CreatureBody>();
             creature.Initialize(
                 this,
                 spec.Kind,
-                visualObject.transform,
-                index * 1.37f,
-                GeneratedArt.Character(spec.Kind),
-                GeneratedArt.ImpactCharacter(spec.Kind));
+                rig);
             return creature;
         }
 
@@ -850,6 +842,11 @@ namespace WobbleStack.Runtime
             _wheelJoint.useMotor = false;
             _windStreaks.SetWind(1, 0f);
             _audio.SetWind(0f);
+            foreach (CreatureBody creature in _creatures)
+            {
+                creature.BeginFallReaction();
+            }
+
             SpawnCrown();
         }
 
@@ -1256,9 +1253,63 @@ namespace WobbleStack.Runtime
 
         private void SpawnImpact(Vector2 point, CharacterKind kind)
         {
-            CreateTransientSprite("Impact Dust", GeneratedArt.Dust(), point + new Vector2(0f, 0.15f), 1.2f, new Vector2(0f, 0.25f), 0.55f);
-            Color kindTint = kind == CharacterKind.Bird ? new Color(1f, 0.8f, 0.65f, 1f) : Color.white;
-            CreateTransientSprite("Impact Stars", GeneratedArt.ImpactStars(), point + new Vector2(0.25f, 0.65f), 0.78f, new Vector2(0.15f, 0.55f), 0.7f, kindTint);
+            CreateTransientSprite(
+                "Impact Dust",
+                GeneratedArt.Dust(),
+                point + new Vector2(0f, 0.12f),
+                1.22f,
+                new Vector2(0f, 0.32f),
+                0.62f,
+                Color.white,
+                0.12f,
+                0f,
+                1.45f);
+            CreateTransientSprite(
+                "Impact Dust Left",
+                GeneratedArt.Dust(),
+                point + new Vector2(-0.18f, 0.12f),
+                0.58f,
+                new Vector2(-0.48f, 0.48f),
+                0.48f,
+                new Color(1f, 0.94f, 0.86f, 0.86f),
+                0.24f,
+                -24f,
+                1.65f);
+            CreateTransientSprite(
+                "Impact Dust Right",
+                GeneratedArt.Dust(),
+                point + new Vector2(0.2f, 0.1f),
+                0.52f,
+                new Vector2(0.55f, 0.42f),
+                0.46f,
+                new Color(1f, 0.94f, 0.86f, 0.82f),
+                0.24f,
+                28f,
+                1.55f);
+
+            Color kindTint = GetCharacterEffectColor(kind);
+            CreateTransientSprite(
+                "Impact Stars",
+                GeneratedArt.ImpactStars(),
+                point + new Vector2(0.22f, 0.62f),
+                0.78f,
+                new Vector2(0.18f, 0.88f),
+                0.78f,
+                kindTint,
+                1.4f,
+                92f,
+                0.78f);
+            CreateTransientSprite(
+                "Impact Toy Chips",
+                GeneratedArt.ImpactStars(),
+                point + new Vector2(-0.22f, 0.38f),
+                0.36f,
+                new Vector2(-0.5f, 1.08f),
+                0.68f,
+                kindTint,
+                2.15f,
+                -145f,
+                0.5f);
         }
 
         private void PreparePlayingCapture()
@@ -1321,6 +1372,21 @@ namespace WobbleStack.Runtime
 
         private void CreateTransientSprite(string name, Sprite sprite, Vector2 position, float height, Vector2 velocity, float duration, Color color)
         {
+            CreateTransientSprite(name, sprite, position, height, velocity, duration, color, 0f, 0f, 1.35f);
+        }
+
+        private void CreateTransientSprite(
+            string name,
+            Sprite sprite,
+            Vector2 position,
+            float height,
+            Vector2 velocity,
+            float duration,
+            Color color,
+            float gravity,
+            float angularVelocity,
+            float endScale)
+        {
             GameObject effect = new GameObject(name);
             effect.transform.SetParent(_worldRoot, false);
             effect.transform.position = position;
@@ -1331,7 +1397,24 @@ namespace WobbleStack.Runtime
             renderer.color = color;
             FitHeight(effect.transform, sprite, height);
             TransientFx transient = effect.AddComponent<TransientFx>();
-            transient.Initialize(duration, velocity);
+            transient.Initialize(duration, velocity, gravity, angularVelocity, endScale);
+        }
+
+        private static Color GetCharacterEffectColor(CharacterKind kind)
+        {
+            switch (kind)
+            {
+                case CharacterKind.Pear:
+                    return new Color(1f, 0.88f, 0.3f, 1f);
+                case CharacterKind.Cube:
+                    return new Color(0.3f, 0.82f, 1f, 1f);
+                case CharacterKind.Bird:
+                    return new Color(1f, 0.57f, 0.28f, 1f);
+                case CharacterKind.Rabbit:
+                    return new Color(0.77f, 0.48f, 1f, 1f);
+                default:
+                    return new Color(0.42f, 0.94f, 0.95f, 1f);
+            }
         }
 
         private void UpdateCameraRig()
@@ -1528,29 +1611,23 @@ namespace WobbleStack.Runtime
 
         private readonly struct CreatureSpec
         {
-            private CreatureSpec(CharacterKind kind, Vector2 colliderSize, float visualHeight, float visualOffsetY)
+            private CreatureSpec(CharacterKind kind, Vector2 colliderSize)
             {
                 Kind = kind;
                 ColliderSize = colliderSize;
-                VisualHeight = visualHeight;
-                VisualOffsetY = visualOffsetY;
             }
 
             public CharacterKind Kind { get; }
 
             public Vector2 ColliderSize { get; }
 
-            public float VisualHeight { get; }
-
-            public float VisualOffsetY { get; }
-
             public static CreatureSpec[] All { get; } =
             {
-                new CreatureSpec(CharacterKind.Pear, new Vector2(1.72f, 2.4f), 2.95f, 0f),
-                new CreatureSpec(CharacterKind.Cube, new Vector2(1.78f, 1.76f), 2.35f, 0f),
-                new CreatureSpec(CharacterKind.Bird, new Vector2(1.55f, 1.85f), 2.35f, 0f),
-                new CreatureSpec(CharacterKind.Rabbit, new Vector2(1.7f, 2.64f), 3.15f, 0f),
-                new CreatureSpec(CharacterKind.Jelly, new Vector2(1.66f, 1.64f), 2f, 0f)
+                new CreatureSpec(CharacterKind.Pear, new Vector2(1.68f, 2.32f)),
+                new CreatureSpec(CharacterKind.Cube, new Vector2(1.65f, 1.65f)),
+                new CreatureSpec(CharacterKind.Bird, new Vector2(1.42f, 1.65f)),
+                new CreatureSpec(CharacterKind.Rabbit, new Vector2(1.58f, 1.78f)),
+                new CreatureSpec(CharacterKind.Jelly, new Vector2(1.72f, 1.2f))
             };
         }
     }
