@@ -15,7 +15,6 @@ namespace WobbleStack.Runtime.Tests
         private static void PrepareBootstrapPreferences()
         {
             PlayerPrefs.DeleteAll();
-            PlayerPrefs.SetInt("wobble.ios.difficulty", 0);
             PlayerPrefs.SetInt("wobble.ios.creature-count", 99);
             PlayerPrefs.Save();
         }
@@ -36,6 +35,7 @@ namespace WobbleStack.Runtime.Tests
             Assert.That(GameObject.Find("Game UI"), Is.Not.Null);
             Assert.That(GameObject.Find("Start Overlay"), Is.Not.Null);
             Assert.That(GameObject.Find("Start Overlay").activeSelf, Is.True);
+            Assert.That(GameObject.Find("Difficulty"), Is.Null);
             AudioListener[] listeners = Object.FindObjectsByType<AudioListener>(FindObjectsSortMode.None);
             Assert.That(listeners.Length, Is.EqualTo(1));
             Assert.That(listeners[0].enabled, Is.True);
@@ -133,9 +133,17 @@ namespace WobbleStack.Runtime.Tests
             wind.Refresh(1f);
 
             LineRenderer line = FindEnabledWindLine(wind);
+            int gentleLineCount = CountEnabledWindLines(wind);
+            float gentleAlpha = line.startColor.a;
             Assert.That(line.startColor.b, Is.GreaterThan(line.startColor.r));
             Assert.That(line.startColor.a, Is.GreaterThan(0.2f));
             Assert.That(line.GetPosition(0).x, Is.GreaterThan(line.GetPosition(1).x));
+
+            wind.SetWind(1, 0.9f);
+            wind.Refresh(1f);
+            LineRenderer strongLine = FindEnabledWindLine(wind);
+            Assert.That(CountEnabledWindLines(wind), Is.GreaterThan(gentleLineCount));
+            Assert.That(strongLine.startColor.a, Is.GreaterThan(gentleAlpha));
 
             wind.SetWind(-1, 0.25f);
             wind.Refresh(1f);
@@ -181,8 +189,7 @@ namespace WobbleStack.Runtime.Tests
             WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
             Assert.That(game, Is.Not.Null);
             float touchAmount = WobbleStackRules.GetControlAmount(0.82f);
-            DifficultyProfile gentle = WobbleStackRules.GetDifficultyProfile(DifficultyId.Gentle);
-            game.ConfigureGameplayProbe(gentle.ForceMin, 1, touchAmount, 3, 1.4f);
+            game.ConfigureGameplayProbe(WobbleStackRules.GustForceMin, 1, touchAmount, 3, 1.4f);
 
             for (int step = 0; step < 5; step += 1)
             {
@@ -199,69 +206,60 @@ namespace WobbleStack.Runtime.Tests
 
         [UnityTest]
         [Order(9)]
-        public IEnumerator DelayedImpreciseCorrectionSurvivesFirstGustMatrix()
+        public IEnumerator DelayedImpreciseCorrectionSurvivesStrongestGustMatrix()
         {
             yield return WaitForBootstrap();
             WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
             Assert.That(game, Is.Not.Null);
 
-            foreach (DifficultyId difficulty in new[] { DifficultyId.Gentle, DifficultyId.Normal, DifficultyId.Wild })
+            foreach (int creatureCount in new[] { 3, 5 })
             {
-                DifficultyProfile profile = WobbleStackRules.GetDifficultyProfile(difficulty);
-                foreach (int creatureCount in new[] { 3, 5 })
+                foreach (int direction in new[] { -1, 1 })
                 {
-                    foreach (int direction in new[] { -1, 1 })
-                    {
-                        TowerMeasurement measurement = default;
-                        yield return MeasureDelayedTower(
-                            game,
-                            profile.ForceMax,
-                            direction,
-                            creatureCount,
-                            profile.DurationMax,
-                            value => measurement = value);
+                    TowerMeasurement measurement = default;
+                    yield return MeasureDelayedTower(
+                        game,
+                        WobbleStackRules.GustForceMax,
+                        direction,
+                        creatureCount,
+                        WobbleStackRules.GustDurationMax,
+                        value => measurement = value);
 
-                        Assert.That(
-                            measurement.Completed,
-                            Is.True,
-                            $"{difficulty}, {creatureCount} creatures, direction {direction} did not survive a delayed imprecise correction: {measurement}.");
-                    }
+                    Assert.That(
+                        measurement.Completed,
+                        Is.True,
+                        $"{creatureCount} creatures, direction {direction} did not survive a delayed imprecise correction: {measurement}.");
                 }
             }
         }
 
         [UnityTest]
         [Order(10)]
-        public IEnumerator CorrectCounterTiltSurvivesWorstFirstGustAcrossDifficultiesAndTowerSizes()
+        public IEnumerator CorrectCounterTiltSurvivesStrongestGustAcrossTowerSizes()
         {
             yield return WaitForBootstrap();
             WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
             Assert.That(game, Is.Not.Null);
 
-            foreach (DifficultyId difficulty in new[] { DifficultyId.Gentle, DifficultyId.Normal, DifficultyId.Wild })
+            foreach (int creatureCount in new[] { 3, 5 })
             {
-                DifficultyProfile profile = WobbleStackRules.GetDifficultyProfile(difficulty);
-
-                foreach (int creatureCount in new[] { 3, 5 })
+                foreach (int direction in new[] { -1, 1 })
                 {
-                    foreach (int direction in new[] { -1, 1 })
-                    {
-                        float humanHold = GetHumanHoldAmount(direction);
-                        TowerMeasurement measurement = default;
-                        yield return MeasureTower(
-                            game,
-                            profile.ForceMax,
-                            direction,
-                            humanHold,
-                            creatureCount,
-                            profile.DurationMax,
-                            value => measurement = value);
+                    float humanHold = GetHumanHoldAmount(direction);
+                    TowerMeasurement measurement = default;
+                    yield return MeasureTower(
+                        game,
+                        WobbleStackRules.GustForceMax,
+                        direction,
+                        humanHold,
+                        creatureCount,
+                        WobbleStackRules.GustDurationMax,
+                        value => measurement = value);
 
-                        Assert.That(
-                            measurement.Completed,
-                            Is.True,
-                            $"{difficulty}, {creatureCount} creatures, direction {direction} failed the complete first gust: {measurement}.");
-                    }
+                    Assert.That(
+                        measurement.Completed,
+                        Is.True,
+                        $"{creatureCount} creatures, direction {direction} failed the complete first gust: {measurement}.");
                 }
             }
         }
@@ -273,37 +271,35 @@ namespace WobbleStack.Runtime.Tests
             yield return WaitForBootstrap();
             WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
             Assert.That(game, Is.Not.Null);
-            DifficultyProfile profile = WobbleStackRules.GetDifficultyProfile(DifficultyId.Normal);
-
             foreach (int direction in new[] { -1, 1 })
             {
                 float humanHold = GetHumanHoldAmount(direction);
                 TowerMeasurement neutral = default;
                 yield return MeasureTower(
                     game,
-                    profile.ForceMax,
+                    WobbleStackRules.GustForceMax,
                     direction,
                     0f,
                     5,
-                    profile.DurationMax,
+                    WobbleStackRules.GustDurationMax,
                     value => neutral = value);
                 TowerMeasurement correct = default;
                 yield return MeasureTower(
                     game,
-                    profile.ForceMax,
+                    WobbleStackRules.GustForceMax,
                     direction,
                     humanHold,
                     5,
-                    profile.DurationMax,
+                    WobbleStackRules.GustDurationMax,
                     value => correct = value);
                 TowerMeasurement wrong = default;
                 yield return MeasureTower(
                     game,
-                    profile.ForceMax,
+                    WobbleStackRules.GustForceMax,
                     direction,
                     -humanHold,
                     5,
-                    profile.DurationMax,
+                    WobbleStackRules.GustDurationMax,
                     value => wrong = value);
 
                 AssertTowerOrdering(neutral, correct, wrong, direction);
@@ -312,46 +308,45 @@ namespace WobbleStack.Runtime.Tests
 
         [UnityTest]
         [Order(12)]
-        public IEnumerator NeutralAndWrongInputCollapseUnderTheStrongestWildGust()
+        public IEnumerator NeutralAndWrongInputCollapseUnderTheStrongestGust()
         {
             yield return WaitForBootstrap();
             WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
             Assert.That(game, Is.Not.Null);
-            DifficultyProfile profile = WobbleStackRules.GetDifficultyProfile(DifficultyId.Wild);
             foreach (int direction in new[] { -1, 1 })
             {
                 float humanHold = GetHumanHoldAmount(direction);
                 TowerMeasurement neutral = default;
                 yield return MeasureTower(
                     game,
-                    profile.ForceMax,
+                    WobbleStackRules.GustForceMax,
                     direction,
                     0f,
                     5,
-                    profile.DurationMax,
+                    WobbleStackRules.GustDurationMax,
                     value => neutral = value);
                 TowerMeasurement correct = default;
                 yield return MeasureTower(
                     game,
-                    profile.ForceMax,
+                    WobbleStackRules.GustForceMax,
                     direction,
                     humanHold,
                     5,
-                    profile.DurationMax,
+                    WobbleStackRules.GustDurationMax,
                     value => correct = value);
                 TowerMeasurement wrong = default;
                 yield return MeasureTower(
                     game,
-                    profile.ForceMax,
+                    WobbleStackRules.GustForceMax,
                     direction,
                     -humanHold,
                     5,
-                    profile.DurationMax,
+                    WobbleStackRules.GustDurationMax,
                     value => wrong = value);
 
-                Assert.That(neutral.Completed, Is.False, $"Neutral input was immortal under {direction} Wild wind: {neutral}.");
-                Assert.That(wrong.Completed, Is.False, $"Wrong input was immortal under {direction} Wild wind: {wrong}.");
-                Assert.That(correct.Completed, Is.True, $"Correct input did not survive {direction} Wild wind: {correct}.");
+                Assert.That(neutral.Completed, Is.False, $"Neutral input was immortal under the strongest {direction} wind: {neutral}.");
+                Assert.That(wrong.Completed, Is.False, $"Wrong input was immortal under the strongest {direction} wind: {wrong}.");
+                Assert.That(correct.Completed, Is.True, $"Correct input did not survive the strongest {direction} wind: {correct}.");
                 Assert.That(correct.SurvivedSteps, Is.GreaterThan(neutral.SurvivedSteps));
                 Assert.That(correct.SurvivedSteps, Is.GreaterThan(wrong.SurvivedSteps));
             }
@@ -584,6 +579,20 @@ namespace WobbleStack.Runtime.Tests
 
             Assert.Fail("Expected at least one visible wind streak.");
             return null;
+        }
+
+        private static int CountEnabledWindLines(WindStreaks wind)
+        {
+            int count = 0;
+            foreach (LineRenderer line in wind.GetComponentsInChildren<LineRenderer>())
+            {
+                if (line.enabled)
+                {
+                    count += 1;
+                }
+            }
+
+            return count;
         }
 
         private static string GetButtonLabel(string gameObjectName)

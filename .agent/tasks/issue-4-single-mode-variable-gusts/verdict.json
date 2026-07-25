@@ -1,0 +1,10 @@
+{
+  "task": "issue-4-single-mode-variable-gusts",
+  "verdict": "PASS_WITH_OWNER_GATE",
+  "review": "fresh adversarial review of the current diff and rerun verification",
+  "findings": [],
+  "residual_risk": [
+    "Automated proofs establish range, presentation scaling, control authority, and fallability but cannot establish whether the distribution feels varied rather than unfair on the physical iPhone."
+  ],
+  "owner_gate": "Play several consecutive runs and judge whether weak, ordinary, and strong gusts are readable without a HUD."
+}

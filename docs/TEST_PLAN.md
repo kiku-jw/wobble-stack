@@ -12,9 +12,10 @@ pnpm build
 
 Assertions cover:
 
-- every gust samples force, rest, and duration inside its profile range;
-- the complete Gentle force range is below Normal, and Normal is below Wild;
-- Normal force is meaningful but stays inside the control limit;
+- every gust samples force, rest, and duration inside one bounded profile;
+- the squared continuous force sample favors ordinary wind while still reaching
+  exact soft and strong bounds;
+- the complete force range stays inside the control limit;
 - correct platform angle reduces effective gust acceleration for the whole stack, while wrong angle increases it;
 - the gust envelope ramps in and out instead of applying peak force immediately;
 - wind streak travel speed increases monotonically with visual intensity;
@@ -38,15 +39,18 @@ Assertions cover:
 
 ## Calibration matrix
 
-1. Gentle, 5 creatures: the first sampled force stays below every possible Normal gust.
-2. Normal, 5 creatures: first force arrives in 2.2–3.8 seconds; holding the counter direction survives the full gust while doing nothing loses soon after it.
-   For the deterministic first run, record neutral, correct, and wrong input from the same gust. Correct must survive longest, neutral must remain between the two, and wrong must fail first.
-3. Wild, 5 creatures: the first gust arrives sooner, lasts longer, and samples above every possible Normal gust.
-4. Change the count to 3, 4, and 5; confirm the preview and physical stack rebuild immediately, the minus button disables at three, and stored lower values clamp to three.
-5. Record a best score, change one setup dimension, and confirm the displayed best changes with it.
-6. Lose a run and press Retry; confirm the selected setup is preserved.
-7. Lose a run and press Change Setup; confirm the settings return without reloading.
-8. Repeat the correct Normal counter once with keyboard input and once by holding the pointer at the calculated beam angle; both must survive the complete first gust.
+1. Confirm setup contains creature count only; there is no difficulty control or
+   wind meter.
+2. Sample several seeded gusts and confirm force varies independently inside
+   the single range rather than increasing with elapsed time.
+3. Compare weakest and strongest gusts: streak density, speed, length, opacity,
+   and physical response must be clearly different without a HUD label.
+4. For the strongest gust, record neutral, correct, and wrong input from the
+   same setup. Correct must survive longest; neutral and wrong must still fail.
+5. Change the count to 3, 4, and 5; confirm the preview and physical stack rebuild immediately, the minus button disables at three, and stored lower values clamp to three.
+6. Record a best score, change creature count, and confirm the displayed best changes with it while an existing Normal score remains available.
+7. Lose a run and press Retry; confirm the selected count is preserved.
+8. Lose a run and press Change Setup; confirm the settings return without reloading.
 
 ## Collapse matrix
 

@@ -85,6 +85,18 @@
   unchanged touch at 32%/68% width. It completes the maximum first-gust matrix
   alongside the earlier strong 22%/78% hold proof.
 
+## 2026-07-25 — single-mode wind
+
+- The owner accepted the delayed-correction build: the first gust is now
+  survivable through normal beam input.
+- Deleted player-selectable difficulty and retained one continuous
+  `0.000055–0.000135` gust range. A squared uniform sample keeps most gusts near
+  the accepted Normal feel while allowing occasional soft and strong outliers.
+- Preview and active cyan streaks scale with sampled force; the game adds no
+  intensity meter, tier name, number, or badge.
+- Creature count and reduced motion remain setup options. Existing Normal score
+  slots remain the persistence key so local records are not lost.
+
 ## Tooling constraint
 
 - Active developer directory is `/Applications/Xcode.app/Contents/Developer`; Xcode `26.6` is licensed and its first-launch setup is complete.
@@ -98,5 +110,5 @@
 - Do not claim an archive or distributable IPA until that separate build is
   produced and verified.
 - Do not claim a TestFlight build until Apple Developer Program and App Store Connect access complete that distribution gate.
-- Do not claim the physical-feel gate until the owner accepts the newly
-  calibrated delayed-correction build.
+- The owner accepted delayed-correction survivability. Do not claim the new
+  single-mode intensity mix feels right until the owner tests this build.

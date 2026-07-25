@@ -14,10 +14,11 @@ and immediately want one cleaner run.
 
 - Offline, single-player, portrait-only.
 - One stage theme with a layered sunset environment.
-- Three wind profiles and three-to-five-creature runs.
+- One game mode with independently sampled variable-intensity gusts and
+  three-to-five-creature runs.
 - Five visually and physically distinct creatures.
 - Start, play, pause, collapse, results, Retry, and setup flows.
-- Local best scores by difficulty and creature count.
+- Local best scores by creature count.
 - Sound and haptic hooks, reduced motion, safe-area support, and interruption-safe pause.
 - A short play-first onboarding and bounded local unlock path only after physical iPhone validation.
 
@@ -29,7 +30,7 @@ and immediately want one cleaner run.
 
 ## Core loop
 
-1. Choose wind and stack size.
+1. Choose stack size.
 2. Drag toward the end named by the wind prompt; the touched beam end rises.
 3. Hold through the gust, then release or reverse when the direction changes.
 4. Survive, recover, and accumulate score.

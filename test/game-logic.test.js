@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  DIFFICULTY_PROFILES,
+  WIND_PROFILE,
   clamp,
   createSeededRandom,
   formatTime,
@@ -22,31 +22,27 @@ test("seeded random repeats the same run", () => {
   assert.deepEqual([first(), first(), first()], [second(), second(), second()]);
 });
 
-test("each gust samples independent timing and force within its profile", () => {
-  for (const profile of Object.values(DIFFICULTY_PROFILES)) {
-    const low = getGustTiming(() => 0, profile);
-    const high = getGustTiming(() => 1, profile);
+test("one profile spans soft through strong independently sampled gusts", () => {
+  const low = getGustTiming(() => 0);
+  const high = getGustTiming(() => 1);
+  const midpointSamples = [0.5, 0.5, 0.5];
+  const ordinary = getGustTiming(() => midpointSamples.shift());
 
-    assert.equal(low.force, profile.forceMin);
-    assert.equal(high.force, profile.forceMax);
-    assert.equal(low.restSeconds, profile.restMin);
-    assert.equal(high.restSeconds, profile.restMax);
-    assert.equal(low.durationSeconds, profile.durationMin);
-    assert.equal(high.durationSeconds, profile.durationMax);
-  }
+  assert.equal(low.force, WIND_PROFILE.forceMin);
+  assert.equal(high.force, WIND_PROFILE.forceMax);
+  assert.equal(low.restSeconds, WIND_PROFILE.restMin);
+  assert.equal(high.restSeconds, WIND_PROFILE.restMax);
+  assert.equal(low.durationSeconds, WIND_PROFILE.durationMin);
+  assert.equal(high.durationSeconds, WIND_PROFILE.durationMax);
+  assert.ok(ordinary.force < (WIND_PROFILE.forceMin + WIND_PROFILE.forceMax) / 2);
+  assert.ok(WIND_PROFILE.forceMax > WIND_PROFILE.forceMin * 2);
 });
 
-test("difficulty force ranges do not overlap", () => {
-  assert.ok(DIFFICULTY_PROFILES.gentle.forceMax < DIFFICULTY_PROFILES.normal.forceMin);
-  assert.ok(DIFFICULTY_PROFILES.normal.forceMax < DIFFICULTY_PROFILES.wild.forceMin);
-});
+test("the single wind range stays within the platform counter-angle", () => {
+  const minimumAngle = getRequiredCounterAngle(WIND_PROFILE.forceMin, 0.00105);
+  const maximumAngle = getRequiredCounterAngle(WIND_PROFILE.forceMax, 0.00105);
 
-test("normal wind is meaningful and stays within the platform counter-angle", () => {
-  const profile = DIFFICULTY_PROFILES.normal;
-  const minimumAngle = getRequiredCounterAngle(profile.forceMin, 0.00105);
-  const maximumAngle = getRequiredCounterAngle(profile.forceMax, 0.00105);
-
-  assert.ok(minimumAngle > 0.06);
+  assert.ok(minimumAngle > 0.05);
   assert.ok(maximumAngle < 0.46);
 });
 

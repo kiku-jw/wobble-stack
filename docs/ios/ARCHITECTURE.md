@@ -33,8 +33,10 @@ Use Unity `6000.3.19f1` as a nested production client at `ios/WobbleStack`. The 
   colliders, free rotation, and no joint, tether, beam grip, or hidden
   stabilization. Small initial separation lets the solver settle without
   explosive overlap.
-- Wind: deterministic sampled gust plus a smooth attack/hold/release envelope
-  and a 1.3-second visual preview before force.
+- Wind: one deterministic continuous force range, biased toward ordinary gusts,
+  plus a smooth attack/hold/release envelope and a 1.3-second visual preview
+  before force. Preview and active streak intensity scale with sampled force;
+  no difficulty or intensity HUD exists.
 - Counter-tilt: normalized touch position maps continuously to signed control
   amount, including before the gust. Touching toward an end raises that same
   end. The sampled gust strength calibrates the useful angle range, so a
@@ -46,8 +48,8 @@ Use Unity `6000.3.19f1` as a nested production client at `ios/WobbleStack`. The 
   or position-corrects the tower.
 - Fallability: contact friction is low enough for strong gusts to matter, while
   higher creatures receive more wind exposure and a small off-center torque.
-  Neutral and wrong input receive no damping and still collapse under maximum
-  Wild gusts.
+  Neutral and wrong input receive no damping and still collapse under the
+  maximum gust.
 
 ## Art pipeline
 

@@ -1,0 +1,49 @@
+{
+  "task": "issue-4-single-mode-variable-gusts",
+  "result": "PASS_WITH_OWNER_GATE",
+  "criteria": {
+    "AC1": {
+      "result": "PASS",
+      "proof": [
+        "difficulty controls and runtime state deleted",
+        "native start capture inspected",
+        "no difficulty runtime symbols remain"
+      ]
+    },
+    "AC2": {
+      "result": "PASS",
+      "proof": [
+        "single continuous bounded force range",
+        "squared Normal-biased sample",
+        "deterministic domain and web tests"
+      ]
+    },
+    "AC3": {
+      "result": "PASS",
+      "proof": [
+        "web wind meter deleted",
+        "force-scaled native preview and active presentation",
+        "strong intensity renders more and more opaque streaks"
+      ]
+    },
+    "AC4": {
+      "result": "PASS",
+      "proof": [
+        "delayed strongest-gust matrix",
+        "early constant-hold strongest-gust matrix",
+        "neutral and wrong strongest-gust collapse"
+      ]
+    },
+    "AC5": {
+      "result": "PASS",
+      "proof": [
+        "legacy Normal score slots preserved",
+        "web and Unity suites pass",
+        "signed arm64 install and launch pass"
+      ]
+    }
+  },
+  "remaining": [
+    "owner judgment of the single-mode intensity mix on the physical iPhone"
+  ]
+}

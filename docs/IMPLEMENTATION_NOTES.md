@@ -90,6 +90,24 @@ The team-selection frame is explicitly deferred. It is evidence for possible fut
 - GitHub prior art: skipped because this is repo-local feel calibration, not a reusable physics package or protocol.
 - New code is one pure acceleration helper, one authority constant, its call site, and deterministic tests; no dependency or new state machine was added.
 
+## M8 single-mode wind
+
+- Deleted the difficulty selector, three profiles, selected-difficulty state,
+  and web intensity meter.
+- One continuous `0.000055–0.000135` force range keeps the accepted Normal
+  center. Squaring the uniform force sample favors ordinary gusts while
+  preserving occasional exact soft/strong bounds and deterministic seeds.
+- Wind streaks and physics remain the intensity language. Best-score keys keep
+  using the former Normal slots to preserve local records.
+
+### M8 lazy-senior receipt
+
+- Lower rung: delete product state and reuse the current scheduler/envelope.
+- GitHub prior art: skipped because this is repo-local simplification, not a
+  reusable widget or scheduler.
+- New code is limited to bounded force sampling and intensity normalization;
+  the net production diff removes substantially more code than it adds.
+
 ## lazy-senior receipt
 
 - Lower rung: browser Canvas + one small established physics dependency.

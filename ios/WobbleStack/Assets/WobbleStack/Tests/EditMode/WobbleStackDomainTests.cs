@@ -5,21 +5,25 @@ namespace WobbleStack.Domain.Tests
     public sealed class WobbleStackDomainTests
     {
         [Test]
-        public void DifficultyForceRangesDoNotOverlap()
+        public void SingleProfileSpansSoftThroughStrongGusts()
         {
-            DifficultyProfile gentle = WobbleStackRules.GetDifficultyProfile(DifficultyId.Gentle);
-            DifficultyProfile normal = WobbleStackRules.GetDifficultyProfile(DifficultyId.Normal);
-            DifficultyProfile wild = WobbleStackRules.GetDifficultyProfile(DifficultyId.Wild);
+            float soft = WobbleStackRules.SampleGustForce(0f);
+            float ordinary = WobbleStackRules.SampleGustForce(0.5f);
+            float strong = WobbleStackRules.SampleGustForce(1f);
 
-            Assert.That(gentle.ForceMax, Is.LessThan(normal.ForceMin));
-            Assert.That(normal.ForceMax, Is.LessThan(wild.ForceMin));
+            Assert.That(soft, Is.EqualTo(WobbleStackRules.GustForceMin).Within(0.0000001f));
+            Assert.That(strong, Is.EqualTo(WobbleStackRules.GustForceMax).Within(0.0000001f));
+            Assert.That(ordinary, Is.LessThan((soft + strong) * 0.5f));
+            Assert.That(strong, Is.GreaterThan(soft * 2f));
+            Assert.That(WobbleStackRules.GetGustIntensity(soft), Is.EqualTo(0f));
+            Assert.That(WobbleStackRules.GetGustIntensity(strong), Is.EqualTo(1f).Within(0.000001f));
         }
 
         [Test]
         public void SeededSchedulerRepeatsDeterministicSequence()
         {
-            GustScheduler first = new GustScheduler(42u, DifficultyId.Normal);
-            GustScheduler second = new GustScheduler(42u, DifficultyId.Normal);
+            GustScheduler first = new GustScheduler(42u);
+            GustScheduler second = new GustScheduler(42u);
 
             GustSample firstA = first.Next(0f);
             GustSample secondA = second.Next(0f);
@@ -39,16 +43,15 @@ namespace WobbleStack.Domain.Tests
         }
 
         [Test]
-        public void SeededSchedulerKeepsSamplesInsideDifficultyBounds()
+        public void SeededSchedulerKeepsSamplesInsideSingleProfileBounds()
         {
-            DifficultyProfile profile = WobbleStackRules.GetDifficultyProfile(DifficultyId.Wild);
-            GustScheduler scheduler = new GustScheduler(7907u, DifficultyId.Wild);
+            GustScheduler scheduler = new GustScheduler(7907u);
 
             GustSample gust = scheduler.Next(11.5f);
 
-            Assert.That(gust.RestSeconds, Is.InRange(profile.RestMin, profile.RestMax));
-            Assert.That(gust.DurationSeconds, Is.InRange(profile.DurationMin, profile.DurationMax));
-            Assert.That(gust.Force, Is.InRange(profile.ForceMin, profile.ForceMax));
+            Assert.That(gust.RestSeconds, Is.InRange(WobbleStackRules.GustRestMin, WobbleStackRules.GustRestMax));
+            Assert.That(gust.DurationSeconds, Is.InRange(WobbleStackRules.GustDurationMin, WobbleStackRules.GustDurationMax));
+            Assert.That(gust.Force, Is.InRange(WobbleStackRules.GustForceMin, WobbleStackRules.GustForceMax));
             Assert.That(gust.Direction == -1 || gust.Direction == 1, Is.True);
             Assert.That(gust.StartsAtSeconds, Is.EqualTo(11.5f + gust.RestSeconds).Within(0.000001f));
             Assert.That(gust.EndsAtSeconds, Is.EqualTo(gust.StartsAtSeconds + gust.DurationSeconds).Within(0.000001f));
@@ -57,13 +60,10 @@ namespace WobbleStack.Domain.Tests
         [Test]
         public void FirstGustLeavesTimeForAVisibleWarning()
         {
-            foreach (DifficultyId difficulty in new[] { DifficultyId.Gentle, DifficultyId.Normal, DifficultyId.Wild })
-            {
-                GustSample gust = new GustScheduler(1u, difficulty).Next(0f);
+            GustSample gust = new GustScheduler(1u).Next(0f);
 
-                Assert.That(gust.RestSeconds, Is.GreaterThanOrEqualTo(WobbleStackRules.FirstGustRestSeconds));
-                Assert.That(gust.RestSeconds, Is.GreaterThan(WobbleStackRules.WindPreviewSeconds));
-            }
+            Assert.That(gust.RestSeconds, Is.GreaterThanOrEqualTo(WobbleStackRules.FirstGustRestSeconds));
+            Assert.That(gust.RestSeconds, Is.GreaterThan(WobbleStackRules.WindPreviewSeconds));
         }
 
         [Test]
@@ -199,7 +199,7 @@ namespace WobbleStack.Domain.Tests
         }
 
         [Test]
-        public void TouchControlContinuouslyRaisesTheTouchedEndAndCoversEveryDifficulty()
+        public void TouchControlContinuouslyRaisesTheTouchedEndAndCoversStrongestGust()
         {
             float farLeft = WobbleStackRules.GetControlAmount(0f);
             float left = WobbleStackRules.GetControlAmount(0.25f);
@@ -216,13 +216,11 @@ namespace WobbleStack.Domain.Tests
             Assert.That(farRight, Is.EqualTo(1f).Within(0.000001f));
             Assert.That(left, Is.EqualTo(-right).Within(0.000001f));
 
-            foreach (DifficultyId difficulty in new[] { DifficultyId.Gentle, DifficultyId.Normal, DifficultyId.Wild })
-            {
-                DifficultyProfile profile = WobbleStackRules.GetDifficultyProfile(difficulty);
-                float required = WobbleStackRules.GetRequiredCounterAngle(profile.ForceMax, WobbleStackRules.GravityScale);
+            float required = WobbleStackRules.GetRequiredCounterAngle(
+                WobbleStackRules.GustForceMax,
+                WobbleStackRules.GravityScale);
 
-                Assert.That(required, Is.LessThanOrEqualTo(WobbleStackRules.MaxPlatformAngle));
-            }
+            Assert.That(required, Is.LessThanOrEqualTo(WobbleStackRules.MaxPlatformAngle));
         }
 
         [Test]

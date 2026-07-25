@@ -136,6 +136,28 @@ pnpm build
 
 Then record the deterministic three-strategy matrix and smoke pointer input, pause, collapse, Retry, and the deployed Pages build.
 
+### M8 — one mode, variable gusts
+
+Acceptance:
+
+- Gentle, Normal, and Wild are removed from setup and runtime state.
+- Every gust independently samples one continuous force range biased toward
+  the accepted Normal feel, with occasional soft and strong gusts.
+- Wind motion communicates intensity; no meter, bar, number, or intensity name
+  appears in the HUD.
+- Strongest-gust delayed correction and neutral/wrong fallability remain intact.
+- Existing Normal best scores remain available by creature count.
+
+Verify:
+
+```sh
+pnpm test
+pnpm build
+```
+
+Then run the single-profile physics matrix, inspect the start/gameplay UI, and
+smoke the deployed Pages build.
+
 ## Kill gate
 
 This prototype earns a native greybox only if several fresh players voluntarily press Retry and can explain why they lost. Visual polish alone is not a pass.

@@ -9,55 +9,27 @@ namespace WobbleStack.Domain
         public const float CounterTiltVelocityDamping = 5.5f;
         public const float FirstGustRestSeconds = 2.8f;
         public const float WindPreviewSeconds = 1.3f;
+        public const float GustForceMin = 0.000055f;
+        public const float GustForceMax = 0.000135f;
+        public const float GustRestMin = 2.2f;
+        public const float GustRestMax = 3.8f;
+        public const float GustDurationMin = 3.8f;
+        public const float GustDurationMax = 5.4f;
         public const int MinCreatureCount = 3;
         public const int MaxCreatureCount = 5;
 
-        private static readonly DifficultyProfile GentleProfile = new DifficultyProfile(
-            DifficultyId.Gentle,
-            "Gentle",
-            "Light gusts · room to recover",
-            0.00003f,
-            0.000055f,
-            2.8f,
-            4.2f,
-            3.6f,
-            4.6f);
-
-        private static readonly DifficultyProfile NormalProfile = new DifficultyProfile(
-            DifficultyId.Normal,
-            "Normal",
-            "Random gusts · real pressure",
-            0.000065f,
-            0.000095f,
-            2.2f,
-            3.6f,
-            3.8f,
-            5f);
-
-        private static readonly DifficultyProfile WildProfile = new DifficultyProfile(
-            DifficultyId.Wild,
-            "Wild",
-            "Heavy gusts · little recovery",
-            0.000105f,
-            0.000135f,
-            1.8f,
-            3f,
-            4f,
-            5.4f);
-
-        public static DifficultyProfile GetDifficultyProfile(DifficultyId difficulty)
+        public static float SampleGustForce(float randomSample)
         {
-            switch (difficulty)
-            {
-                case DifficultyId.Gentle:
-                    return GentleProfile;
-                case DifficultyId.Normal:
-                    return NormalProfile;
-                case DifficultyId.Wild:
-                    return WildProfile;
-                default:
-                    return NormalProfile;
-            }
+            float bounded = Clamp(randomSample, 0f, 1f);
+            return Lerp(GustForceMin, GustForceMax, bounded * bounded);
+        }
+
+        public static float GetGustIntensity(float force)
+        {
+            return Clamp(
+                (force - GustForceMin) / (GustForceMax - GustForceMin),
+                0f,
+                1f);
         }
 
         public static float Clamp(float value, float min, float max)

@@ -8,27 +8,27 @@
 - PlayMode tests cover scene bootstrap, count controls, beam/collider alignment,
   compact contacts, expression progression, cyan wind direction, direct
   pre-gust beam motion, absence of hidden joints/locks, stable free warmup,
-  delayed imprecise recovery, full first gusts, bounded Wild collapse, input
+  delayed imprecise recovery, full strongest gusts, bounded collapse, input
   ordering, and interruption-safe failure.
 - Current receipt: `12/12` EditMode and `13/13` PlayMode tests pass on Unity
   `6000.3.19f1`.
 
 ## Deterministic physics matrix
 
-For the same seed and Normal gust:
+For the single wind profile:
 
 1. Neutral angle establishes the baseline.
 2. One constant hold at 22% or 78% of the screen width survives the entire
    maximum first gust; the test does not feed a changing angle.
 3. Correct hold produces less downwind displacement and survives at least as
-   long as neutral and wrong input on the same Normal gust.
+   long as neutral and wrong input on the same strongest gust.
 4. Repeat with the opposite gust direction.
 5. Repeat with three and five creatures.
-6. On the maximum Wild gust, neutral and wrong input both collapse while
-   correct input completes the gust.
+6. On the maximum gust, neutral and wrong input both collapse while correct
+   input completes the gust.
 7. Separately start neutral, allow `0.35 s` of physical wind, then apply one
-   unchanged touch at 32%/68% width. Repeat maximum Gentle/Normal/Wild gusts in
-   both directions with three and five creatures.
+   unchanged touch at 32%/68% width. Repeat the maximum gust in both directions
+   with three and five creatures.
 
 ## Interaction matrix
 
@@ -66,8 +66,10 @@ The remaining owner gate is another physical playtest:
 
 - Dragging and holding the indicated outer side visibly raises that end before
   wind begins.
-- A delayed moderate hold and an early strong hold both survive the first gust
-  on Gentle, Normal, and Wild without chasing a changing angle.
+- A delayed moderate hold and an early strong hold both survive the strongest
+  gust without chasing a changing angle.
+- Soft and strong gusts read differently through cyan streaks, audio, faces,
+  and motion without an intensity HUD.
 - The touched-end instruction is understood without explanation.
 - Neutral/wrong play still produces a believable collapse.
 - Characters sit close, trust the beam ends, and change expressions clearly.

@@ -20,7 +20,7 @@ instant retry?
 
 The public GitHub Pages build remains the lightweight Matter.js prototype. The
 current iPhone vertical slice lives in `ios/WobbleStack`: a Unity 6 build with
-clay character art, deterministic gusts, three difficulty profiles,
+clay character art and deterministic variable-intensity gusts,
 three-to-five-creature setups, pause/results/Retry flows, local best scores,
 impact slow motion, calm/panic/impact expressions, generated sound, haptic
 hooks, reduced motion, safe areas, and a finished app icon.
@@ -35,8 +35,10 @@ hooks, reduced motion, safe areas, and a finished app icon.
 - **Goal:** keep every creature on the beam as each visible gust builds.
 - **Pause:** use the button in the top-right corner or press Escape.
 
-Before each run you can choose Gentle, Normal, or Wild wind and a stack of three
-to five creatures. Best times are tracked separately for every combination.
+Before each run you can choose a stack of three to five creatures. There is one
+game mode: every gust independently samples a different intensity, and the
+wind itself—not a meter or difficulty label—shows how strong it is. Best times
+are tracked separately by stack size.
 
 ## Run the web prototype locally
 
@@ -59,7 +61,8 @@ pnpm build
 - Matter.js provides gravity, collision, and rigid-body motion.
 - A custom Canvas renderer draws the stage and up to five characters.
 - Pointer and keyboard input control one target angle for the beam.
-- Seeded gusts vary inside distinct difficulty ranges and build through visible wind streaks.
+- Seeded gusts vary inside one continuous force range biased toward ordinary
+  Normal-like wind, with occasional soft and strong outliers.
 - Moving wind streaks show direction while their speed, density, and opacity build with force.
 - Creatures fall at normal speed; the first ground impact triggers a brief slow-motion beat.
 - Per-setup best times and the last setup are stored locally; nothing is sent anywhere.
@@ -106,10 +109,11 @@ top of this README are rendered from the current Unity build.
   <img src="docs/concepts/comedic-collapse.png" width="300" alt="Concept art showing the creature tower collapsing" />
 </p>
 
-The next gate is another physical iPhone feel test: delayed imprecise
-first-gust recovery, believable collapse when input is absent or wrong, frame
-pacing, safe areas, haptics, and voluntary Retry. Meta systems stay out until
-that evidence exists.
+The next gate is a physical iPhone feel test of the single-mode intensity mix:
+soft and strong gusts must feel different without a HUD while an ordinary
+delayed correction stays reliable. Frame pacing, safe areas, haptics, and
+voluntary Retry remain device gates. Meta systems stay out until that evidence
+exists.
 
 ## License
 

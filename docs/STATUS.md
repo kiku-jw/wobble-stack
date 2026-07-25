@@ -1,11 +1,11 @@
 # Wobble Stack web prototype status
 
-Updated: 2026-07-22
+Updated: 2026-07-25
 
 ## Current state
 
 - Phase: calibrated public build
-- Current milestone: M7 — meaningful counter-tilt live
+- Current milestone: M8 — one mode with variable gusts
 - Blockers: none
 
 ## Completed
@@ -51,7 +51,14 @@ Updated: 2026-07-22
 - The opposite-direction seeded gust also stayed upright through its 7.81-second end; Pause held time exactly, impact used `1 → 0.18 → 1`, all five reactions registered, and Retry reset the run.
 - Eleven deterministic logic tests and the Vite production build pass locally with no browser console errors.
 - GitHub Pages run `29956303847` built and deployed commit `972fb44`; the live deterministic Normal counter-tilt survived the complete 7.57-second gust and failed only at 11.48 seconds, with zero console errors.
+- Player-selectable difficulty and the web wind meter are removed. One
+  continuous seeded force range now produces mostly Normal-like gusts plus
+  visibly softer and stronger outliers without elapsed-time escalation.
+- Best scores continue using the prior Normal slots, so existing records remain
+  available by creature count.
+- Ten deterministic web tests and the Vite production build pass for M8.
 
 ## Next
 
-- Put the updated build in front of fresh players.
+- Verify the deployed single-mode build and put the updated iPhone build in
+  front of the owner.

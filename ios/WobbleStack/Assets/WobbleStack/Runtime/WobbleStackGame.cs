@@ -20,7 +20,6 @@ namespace WobbleStack.Runtime
         private const float ImpactSlowMotionSeconds = 0.36f;
         private const float FailureResultHoldSeconds = 0.9f;
         private const float FailureHardTimeoutSeconds = 2.6f;
-        private const string DifficultyPreference = "wobble.ios.difficulty";
         private const string CreatureCountPreference = "wobble.ios.creature-count";
         private const string ReducedMotionPreference = "wobble.ios.reduced-motion";
 
@@ -39,7 +38,6 @@ namespace WobbleStack.Runtime
         private GameObject _resultsOverlay;
         private Text _scoreText;
         private Text _bestText;
-        private Text _difficultyText;
         private Text _countText;
         private Text _motionText;
         private Text _resultTimeText;
@@ -47,7 +45,6 @@ namespace WobbleStack.Runtime
         private Text _saveText;
         private Text _hintText;
         private GamePhase _phase = GamePhase.Ready;
-        private DifficultyId _difficulty = DifficultyId.Normal;
         private int _creatureCount = 5;
         private bool _reducedMotion;
         private int _runCount;
@@ -265,7 +262,7 @@ namespace WobbleStack.Runtime
             _targetAngleRadians = 0f;
             _controlAmount = Mathf.Clamp(controlAmount, -1f, 1f);
             _pointerActive = true;
-            _gustScheduler = new GustScheduler(1u, _difficulty);
+            _gustScheduler = new GustScheduler(1u);
             _gust = new GustSample(0.7f, durationSeconds, force, direction, 0.7f);
             _hasGust = true;
             _gustIndex = 0;
@@ -316,14 +313,12 @@ namespace WobbleStack.Runtime
 
         private void LoadSettings()
         {
-            _difficulty = DifficultyFromStored(PlayerPrefs.GetInt(DifficultyPreference, 1));
             _creatureCount = WobbleStackRules.ClampCreatureCount(PlayerPrefs.GetInt(CreatureCountPreference, 5));
             _reducedMotion = PlayerPrefs.GetInt(ReducedMotionPreference, 0) == 1;
         }
 
         private void SaveSettings()
         {
-            PlayerPrefs.SetInt(DifficultyPreference, DifficultyToStored(_difficulty));
             PlayerPrefs.SetInt(CreatureCountPreference, _creatureCount);
             PlayerPrefs.SetInt(ReducedMotionPreference, _reducedMotion ? 1 : 0);
             PlayerPrefs.Save();
@@ -500,8 +495,7 @@ namespace WobbleStack.Runtime
             subtitleRect.sizeDelta = new Vector2(850f, 80f);
 
             CreateButton("Play", _startOverlay.transform, "PLAY", new Vector2(0.5f, 0f), new Vector2(0f, 340f), new Vector2(560f, 230f), GeneratedArt.CoralPlate(), StartRun, 72);
-            _difficultyText = CreateButton("Difficulty", _startOverlay.transform, "NORMAL", new Vector2(0.31f, 0f), new Vector2(0f, 170f), new Vector2(360f, 125f), GeneratedArt.CocoaPlate(), CycleDifficulty, 34).GetComponentInChildren<Text>();
-            _countText = CreateButton("Creature Count", _startOverlay.transform, "5 FRIENDS", new Vector2(0.69f, 0f), new Vector2(0f, 170f), new Vector2(360f, 125f), GeneratedArt.CocoaPlate(), CycleCreatureCount, 34).GetComponentInChildren<Text>();
+            _countText = CreateButton("Creature Count", _startOverlay.transform, "5 FRIENDS", new Vector2(0.5f, 0f), new Vector2(0f, 170f), new Vector2(360f, 125f), GeneratedArt.CocoaPlate(), CycleCreatureCount, 34).GetComponentInChildren<Text>();
             _motionText = CreateButton("Motion", _startOverlay.transform, "MOTION FULL", new Vector2(0.5f, 0f), new Vector2(0f, 58f), new Vector2(380f, 95f), GeneratedArt.CocoaPlate(), ToggleReducedMotion, 27).GetComponentInChildren<Text>();
         }
 
@@ -675,7 +669,7 @@ namespace WobbleStack.Runtime
             _dangerWasHigh = false;
             _cameraShake = 0f;
             _platformBody.rotation = 0f;
-            _gustScheduler = new GustScheduler(Convert.ToUInt32(7907 + (_runCount * 101)), _difficulty);
+            _gustScheduler = new GustScheduler(Convert.ToUInt32(7907 + (_runCount * 101)));
             _gust = _gustScheduler.Next(0f);
             _hasGust = true;
             BuildStack(true);
@@ -800,31 +794,6 @@ namespace WobbleStack.Runtime
             _resultsOverlay.SetActive(false);
             _hudRoot.SetActive(false);
             UpdateSetupLabels();
-        }
-
-        private void CycleDifficulty()
-        {
-            if (_phase != GamePhase.Ready)
-            {
-                return;
-            }
-
-            switch (_difficulty)
-            {
-                case DifficultyId.Gentle:
-                    _difficulty = DifficultyId.Normal;
-                    break;
-                case DifficultyId.Normal:
-                    _difficulty = DifficultyId.Wild;
-                    break;
-                default:
-                    _difficulty = DifficultyId.Gentle;
-                    break;
-            }
-
-            SaveSettings();
-            UpdateSetupLabels();
-            _audio.PlayClick();
         }
 
         private void CycleCreatureCount()
@@ -988,7 +957,12 @@ namespace WobbleStack.Runtime
             if (!IsGustActive())
             {
                 float preview = WobbleStackRules.GetWindPreviewEnvelope(_gust.StartsAtSeconds - _runSeconds);
-                float previewIntensity = preview <= 0f ? 0f : Mathf.Lerp(0.08f, 0.34f, preview);
+                float previewForceRatio = WobbleStackRules.GetGustIntensity(_gust.Force);
+                float previewIntensity = preview <= 0f
+                    ? 0f
+                    : Mathf.Clamp01(
+                        Mathf.Lerp(0.08f, 0.3f, preview) *
+                        Mathf.Lerp(0.75f, 1.25f, previewForceRatio));
                 _windStreaks.SetWind(_gust.Direction, previewIntensity);
                 _audio.SetWind(previewIntensity * 0.24f);
                 foreach (CreatureBody creature in _creatures)
@@ -1000,8 +974,7 @@ namespace WobbleStack.Runtime
 
             float progress = (_runSeconds - _gust.StartsAtSeconds) / _gust.DurationSeconds;
             float envelope = WobbleStackRules.GetGustEnvelope(progress);
-            DifficultyProfile wild = WobbleStackRules.GetDifficultyProfile(DifficultyId.Wild);
-            float forceRatio = Mathf.Clamp01(_gust.Force / wild.ForceMax);
+            float forceRatio = WobbleStackRules.GetGustIntensity(_gust.Force);
             float visibleEnvelope = Mathf.Lerp(0.34f, 1f, envelope);
             float visibleIntensity = visibleEnvelope * Mathf.Lerp(0.58f, 1f, forceRatio);
             _windStreaks.SetWind(_gust.Direction, visibleIntensity);
@@ -1147,7 +1120,6 @@ namespace WobbleStack.Runtime
 
         private void UpdateSetupLabels()
         {
-            _difficultyText.text = WobbleStackRules.GetDifficultyProfile(_difficulty).Label.ToUpperInvariant();
             _countText.text = $"{_creatureCount} FRIENDS";
             _motionText.text = _reducedMotion ? "MOTION REDUCED" : "MOTION FULL";
         }
@@ -1291,30 +1263,7 @@ namespace WobbleStack.Runtime
 
         private string BestScoreKey()
         {
-            return $"wobble.ios.best.{DifficultyToStored(_difficulty)}.{_creatureCount}";
-        }
-
-        private static DifficultyId DifficultyFromStored(int value)
-        {
-            if (value == 0)
-            {
-                return DifficultyId.Gentle;
-            }
-
-            return value == 2 ? DifficultyId.Wild : DifficultyId.Normal;
-        }
-
-        private static int DifficultyToStored(DifficultyId difficulty)
-        {
-            switch (difficulty)
-            {
-                case DifficultyId.Gentle:
-                    return 0;
-                case DifficultyId.Wild:
-                    return 2;
-                default:
-                    return 1;
-            }
+            return $"wobble.ios.best.1.{_creatureCount}";
         }
 
         private static void FitHeight(Transform target, Sprite sprite, float height)

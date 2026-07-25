@@ -1,7 +1,7 @@
 import Matter from "matter-js";
 import "./style.css";
 import {
-  DIFFICULTY_PROFILES,
+  WIND_PROFILE,
   clamp,
   createSeededRandom,
   formatTime,
@@ -45,12 +45,8 @@ const context = canvas.getContext("2d");
 const scoreValue = document.querySelector("#score-value");
 const bestValue = document.querySelector("#best-value");
 const pauseButton = document.querySelector("#pause-button");
-const windMeter = document.querySelector("#wind-meter");
-const windBars = [...document.querySelectorAll(".wind-bars i")];
 const startOverlay = document.querySelector("#start-overlay");
 const startButton = document.querySelector("#start-button");
-const difficultyInputs = [...document.querySelectorAll('input[name="difficulty"]')];
-const difficultyNote = document.querySelector("#difficulty-note");
 const countMinusButton = document.querySelector("#count-minus");
 const countPlusButton = document.querySelector("#count-plus");
 const countValue = document.querySelector("#count-value");
@@ -73,7 +69,6 @@ let state = "ready";
 let previousState = "ready";
 let runSeconds = 0;
 const storedSettings = readSettings();
-let selectedDifficulty = storedSettings.difficulty;
 let selectedCreatureCount = storedSettings.creatureCount;
 let bestScores = readBestScores();
 let bestSeconds = getBestScore();
@@ -116,12 +111,6 @@ pauseButton.addEventListener("click", pauseRun);
 resumeButton.addEventListener("click", resumeRun);
 countMinusButton.addEventListener("click", () => setCreatureCount(selectedCreatureCount - 1));
 countPlusButton.addEventListener("click", () => setCreatureCount(selectedCreatureCount + 1));
-
-for (const input of difficultyInputs) {
-  input.addEventListener("change", () => {
-    if (input.checked) setDifficulty(input.value);
-  });
-}
 
 canvas.addEventListener("pointerdown", (event) => {
   if (state !== "playing") return;
@@ -185,12 +174,6 @@ function setupCanvas() {
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 }
 
-function setDifficulty(value) {
-  if (!Object.hasOwn(DIFFICULTY_PROFILES, value)) return;
-  selectedDifficulty = value;
-  updateSetup();
-}
-
 function setCreatureCount(value) {
   selectedCreatureCount = clamp(Math.round(value), MIN_CREATURE_COUNT, MAX_CREATURE_COUNT);
   updateSetup();
@@ -205,10 +188,6 @@ function updateSetup() {
 }
 
 function syncSetupControls() {
-  const profile = DIFFICULTY_PROFILES[selectedDifficulty];
-
-  for (const input of difficultyInputs) input.checked = input.value === selectedDifficulty;
-  difficultyNote.textContent = profile.note;
   countValue.value = String(selectedCreatureCount);
   countValue.textContent = String(selectedCreatureCount);
   countMinusButton.disabled = selectedCreatureCount === MIN_CREATURE_COUNT;
@@ -318,7 +297,7 @@ function startRun() {
   startOverlay.hidden = true;
   resultOverlay.hidden = true;
   pauseOverlay.hidden = true;
-  liveStatus.textContent = `Game started with ${selectedCreatureCount} creatures on ${selectedDifficulty} wind.`;
+  liveStatus.textContent = `Game started with ${selectedCreatureCount} creatures.`;
   scheduleGust();
   syncScore();
   syncControls();
@@ -564,7 +543,7 @@ function enforcePlatformLimits() {
 }
 
 function scheduleGust(minimumRest = 0) {
-  const timing = getGustTiming(random, DIFFICULTY_PROFILES[selectedDifficulty]);
+  const timing = getGustTiming(random);
   const restSeconds = Math.max(minimumRest, timing.restSeconds);
   gust = {
     phase: "waiting",
@@ -618,7 +597,11 @@ function getActiveGustEnvelope() {
 
 function getWindVisualIntensity() {
   if (!gust || gust.phase !== "active") return 0;
-  const forceRatio = clamp(gust.force / DIFFICULTY_PROFILES.wild.forceMax, 0, 1);
+  const forceRatio = clamp(
+    (gust.force - WIND_PROFILE.forceMin) / (WIND_PROFILE.forceMax - WIND_PROFILE.forceMin),
+    0,
+    1,
+  );
   return getActiveGustEnvelope() * (0.4 + forceRatio * 0.6);
 }
 
@@ -1016,15 +999,6 @@ function drawSaveFlash() {
 function syncScore() {
   scoreValue.textContent = formatTime(runSeconds);
   bestValue.textContent = `BEST ${formatTime(bestSeconds)}`;
-  const forceRatio = gust && gust.phase === "active"
-    ? clamp((gust.force * getActiveGustEnvelope()) / DIFFICULTY_PROFILES.wild.forceMax, 0, 1)
-    : 0;
-  const windLevel = Math.ceil(forceRatio * 5);
-  windMeter.setAttribute("aria-label", windLevel === 0 ? "Wind calm" : `Wind level ${windLevel} of 5`);
-
-  for (const [index, bar] of windBars.entries()) {
-    bar.classList.toggle("is-filled", index < windLevel);
-  }
 }
 
 function syncControls() {
@@ -1035,7 +1009,7 @@ function syncControls() {
 }
 
 function getScoreKey() {
-  return `${selectedDifficulty}:${selectedCreatureCount}`;
+  return `normal:${selectedCreatureCount}`;
 }
 
 function getBestScore() {
@@ -1074,19 +1048,16 @@ function writeBestScores() {
 }
 
 function readSettings() {
-  const defaults = { difficulty: "normal", creatureCount: 5 };
+  const defaults = { creatureCount: 5 };
 
   try {
     const stored = JSON.parse(window.localStorage.getItem(SETTINGS_KEY) || "{}");
-    const difficulty = Object.hasOwn(DIFFICULTY_PROFILES, stored.difficulty)
-      ? stored.difficulty
-      : defaults.difficulty;
     const creatureCount = clamp(
       Math.round(Number(stored.creatureCount) || defaults.creatureCount),
       MIN_CREATURE_COUNT,
       MAX_CREATURE_COUNT,
     );
-    return { difficulty, creatureCount };
+    return { creatureCount };
   } catch {
     return defaults;
   }
@@ -1096,10 +1067,10 @@ function writeSettings() {
   try {
     window.localStorage.setItem(
       SETTINGS_KEY,
-      JSON.stringify({ difficulty: selectedDifficulty, creatureCount: selectedCreatureCount }),
+      JSON.stringify({ creatureCount: selectedCreatureCount }),
     );
   } catch {
-    // Settings fall back to Normal with five creatures when storage is unavailable.
+    // Settings fall back to five creatures when storage is unavailable.
   }
 }
 
@@ -1108,7 +1079,7 @@ if (new URLSearchParams(window.location.search).has("debug")) {
     getState: () => state,
     getRunSeconds: () => runSeconds,
     getPlatformAngle: () => platform.angle,
-    getSetup: () => ({ difficulty: selectedDifficulty, creatureCount: selectedCreatureCount }),
+    getSetup: () => ({ creatureCount: selectedCreatureCount }),
     getGustState: () => (gust ? { ...gust } : null),
     getWindState: () => ({
       envelope: getActiveGustEnvelope(),
@@ -1124,9 +1095,8 @@ if (new URLSearchParams(window.location.search).has("debug")) {
       timeScale: engine.timing.timeScale,
       reactions: creatures.map(({ kind, impactElapsed }) => ({ kind, impactElapsed })),
     }),
-    setSetup: (difficulty, creatureCount) => {
+    setSetup: (creatureCount) => {
       if (state !== "ready") return false;
-      if (Object.hasOwn(DIFFICULTY_PROFILES, difficulty)) selectedDifficulty = difficulty;
       selectedCreatureCount = clamp(Math.round(creatureCount), MIN_CREATURE_COUNT, MAX_CREATURE_COUNT);
       updateSetup();
       return true;

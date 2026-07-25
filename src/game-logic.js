@@ -1,34 +1,10 @@
-export const DIFFICULTY_PROFILES = Object.freeze({
-  gentle: Object.freeze({
-    label: "Gentle",
-    note: "Light gusts · room to recover",
-    forceMin: 0.000025,
-    forceMax: 0.00005,
-    restMin: 3.2,
-    restMax: 5,
-    durationMin: 3.6,
-    durationMax: 4.6,
-  }),
-  normal: Object.freeze({
-    label: "Normal",
-    note: "Random gusts · real pressure",
-    forceMin: 0.000065,
-    forceMax: 0.000105,
-    restMin: 2.2,
-    restMax: 3.8,
-    durationMin: 3.8,
-    durationMax: 5,
-  }),
-  wild: Object.freeze({
-    label: "Wild",
-    note: "Heavy gusts · little recovery",
-    forceMin: 0.00011,
-    forceMax: 0.000135,
-    restMin: 1.3,
-    restMax: 2.6,
-    durationMin: 4,
-    durationMax: 5.4,
-  }),
+export const WIND_PROFILE = Object.freeze({
+  forceMin: 0.000055,
+  forceMax: 0.000135,
+  restMin: 2.2,
+  restMax: 3.8,
+  durationMin: 3.8,
+  durationMax: 5.4,
 });
 
 export function clamp(value, min, max) {
@@ -47,15 +23,19 @@ export function createSeededRandom(seed) {
   };
 }
 
-function sampleRange(min, max, random) {
-  return min + (max - min) * random();
+function sampleRange(min, max, sample) {
+  return min + (max - min) * sample;
 }
 
-export function getGustTiming(random, profile = DIFFICULTY_PROFILES.normal) {
+export function getGustTiming(random, profile = WIND_PROFILE) {
+  const restSeconds = sampleRange(profile.restMin, profile.restMax, random());
+  const durationSeconds = sampleRange(profile.durationMin, profile.durationMax, random());
+  const forceSample = random();
+
   return {
-    restSeconds: sampleRange(profile.restMin, profile.restMax, random),
-    durationSeconds: sampleRange(profile.durationMin, profile.durationMax, random),
-    force: sampleRange(profile.forceMin, profile.forceMax, random),
+    restSeconds,
+    durationSeconds,
+    force: sampleRange(profile.forceMin, profile.forceMax, forceSample * forceSample),
   };
 }
 
