@@ -1,6 +1,6 @@
 # Generated asset manifest
 
-Generated: 2026-07-22
+Generated: 2026-07-22; extended 2026-07-25
 
 Source direction:
 
@@ -17,6 +17,18 @@ Assets:
 - `characters-impact-chroma.png`: matching post-impact expressions for all five characters over `#FF00FF` chroma.
 - `props-ui-chroma.png`: beam, fulcrum, crown, toy plates, dust, and impact stars over `#FF00FF` chroma.
 - `AppIcon.png`: square three-character App Store icon with the same clay material and sunset palette.
+- `road-tile.png`: edge-to-edge side-view terracotta clay terrain with a
+  softly rounded sunlit rim, generated on `#00FF00` chroma and converted to
+  alpha for continuous horizontal tiling beneath the physical wheel.
+
+Generation receipt for `road-tile.png`:
+
+- Built-in OpenAI image generation, `stylized-concept` use case.
+- Prompt target: a seamless orthographic side-scrolling clay road cross-section
+  spanning the full width, warm coral soil, quiet tactile imperfections, no
+  props, text, characters, wheel, plank, sky, or UI.
+- Chroma removal used the explicit `#00FF00` key after border auto-detection was
+  rejected for sampling the orange terrain.
 
 Rights and use:
 

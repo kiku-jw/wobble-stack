@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="13" result="Passed" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.0274072">
+  <test-suite type="TestSuite" id="1000" name="Wobble Stack" fullname="Wobble Stack" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.027407" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1016" name="WobbleStack.Domain.Tests.dll" fullname="ios/WobbleStack/Library/ScriptAssemblies/WobbleStack.Domain.Tests.dll" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.021868" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="36035" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1017" name="WobbleStack" fullname="WobbleStack" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.021627" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1018" name="Domain" fullname="WobbleStack.Domain" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.021562" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1019" name="Tests" fullname="WobbleStack.Domain.Tests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.021498" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1002" name="WobbleStackDomainTests" fullname="WobbleStack.Domain.Tests.WobbleStackDomainTests" classname="WobbleStack.Domain.Tests.WobbleStackDomainTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.020981" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1010" name="BeamTiltDirectlyCountersOrAmplifiesTheWind" fullname="WobbleStack.Domain.Tests.WobbleStackDomainTests.BeamTiltDirectlyCountersOrAmplifiesTheWind" methodname="BeamTiltDirectlyCountersOrAmplifiesTheWind" classname="WobbleStack.Domain.Tests.WobbleStackDomainTests" runstate="Runnable" seed="1554591904" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.010548" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1011" name="CorrectTiltDampsOnlyDownwindMotion" fullname="WobbleStack.Domain.Tests.WobbleStackDomainTests.CorrectTiltDampsOnlyDownwindMotion" methodname="CorrectTiltDampsOnlyDownwindMotion" classname="WobbleStack.Domain.Tests.WobbleStackDomainTests" runstate="Runnable" seed="1531754070" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.000432" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1014" name="CreatureSetupStaysInsideThreeToFive" fullname="WobbleStack.Domain.Tests.WobbleStackDomainTests.CreatureSetupStaysInsideThreeToFive" methodname="CreatureSetupStaysInsideThreeToFive" classname="WobbleStack.Domain.Tests.WobbleStackDomainTests" runstate="Runnable" seed="565874535" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.000383" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1006" name="FirstGustLeavesTimeForAVisibleWarning" fullname="WobbleStack.Domain.Tests.WobbleStackDomainTests.FirstGustLeavesTimeForAVisibleWarning" methodname="FirstGustLeavesTimeForAVisibleWarning" classname="WobbleStack.Domain.Tests.WobbleStackDomainTests" runstate="Runnable" seed="1193772880" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.000265" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1015" name="GamePhaseTransitionsStayWithinPlayableFlow" fullname="WobbleStack.Domain.Tests.WobbleStackDomainTests.GamePhaseTransitionsStayWithinPlayableFlow" methodname="GamePhaseTransitionsStayWithinPlayableFlow" classname="WobbleStack.Domain.Tests.WobbleStackDomainTests" runstate="Runnable" seed="1768138848" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.000337" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1009" name="GustAccelerationFollowsDirectionAndEnvelope" fullname="WobbleStack.Domain.Tests.WobbleStackDomainTests.GustAccelerationFollowsDirectionAndEnvelope" methodname="GustAccelerationFollowsDirectionAndEnvelope" classname="WobbleStack.Domain.Tests.WobbleStackDomainTests" runstate="Runnable" seed="1009147117" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.000169" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1007" name="GustEnvelopeEasesInHoldsAndEasesOut" fullname="WobbleStack.Domain.Tests.WobbleStackDomainTests.GustEnvelopeEasesInHoldsAndEasesOut" methodname="GustEnvelopeEasesInHoldsAndEasesOut" classname="WobbleStack.Domain.Tests.WobbleStackDomainTests" runstate="Runnable" seed="718067596" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.000175" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1013" name="RelativePointerDriveUsesItsOwnTouchOrigin" fullname="WobbleStack.Domain.Tests.WobbleStackDomainTests.RelativePointerDriveUsesItsOwnTouchOrigin" methodname="RelativePointerDriveUsesItsOwnTouchOrigin" classname="WobbleStack.Domain.Tests.WobbleStackDomainTests" runstate="Runnable" seed="791105337" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.000197" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1005" name="SeededSchedulerKeepsSamplesInsideSingleProfileBounds" fullname="WobbleStack.Domain.Tests.WobbleStackDomainTests.SeededSchedulerKeepsSamplesInsideSingleProfileBounds" methodname="SeededSchedulerKeepsSamplesInsideSingleProfileBounds" classname="WobbleStack.Domain.Tests.WobbleStackDomainTests" runstate="Runnable" seed="1541464898" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.000270" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1004" name="SeededSchedulerRepeatsDeterministicSequence" fullname="WobbleStack.Domain.Tests.WobbleStackDomainTests.SeededSchedulerRepeatsDeterministicSequence" methodname="SeededSchedulerRepeatsDeterministicSequence" classname="WobbleStack.Domain.Tests.WobbleStackDomainTests" runstate="Runnable" seed="1553785997" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.000272" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1003" name="SingleProfileSpansSoftThroughStrongGusts" fullname="WobbleStack.Domain.Tests.WobbleStackDomainTests.SingleProfileSpansSoftThroughStrongGusts" methodname="SingleProfileSpansSoftThroughStrongGusts" classname="WobbleStack.Domain.Tests.WobbleStackDomainTests" runstate="Runnable" seed="1453928902" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.000154" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1012" name="TouchControlContinuouslyRaisesTheTouchedEndAndCoversStrongestGust" fullname="WobbleStack.Domain.Tests.WobbleStackDomainTests.TouchControlContinuouslyRaisesTheTouchedEndAndCoversStrongestGust" methodname="TouchControlContinuouslyRaisesTheTouchedEndAndCoversStrongestGust" classname="WobbleStack.Domain.Tests.WobbleStackDomainTests" runstate="Runnable" seed="1275792908" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.000209" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1008" name="WindPreviewBuildsBeforePhysicalForceStarts" fullname="WobbleStack.Domain.Tests.WobbleStackDomainTests.WindPreviewBuildsBeforePhysicalForceStarts" methodname="WindPreviewBuildsBeforePhysicalForceStarts" classname="WobbleStack.Domain.Tests.WobbleStackDomainTests" runstate="Runnable" seed="69207338" result="Passed" start-time="2026-07-25 20:57:11Z" end-time="2026-07-25 20:57:11Z" duration="0.000105" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: /tmp/wobble-review-edit.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

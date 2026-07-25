@@ -4,53 +4,44 @@ Updated: 2026-07-25
 
 ## Current
 
-- Phase: M2 single-mode variable-intensity device retest.
+- Phase: M3 rolling-world production, core vehicle gate verified locally.
 - Canonical task: `kiku-jw/wobble-stack#4`.
-- Next actor: Owner, to test the launched single-mode build on the iPhone.
-- Blocker: none for another local iteration. App Store distribution remains a
-  separate Apple Developer Program gate.
+- Next actor: Agent, implementing articulated characters and the first
+  travelling route.
+- Blocker: none for local production. Subjective control remains a physical
+  iPhone gate; App Store distribution remains a separate Apple Developer
+  Program boundary.
 
-## Verified inputs
+## Verified rolling-core outcome
 
-- Public web prototype establishes the game loop and deterministic calibration harness.
-- Same-seed web outcomes after the latest physics fix: neutral `9.00 s`, correct `11.78 s`, wrong `7.22 s`.
-- Three concept frames establish gameplay, collapse, team, character, environment, and UI direction.
-- Unity `6000.3.19f1` and `6000.5.2f1` are installed; `6000.3.19f1` includes iOS support.
-- Xcode `26.6` is selected, licensed, and initialized with the iOS `26.5` platform runtime.
-- A paired development iPhone and valid Apple Development signing identity are
-  available for local device builds.
+- The direct-angle kinematic beam is gone from native gameplay.
+- A dynamic star wheel rolls on a continuous physical road and drives a dynamic
+  plank through one native `WheelJoint2D`.
+- Touch displacement is relative to the initial contact point, works away from
+  the bezel, and controls wheel motion rather than plank angle.
+- A smoothed camera follows horizontal vehicle travel with velocity look-ahead;
+  wind rendering moves with the camera.
+- Correct wheel travel completes the strongest deterministic gust in both
+  directions with three and five creatures. Neutral and wrong travel still
+  collapse.
+- A delayed broad rescue gesture also completes the strongest matrix without
+  tower-state feedback or per-frame scripted correction.
+- The wheel stays grounded through a strong five-friend catch, and measured
+  sprite fill now matches its circular collider at the road contact.
+- A generated alpha clay terrain tile replaces the temporary flat-color road.
+- Current actual-physics start/gameplay captures are stored under the canonical
+  proof bundle and reflected in the README screenshots.
+- Unity batch compile, `13/13` EditMode, `15/15` PlayMode, and Mac Metal capture
+  pass.
 
-## Verified in-repository
+## Still in production
 
-- Complete Ready → Playing → Paused/Failing → Results → Retry state flow.
-- One deterministic continuous gust range produces mostly Normal-like wind plus
-  occasional visibly soft and strong outliers; elapsed time does not raise it.
-- Difficulty selection and the intensity HUD are absent. Creature count and
-  reduced motion remain setup options.
-- Early strong input and a delayed moderate input both complete the strongest
-  possible gust in both directions and three/five-creature towers without a
-  changing test angle.
-- Correct tilt directly weakens gust acceleration for every creature and
-  damps only motion currently traveling downwind. It never chooses the side or
-  pulls a recovering body back.
-- Three-to-five creature setup, local best scores by count, reduced motion, and
-  safe-area UI. Former Normal score slots remain readable.
-- Rounded beam collision, compact flat-contact silhouettes, free rotation, and
-  a jointless physical stack.
-- Calm, wind/panic, and impact-expression atlases plus a 1024 px app icon.
-- Impact-only slow motion, flying crown, dust/stars, procedural wind and feedback audio, and iOS haptic hooks.
-- Maximum wind collapses neutral and wrong input; a constant correct hold
-  completes it.
-- Unity batch compile, `12/12` EditMode tests, `13/13` PlayMode tests, Mac smoke
-  build, and an inspected Metal gameplay capture pass for the replacement
-  source.
-- Unity exports a non-Development Xcode project. Xcode produced a valid signed
-  arm64 app, and CoreDevice confirmed install and launch on the paired iPhone.
-
-## Next verified outcome
-
-Pass the owner playtest for the single-mode intensity mix: soft and strong
-gusts should feel different without a meter while delayed imprecise correction,
-believable fallability, beam-end collisions, expression readability, clean
-presentation, and voluntary Retry remain intact. Install and launch receipts
-prove delivery, not subjective feel, performance, or App Store readiness.
+- Articulated limbs/ears/leaves/wings, weak visible grips, blink/gaze, and
+  character-specific emotional behavior.
+- First travelling route, parallax layers, moving clouds, windmill, badges,
+  join stops, finish, and local route progression.
+- Ground-impact deformation/debris and a longer readable collapse.
+- Removal of obsolete creature-count/setup UI and final minimal start/results
+  presentation.
+- Fresh iOS export, signed install/launch, and owner feel approval after the
+  next cohesive device build.

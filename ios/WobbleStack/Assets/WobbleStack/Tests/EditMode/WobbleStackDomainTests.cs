@@ -224,6 +224,47 @@ namespace WobbleStack.Domain.Tests
         }
 
         [Test]
+        public void RelativePointerDriveUsesItsOwnTouchOrigin()
+        {
+            const float screenWidth = 1000f;
+            const float travelFraction = 0.28f;
+            float centered = WobbleStackRules.GetRelativeDriveAmount(
+                420f,
+                420f,
+                screenWidth,
+                travelFraction);
+            float right = WobbleStackRules.GetRelativeDriveAmount(
+                420f,
+                560f,
+                screenWidth,
+                travelFraction);
+            float sameRightFromAnotherOrigin = WobbleStackRules.GetRelativeDriveAmount(
+                100f,
+                240f,
+                screenWidth,
+                travelFraction);
+            float left = WobbleStackRules.GetRelativeDriveAmount(
+                420f,
+                280f,
+                screenWidth,
+                travelFraction);
+            float saturated = WobbleStackRules.GetRelativeDriveAmount(
+                420f,
+                900f,
+                screenWidth,
+                travelFraction);
+
+            Assert.That(centered, Is.EqualTo(0f));
+            Assert.That(right, Is.GreaterThan(0.4f));
+            Assert.That(right, Is.EqualTo(sameRightFromAnotherOrigin).Within(0.000001f));
+            Assert.That(left, Is.EqualTo(-right).Within(0.000001f));
+            Assert.That(saturated, Is.EqualTo(1f));
+            Assert.That(
+                WobbleStackRules.GetRelativeDriveAmount(10f, 20f, 0f, travelFraction),
+                Is.EqualTo(0f));
+        }
+
+        [Test]
         public void CreatureSetupStaysInsideThreeToFive()
         {
             Assert.That(WobbleStackRules.ClampCreatureCount(1), Is.EqualTo(3));

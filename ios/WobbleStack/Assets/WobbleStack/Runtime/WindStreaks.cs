@@ -12,6 +12,7 @@ namespace WobbleStack.Runtime
         private Material _material;
         private float _intensity;
         private int _direction = 1;
+        private float _centerX;
 
         public void Build()
         {
@@ -39,6 +40,11 @@ namespace WobbleStack.Runtime
             _intensity = Mathf.Clamp01(intensity);
         }
 
+        public void SetCenterX(float centerX)
+        {
+            _centerX = centerX;
+        }
+
         private void Update()
         {
             Refresh(Time.time);
@@ -60,7 +66,7 @@ namespace WobbleStack.Runtime
                 }
 
                 float travel = Mathf.Repeat(_offsets[index] + (time * speed * 0.08f), 1f);
-                float x = Mathf.Lerp(-7f, 7f, _direction > 0 ? travel : 1f - travel);
+                float x = _centerX + Mathf.Lerp(-7f, 7f, _direction > 0 ? travel : 1f - travel);
                 float length = Mathf.Lerp(0.9f, 2.8f, _intensity);
                 float width = Mathf.Lerp(0.03f, 0.11f, _intensity);
                 float alpha = Mathf.Lerp(0.22f, 0.72f, _intensity);

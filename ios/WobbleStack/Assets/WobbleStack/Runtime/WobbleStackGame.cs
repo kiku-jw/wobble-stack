@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -9,12 +10,22 @@ namespace WobbleStack.Runtime
 {
     internal sealed class WobbleStackGame : MonoBehaviour
     {
-        private const float PlatformY = -4.35f;
+        private const float GroundSurfaceY = -7.15f;
+        private const float WheelRadius = 1.08f;
+        private const float WheelSpriteFillRatio = 268f / 310f;
+        private const float WheelCenterY = GroundSurfaceY + WheelRadius;
+        private const float PlatformY = GroundSurfaceY + (WheelRadius * 2f) + 0.37f;
         private const float PlatformWidth = 8.5f;
         private const float PlatformHeight = 0.78f;
         private const float StaticStackContactInset = 0.06f;
-        private const float DynamicStackContactInset = -0.012f;
-        private const float CatchFloorY = -8.65f;
+        private const float DynamicStackContactInset = 0.018f;
+        private const float RoadLength = 180f;
+        private const float RoadCenterX = 70f;
+        private const float PointerTravelFraction = 0.28f;
+        private const float WheelMotorSpeed = 18f;
+        private const float WheelCatchBoostSpeed = 20f;
+        private const float WheelDriveTorque = 40f;
+        private const float WheelBrakeTorque = 12f;
         private const float UnityAccelerationScale = 9342.857f;
         private const float ImpactSlowMotionScale = 0.18f;
         private const float ImpactSlowMotionSeconds = 0.36f;
@@ -26,11 +37,16 @@ namespace WobbleStack.Runtime
         private readonly List<CreatureBody> _creatures = new List<CreatureBody>();
         private Camera _camera;
         private Vector3 _cameraHome;
+        private float _cameraFollowVelocity;
+        private Transform _backgroundTransform;
         private Rigidbody2D _platformBody;
+        private Rigidbody2D _wheelBody;
+        private WheelJoint2D _wheelJoint;
         private Transform _worldRoot;
         private WindStreaks _windStreaks;
         private GameAudio _audio;
         private PhysicsMaterial2D _creatureMaterial;
+        private PhysicsMaterial2D _roadMaterial;
         private Canvas _canvas;
         private GameObject _hudRoot;
         private GameObject _startOverlay;
@@ -49,8 +65,8 @@ namespace WobbleStack.Runtime
         private bool _reducedMotion;
         private int _runCount;
         private float _runSeconds;
-        private float _targetAngleRadians;
         private bool _pointerActive;
+        private float _pointerOriginX;
         private float _controlAmount;
         private GustScheduler _gustScheduler;
         private GustSample _gust;
@@ -75,12 +91,12 @@ namespace WobbleStack.Runtime
             ShowReady();
         }
 
-        private void Start()
+        private IEnumerator Start()
         {
             string capturePath = FindArgumentValue("--wobble-capture=");
             if (string.IsNullOrEmpty(capturePath))
             {
-                return;
+                yield break;
             }
 
             if (HasArgument("--wobble-capture-results"))
@@ -94,8 +110,14 @@ namespace WobbleStack.Runtime
             else if (HasArgument("--wobble-capture-playing"))
             {
                 PreparePlayingCapture();
+                for (int step = 0; step < 140; step += 1)
+                {
+                    yield return new WaitForFixedUpdate();
+                }
             }
 
+            UpdateCameraRig();
+            UpdateHud();
             PortraitCapture.Write(_camera, _canvas, capturePath);
             Application.Quit();
         }
@@ -123,7 +145,7 @@ namespace WobbleStack.Runtime
                 UpdateFailure();
             }
 
-            UpdateCameraShake();
+            UpdateCameraRig();
             UpdateHud();
         }
 
@@ -136,12 +158,7 @@ namespace WobbleStack.Runtime
 
             _runSeconds += Time.fixedDeltaTime;
             UpdateGust();
-            UpdateControlTarget();
-
-            float currentDegrees = _platformBody.rotation;
-            float targetDegrees = _targetAngleRadians * Mathf.Rad2Deg;
-            float nextDegrees = Mathf.MoveTowardsAngle(currentDegrees, targetDegrees, 150f * Time.fixedDeltaTime);
-            _platformBody.MoveRotation(nextDegrees);
+            UpdateWheelDrive();
 
             if (_hasGust && _runSeconds >= _gust.StartsAtSeconds && _runSeconds < _gust.EndsAtSeconds)
             {
@@ -150,13 +167,7 @@ namespace WobbleStack.Runtime
                 float acceleration = WobbleStackRules.GetEffectiveGustAcceleration(
                     _gust.Force,
                     _gust.Direction,
-                    envelope,
-                    _platformBody.rotation * Mathf.Deg2Rad,
-                    WobbleStackRules.GravityScale,
-                    WobbleStackRules.CounterTiltAuthority) * UnityAccelerationScale;
-                float requiredAngle = WobbleStackRules.GetRequiredCounterAngle(
-                    _gust.Force,
-                    WobbleStackRules.GravityScale);
+                    envelope) * UnityAccelerationScale;
                 float liftAcceleration = 0.000006f * UnityAccelerationScale * envelope;
 
                 for (int index = 0; index < _creatures.Count; index += 1)
@@ -164,14 +175,7 @@ namespace WobbleStack.Runtime
                     CreatureBody creature = _creatures[index];
                     Rigidbody2D body = creature.Body;
                     float exposure = 0.9f + (index * 0.22f);
-                    float dampingAcceleration = WobbleStackRules.GetCounterTiltDampingAcceleration(
-                        body.linearVelocity.x,
-                        _gust.Direction,
-                        _platformBody.rotation * Mathf.Deg2Rad,
-                        requiredAngle,
-                        envelope,
-                        WobbleStackRules.CounterTiltVelocityDamping);
-                    float horizontalAcceleration = (acceleration * exposure) + dampingAcceleration;
+                    float horizontalAcceleration = acceleration * exposure;
                     Vector2 horizontalForce = new Vector2(horizontalAcceleration * body.mass, 0f);
                     body.AddForceAtPosition(horizontalForce, body.worldCenterOfMass + new Vector2(0f, 0.18f));
                     body.AddForce(new Vector2(0f, liftAcceleration * body.mass));
@@ -213,6 +217,11 @@ namespace WobbleStack.Runtime
             if (_creatureMaterial != null)
             {
                 Destroy(_creatureMaterial);
+            }
+
+            if (_roadMaterial != null)
+            {
+                Destroy(_roadMaterial);
             }
 
             GeneratedArt.Release();
@@ -259,15 +268,13 @@ namespace WobbleStack.Runtime
             _creatureCount = WobbleStackRules.ClampCreatureCount(creatureCount);
             _phase = GamePhase.Playing;
             _runSeconds = 0f;
-            _targetAngleRadians = 0f;
             _controlAmount = Mathf.Clamp(controlAmount, -1f, 1f);
             _pointerActive = true;
             _gustScheduler = new GustScheduler(1u);
             _gust = new GustSample(0.7f, durationSeconds, force, direction, 0.7f);
             _hasGust = true;
             _gustIndex = 0;
-            _platformBody.rotation = 0f;
-            _platformBody.transform.rotation = Quaternion.identity;
+            ResetVehicle(true);
             BuildStack(true);
             _startOverlay.SetActive(false);
             _pauseOverlay.SetActive(false);
@@ -290,10 +297,30 @@ namespace WobbleStack.Runtime
             float maxDrift = 0f;
             foreach (CreatureBody creature in _creatures)
             {
-                maxDrift = Mathf.Max(maxDrift, Mathf.Abs(creature.Body.position.x));
+                maxDrift = Mathf.Max(maxDrift, Mathf.Abs(creature.Body.position.x - _platformBody.position.x));
             }
 
             return maxDrift;
+        }
+
+        internal Vector2 GetGameplayProbeWheelPosition()
+        {
+            return _wheelBody.position;
+        }
+
+        internal float GetGameplayProbeWheelRotation()
+        {
+            return _wheelBody.rotation;
+        }
+
+        internal float GetGameplayProbePlatformRotation()
+        {
+            return _platformBody.rotation;
+        }
+
+        internal float GetGameplayProbeCameraX()
+        {
+            return _camera.transform.position.x;
         }
 
         private void ConfigureRuntime()
@@ -308,6 +335,11 @@ namespace WobbleStack.Runtime
             {
                 friction = 0.18f,
                 bounciness = 0.035f
+            };
+            _roadMaterial = new PhysicsMaterial2D("Road Grip")
+            {
+                friction = 1.1f,
+                bounciness = 0f
             };
         }
 
@@ -361,6 +393,7 @@ namespace WobbleStack.Runtime
         {
             GameObject background = new GameObject("Sunset Stage");
             background.transform.SetParent(_worldRoot, false);
+            _backgroundTransform = background.transform;
             SpriteRenderer renderer = background.AddComponent<SpriteRenderer>();
             renderer.sprite = GeneratedArt.Background();
             renderer.sortingOrder = -100;
@@ -372,14 +405,49 @@ namespace WobbleStack.Runtime
 
         private void BuildStage()
         {
-            GameObject fulcrum = new GameObject("Fulcrum");
-            fulcrum.transform.SetParent(_worldRoot, false);
-            SpriteRenderer fulcrumRenderer = fulcrum.AddComponent<SpriteRenderer>();
-            fulcrumRenderer.sprite = GeneratedArt.Fulcrum();
-            fulcrumRenderer.material = GeneratedArt.ChromaMaterial;
-            fulcrumRenderer.sortingOrder = 10;
-            FitHeight(fulcrum.transform, fulcrumRenderer.sprite, 1.65f);
-            fulcrum.transform.position = new Vector3(0f, PlatformY - 0.82f, 0f);
+            GameObject road = new GameObject("Road");
+            road.transform.SetParent(_worldRoot, false);
+            road.transform.position = new Vector3(RoadCenterX, GroundSurfaceY - 1.2f, 0f);
+            GameObject roadVisual = new GameObject("Road Visual");
+            roadVisual.transform.SetParent(road.transform, false);
+            SpriteRenderer roadRenderer = roadVisual.AddComponent<SpriteRenderer>();
+            roadRenderer.sprite = GeneratedArt.Road();
+            roadRenderer.sortingOrder = -4;
+            roadRenderer.drawMode = SpriteDrawMode.Tiled;
+            roadRenderer.tileMode = SpriteTileMode.Continuous;
+            roadRenderer.size = new Vector2(RoadLength, roadRenderer.sprite.bounds.size.y);
+            roadVisual.transform.localScale = new Vector3(
+                1f,
+                2.4f / roadRenderer.sprite.bounds.size.y,
+                1f);
+            BoxCollider2D roadCollider = road.AddComponent<BoxCollider2D>();
+            roadCollider.size = new Vector2(RoadLength, 2.4f);
+            roadCollider.sharedMaterial = _roadMaterial;
+
+            GameObject wheel = new GameObject("Star Wheel");
+            wheel.transform.SetParent(_worldRoot, false);
+            wheel.transform.position = new Vector3(0f, WheelCenterY, 0f);
+            GameObject wheelVisual = new GameObject("Visual");
+            wheelVisual.transform.SetParent(wheel.transform, false);
+            SpriteRenderer wheelRenderer = wheelVisual.AddComponent<SpriteRenderer>();
+            wheelRenderer.sprite = GeneratedArt.Fulcrum();
+            wheelRenderer.material = GeneratedArt.ChromaMaterial;
+            wheelRenderer.sortingOrder = 12;
+            FitHeight(
+                wheelVisual.transform,
+                wheelRenderer.sprite,
+                (WheelRadius * 2f) / WheelSpriteFillRatio);
+            _wheelBody = wheel.AddComponent<Rigidbody2D>();
+            _wheelBody.bodyType = RigidbodyType2D.Kinematic;
+            _wheelBody.mass = 6f;
+            _wheelBody.gravityScale = 1.5f;
+            _wheelBody.linearDamping = 0.08f;
+            _wheelBody.angularDamping = 0.08f;
+            _wheelBody.interpolation = RigidbodyInterpolation2D.Interpolate;
+            _wheelBody.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            CircleCollider2D wheelCollider = wheel.AddComponent<CircleCollider2D>();
+            wheelCollider.radius = WheelRadius;
+            wheelCollider.sharedMaterial = _roadMaterial;
 
             GameObject platform = new GameObject("Seesaw Beam");
             platform.transform.SetParent(_worldRoot, false);
@@ -391,18 +459,30 @@ namespace WobbleStack.Runtime
             FitWidth(platform.transform, renderer.sprite, PlatformWidth + 0.35f);
             _platformBody = platform.AddComponent<Rigidbody2D>();
             _platformBody.bodyType = RigidbodyType2D.Kinematic;
+            _platformBody.mass = 4.2f;
+            _platformBody.gravityScale = 1f;
+            _platformBody.linearDamping = 0.16f;
+            _platformBody.angularDamping = 1.15f;
             _platformBody.interpolation = RigidbodyInterpolation2D.Interpolate;
+            _platformBody.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
             CapsuleCollider2D collider = platform.AddComponent<CapsuleCollider2D>();
             float platformScale = platform.transform.localScale.x;
             collider.size = new Vector2(PlatformWidth / platformScale, PlatformHeight / platformScale);
             collider.direction = CapsuleDirection2D.Horizontal;
             collider.sharedMaterial = _creatureMaterial;
 
-            GameObject floor = new GameObject("Catch Floor");
-            floor.transform.SetParent(_worldRoot, false);
-            floor.transform.position = new Vector3(0f, CatchFloorY, 0f);
-            BoxCollider2D floorCollider = floor.AddComponent<BoxCollider2D>();
-            floorCollider.size = new Vector2(18f, 0.5f);
+            _wheelJoint = platform.AddComponent<WheelJoint2D>();
+            _wheelJoint.connectedBody = _wheelBody;
+            _wheelJoint.autoConfigureConnectedAnchor = false;
+            _wheelJoint.anchor = platform.transform.InverseTransformPoint(wheel.transform.position);
+            _wheelJoint.connectedAnchor = Vector2.zero;
+            _wheelJoint.enableCollision = false;
+            JointSuspension2D suspension = _wheelJoint.suspension;
+            suspension.angle = 90f;
+            suspension.frequency = 8f;
+            suspension.dampingRatio = 0.92f;
+            _wheelJoint.suspension = suspension;
+            _wheelJoint.useMotor = false;
         }
 
         private void BuildInterface()
@@ -542,7 +622,7 @@ namespace WobbleStack.Runtime
         {
             ClearStack();
             CreatureSpec[] specs = CreatureSpec.All;
-            float bottom = PlatformY + (PlatformHeight * 0.5f);
+            float bottom = _platformBody.position.y + (PlatformHeight * 0.5f);
             float contactInset = dynamicBodies ? DynamicStackContactInset : StaticStackContactInset;
 
             for (int index = 0; index < _creatureCount; index += 1)
@@ -550,10 +630,50 @@ namespace WobbleStack.Runtime
                 CreatureSpec spec = specs[index];
                 float y = bottom + (spec.ColliderSize.y * 0.5f);
                 bottom += spec.ColliderSize.y - contactInset;
-                CreatureBody creature = CreateCreature(spec, index, new Vector2(0f, y), dynamicBodies);
+                CreatureBody creature = CreateCreature(
+                    spec,
+                    index,
+                    new Vector2(_platformBody.position.x, y),
+                    dynamicBodies);
                 _creatures.Add(creature);
             }
 
+        }
+
+        private void ResetVehicle(bool dynamicBodies)
+        {
+            _wheelJoint.useMotor = false;
+            _platformBody.bodyType = RigidbodyType2D.Kinematic;
+            _wheelBody.bodyType = RigidbodyType2D.Kinematic;
+            _platformBody.position = new Vector2(0f, PlatformY);
+            _platformBody.rotation = 0f;
+            _platformBody.linearVelocity = Vector2.zero;
+            _platformBody.angularVelocity = 0f;
+            _wheelBody.position = new Vector2(0f, WheelCenterY);
+            _wheelBody.rotation = 0f;
+            _wheelBody.linearVelocity = Vector2.zero;
+            _wheelBody.angularVelocity = 0f;
+            _cameraFollowVelocity = 0f;
+            _cameraHome = new Vector3(0f, 0f, -10f);
+            _camera.transform.position = _cameraHome;
+            if (_backgroundTransform != null)
+            {
+                Vector3 backgroundPosition = _backgroundTransform.position;
+                backgroundPosition.x = 0f;
+                _backgroundTransform.position = backgroundPosition;
+            }
+
+            _windStreaks.SetCenterX(0f);
+            Physics2D.SyncTransforms();
+
+            if (!dynamicBodies)
+            {
+                return;
+            }
+
+            _platformBody.bodyType = RigidbodyType2D.Dynamic;
+            _wheelBody.bodyType = RigidbodyType2D.Dynamic;
+            _wheelJoint.useMotor = true;
         }
 
         private CreatureBody CreateCreature(CreatureSpec spec, int index, Vector2 position, bool dynamicBody)
@@ -659,7 +779,6 @@ namespace WobbleStack.Runtime
             AudioListener.pause = false;
             _runCount += 1;
             _runSeconds = 0f;
-            _targetAngleRadians = 0f;
             _pointerActive = false;
             _controlAmount = 0f;
             _gustIndex = 0;
@@ -668,10 +787,10 @@ namespace WobbleStack.Runtime
             _failureSuspendedAt = -1f;
             _dangerWasHigh = false;
             _cameraShake = 0f;
-            _platformBody.rotation = 0f;
             _gustScheduler = new GustScheduler(Convert.ToUInt32(7907 + (_runCount * 101)));
             _gust = _gustScheduler.Next(0f);
             _hasGust = true;
+            ResetVehicle(true);
             BuildStack(true);
             _phase = GamePhase.Playing;
             _startOverlay.SetActive(false);
@@ -693,7 +812,6 @@ namespace WobbleStack.Runtime
 
             _phase = GamePhase.Paused;
             _pointerActive = false;
-            _targetAngleRadians = 0f;
             _controlAmount = 0f;
             Time.timeScale = 0f;
             AudioListener.pause = true;
@@ -729,7 +847,7 @@ namespace WobbleStack.Runtime
             _failureSuspendedAt = -1f;
             _pointerActive = false;
             _controlAmount = 0f;
-            _targetAngleRadians = _platformBody.rotation * Mathf.Deg2Rad;
+            _wheelJoint.useMotor = false;
             _windStreaks.SetWind(1, 0f);
             _audio.SetWind(0f);
             SpawnCrown();
@@ -782,12 +900,11 @@ namespace WobbleStack.Runtime
             AudioListener.pause = false;
             _phase = GamePhase.Ready;
             _runSeconds = 0f;
-            _targetAngleRadians = 0f;
             _controlAmount = 0f;
-            _platformBody.rotation = 0f;
             _hasGust = false;
             _windStreaks.SetWind(1, 0f);
             _audio.SetWind(0f);
+            ResetVehicle(false);
             BuildStack(false);
             _startOverlay.SetActive(true);
             _pauseOverlay.SetActive(false);
@@ -856,8 +973,7 @@ namespace WobbleStack.Runtime
                         return;
                     }
 
-                    _pointerActive = true;
-                    SetPointerTarget(touch.position.x);
+                    BeginPointer(touch.position.x);
                     return;
                 }
 
@@ -878,8 +994,7 @@ namespace WobbleStack.Runtime
             {
                 if (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject())
                 {
-                    _pointerActive = true;
-                    SetPointerTarget(Input.mousePosition.x);
+                    BeginPointer(Input.mousePosition.x);
                 }
             }
             else if (Input.GetMouseButton(0) && _pointerActive)
@@ -899,45 +1014,38 @@ namespace WobbleStack.Runtime
 
         private void SetPointerTarget(float screenX)
         {
-            float normalized = Mathf.Clamp01(screenX / Screen.width);
-            _controlAmount = WobbleStackRules.GetControlAmount(normalized);
+            _controlAmount = WobbleStackRules.GetRelativeDriveAmount(
+                _pointerOriginX,
+                screenX,
+                Screen.width,
+                PointerTravelFraction);
         }
 
-        private void UpdateControlTarget()
+        private void BeginPointer(float screenX)
+        {
+            _pointerActive = true;
+            _pointerOriginX = screenX;
+            _controlAmount = 0f;
+        }
+
+        private void UpdateWheelDrive()
         {
             float inputMagnitude = Mathf.Abs(_controlAmount);
-            if (inputMagnitude <= 0f || !_hasGust)
+            if (inputMagnitude <= 0f && !_pointerActive)
             {
-                _targetAngleRadians = 0f;
+                _wheelJoint.useMotor = false;
                 return;
             }
 
-            float requiredAngle = WobbleStackRules.GetRequiredCounterAngle(
-                _gust.Force,
-                WobbleStackRules.GravityScale);
-            float authority = Mathf.Max(requiredAngle * 0.72f, 0.06f);
-            float secondsUntilGust = _gust.StartsAtSeconds - _runSeconds;
-            if (secondsUntilGust > 0f && secondsUntilGust <= WobbleStackRules.WindPreviewSeconds)
-            {
-                float preview = WobbleStackRules.GetWindPreviewEnvelope(secondsUntilGust);
-                authority = Mathf.Max(
-                    requiredAngle * Mathf.Lerp(0.72f, 0.88f, preview),
-                    0.06f);
-            }
-            else if (IsGustActive())
-            {
-                float progress = (_runSeconds - _gust.StartsAtSeconds) / _gust.DurationSeconds;
-                float envelope = WobbleStackRules.GetGustEnvelope(progress);
-                authority = Mathf.Max(
-                    requiredAngle * Mathf.Lerp(0.88f, 1.08f, envelope),
-                    0.06f);
-            }
-
-            float shapedMagnitude = Mathf.Min(1f, Mathf.Sqrt(inputMagnitude) * 1.35f);
+            float shapedMagnitude = Mathf.Sqrt(inputMagnitude);
+            float boost = Mathf.InverseLerp(0.65f, 1f, inputMagnitude);
             float direction = _controlAmount < 0f ? -1f : 1f;
-            _targetAngleRadians = direction *
-                Mathf.Min(authority, WobbleStackRules.MaxPlatformAngle) *
-                shapedMagnitude;
+            JointMotor2D motor = _wheelJoint.motor;
+            motor.motorSpeed = -direction *
+                ((shapedMagnitude * WheelMotorSpeed) + (boost * boost * WheelCatchBoostSpeed));
+            motor.maxMotorTorque = Mathf.Lerp(WheelBrakeTorque, WheelDriveTorque, shapedMagnitude);
+            _wheelJoint.motor = motor;
+            _wheelJoint.useMotor = true;
         }
 
         private void UpdateGust()
@@ -1001,8 +1109,9 @@ namespace WobbleStack.Runtime
             for (int index = 0; index < _creatures.Count; index += 1)
             {
                 CreatureBody creature = _creatures[index];
-                maxDrift = Mathf.Max(maxDrift, Mathf.Abs(creature.Body.position.x));
-                if (creature.Body.position.y < -7.1f || Mathf.Abs(creature.Body.position.x) > 6.8f)
+                float localDrift = Mathf.Abs(creature.Body.position.x - _platformBody.position.x);
+                maxDrift = Mathf.Max(maxDrift, localDrift);
+                if (creature.Body.position.y < PlatformY - 1.15f)
                 {
                     BeginFailure();
                     return;
@@ -1015,7 +1124,7 @@ namespace WobbleStack.Runtime
                 }
             }
 
-            float danger = Mathf.Max(maxDrift / 2.2f, Mathf.Abs(_platformBody.rotation) / (WobbleStackRules.MaxPlatformAngle * Mathf.Rad2Deg));
+            float danger = Mathf.Max(maxDrift / 2.2f, Mathf.Abs(_platformBody.rotation) / 20f);
             if (danger > 0.72f)
             {
                 _dangerWasHigh = true;
@@ -1108,13 +1217,11 @@ namespace WobbleStack.Runtime
             float secondsUntilGust = _gust.StartsAtSeconds - _runSeconds;
             if (secondsUntilGust > WobbleStackRules.WindPreviewSeconds)
             {
-                _hintText.text = "DRAG LEFT / RIGHT · THE TOUCHED END RISES";
+                _hintText.text = "TOUCH · SLIDE LEFT OR RIGHT TO ROLL";
             }
             else
             {
-                _hintText.text = _gust.Direction > 0
-                    ? "WIND → · RAISE THE RIGHT END"
-                    : "WIND ← · RAISE THE LEFT END";
+                _hintText.text = "ROLL UNDER THE LEAN";
             }
         }
 
@@ -1156,27 +1263,12 @@ namespace WobbleStack.Runtime
 
         private void PreparePlayingCapture()
         {
-            StartRun();
-            _runSeconds = 12.4f;
-            _targetAngleRadians = -0.12f;
-            _platformBody.rotation = _targetAngleRadians * Mathf.Rad2Deg;
-            _platformBody.transform.rotation = Quaternion.Euler(0f, 0f, _platformBody.rotation);
-            _windStreaks.SetWind(1, 0.78f);
-            _windStreaks.Refresh(1.35f);
-
-            for (int index = 0; index < _creatures.Count; index += 1)
-            {
-                CreatureBody creature = _creatures[index];
-                Vector2 position = creature.Body.position + new Vector2(index * -0.08f, 0f);
-                creature.Body.position = position;
-                creature.Body.rotation = index * -1.2f;
-                creature.transform.position = position;
-                creature.transform.rotation = Quaternion.Euler(0f, 0f, creature.Body.rotation);
-                creature.SetWind(0.78f);
-            }
-
-            Physics2D.SyncTransforms();
-            UpdateHud();
+            ConfigureGameplayProbe(
+                WobbleStackRules.GustForceMax,
+                1,
+                0.8f,
+                5,
+                WobbleStackRules.GustDurationMax);
         }
 
         private void PrepareImpactCapture()
@@ -1242,8 +1334,30 @@ namespace WobbleStack.Runtime
             transient.Initialize(duration, velocity);
         }
 
-        private void UpdateCameraShake()
+        private void UpdateCameraRig()
         {
+            float targetX = 0f;
+            if (_wheelBody != null)
+            {
+                float lookAhead = Mathf.Clamp(_wheelBody.linearVelocity.x * 0.25f, -1f, 1.65f);
+                targetX = _wheelBody.position.x + 0.8f + lookAhead;
+            }
+
+            _cameraHome.x = Mathf.SmoothDamp(
+                _cameraHome.x,
+                targetX,
+                ref _cameraFollowVelocity,
+                0.18f,
+                30f,
+                Time.unscaledDeltaTime);
+            if (_backgroundTransform != null)
+            {
+                Vector3 backgroundPosition = _backgroundTransform.position;
+                backgroundPosition.x = _cameraHome.x;
+                _backgroundTransform.position = backgroundPosition;
+            }
+
+            _windStreaks.SetCenterX(_cameraHome.x);
             if (_cameraShake <= 0f)
             {
                 _camera.transform.position = _cameraHome;

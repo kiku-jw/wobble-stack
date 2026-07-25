@@ -1,6 +1,7 @@
 # Wobble Stack
 
-Keep three to five little disasters together while the wind tries to tear the tower apart.
+Roll one ridiculous wheel under five little disasters while the wind tries to
+tear the tower apart.
 
 [**Play the web prototype**](https://kiku-jw.github.io/wobble-stack/) · Touch, mouse, and keyboard
 
@@ -8,7 +9,7 @@ Keep three to five little disasters together while the wind tries to tear the to
 
 <p align="center">
   <img src="docs/ios/screenshots/start.jpg" width="240" alt="Wobble Stack iPhone start screen" />
-  <img src="docs/ios/screenshots/gameplay.jpg" width="240" alt="Five clay creatures counter-leaning on a seesaw in the iPhone game" />
+  <img src="docs/ios/screenshots/gameplay.jpg" width="240" alt="Five clay creatures balancing while a star wheel rolls on a clay road" />
   <img src="docs/ios/screenshots/collapse.jpg" width="240" alt="Five clay creatures flying apart with comic impact reactions" />
 </p>
 
@@ -19,26 +20,29 @@ thumb create a satisfying cycle of calm, wobble, panic, save, collapse, and
 instant retry?
 
 The public GitHub Pages build remains the lightweight Matter.js prototype. The
-current iPhone vertical slice lives in `ios/WobbleStack`: a Unity 6 build with
-clay character art and deterministic variable-intensity gusts,
-three-to-five-creature setups, pause/results/Retry flows, local best scores,
-impact slow motion, calm/panic/impact expressions, generated sound, haptic
-hooks, reduced motion, safe areas, and a finished app icon.
+current iPhone production client lives in `ios/WobbleStack`: a Unity 6 build
+whose dynamic star wheel rolls on a clay road, drives a freely reacting plank,
+and carries the tower through deterministic variable-intensity gusts. The
+travelling camera, pause/results/Retry flows, impact slow motion,
+calm/panic/impact expressions, generated sound, haptic hooks, reduced motion,
+safe areas, and app icon are already present; articulated characters, routes,
+collectibles, and final UI are in production.
 
 ## Controls
 
-- **iPhone:** drag and hold the end named by the wind prompt. The touched end
-  rises; a moderate same-side hold is enough, so there is no need to reach the
-  bezel or chase an exact angle. Release to return toward neutral.
+- **iPhone:** touch anywhere outside UI, then slide left or right from that
+  touch-down point to roll the wheel. Move the wheel under the leaning tower;
+  return toward the starting point to coast or brake.
 - **Web prototype:** drag left/right with touch or mouse, or use Left/Right or
   A/D.
-- **Goal:** keep every creature on the beam as each visible gust builds.
+- **Goal:** carry every creature toward the windmill and keep them off the road
+  as each visible gust builds.
 - **Pause:** use the button in the top-right corner or press Escape.
 
-Before each run you can choose a stack of three to five creatures. There is one
-game mode: every gust independently samples a different intensity, and the
-wind itself—not a meter or difficulty label—shows how strong it is. Best times
-are tracked separately by stack size.
+There is one game mode: every gust independently samples a different intensity,
+and the wind itself—not a meter or difficulty label—shows how strong it is.
+The first route will begin with three friends and add Rabbit and Jelly King at
+safe stops; setup selection is being removed in favor of that journey.
 
 ## Run the web prototype locally
 
@@ -109,11 +113,12 @@ top of this README are rendered from the current Unity build.
   <img src="docs/concepts/comedic-collapse.png" width="300" alt="Concept art showing the creature tower collapsing" />
 </p>
 
-The next gate is a physical iPhone feel test of the single-mode intensity mix:
-soft and strong gusts must feel different without a HUD while an ordinary
-delayed correction stays reliable. Frame pacing, safe areas, haptics, and
-voluntary Retry remain device gates. Meta systems stay out until that evidence
-exists.
+The rolling-core gate now passes deterministic physics and Metal capture:
+correct wheel travel beats neutral/wrong travel, the wheel remains grounded,
+and a delayed broad rescue gesture is survivable. The next production gate is
+articulated character life—limbs, ears, grips, blink/gaze, personality, and a
+readable impact—followed by the first travelling route and another physical
+iPhone feel test.
 
 ## License
 

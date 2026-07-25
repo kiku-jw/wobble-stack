@@ -100,7 +100,7 @@ namespace WobbleStack.Runtime
 
         private void OnCollisionEnter2D(Collision2D collision)
         {
-            if (_impacted || collision.collider.gameObject.name != "Catch Floor")
+            if (_impacted || collision.collider.gameObject.name != "Road")
             {
                 return;
             }

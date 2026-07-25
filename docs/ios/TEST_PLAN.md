@@ -3,77 +3,85 @@
 ## Automated foundation
 
 - Batch project import and C# compile with Unity `6000.3.19f1`.
-- EditMode tests for gust sampling, warning/preview timing, force direction,
-  control coverage, setup clamping, and state transitions.
-- PlayMode tests cover scene bootstrap, count controls, beam/collider alignment,
-  compact contacts, expression progression, cyan wind direction, direct
-  pre-gust beam motion, absence of hidden joints/locks, stable free warmup,
-  delayed imprecise recovery, full strongest gusts, bounded collapse, input
-  ordering, and interruption-safe failure.
-- Current receipt: `12/12` EditMode and `13/13` PlayMode tests pass on Unity
-  `6000.3.19f1`.
+- EditMode covers gust sampling, preview/envelope timing, direction, input
+  bounds, setup clamping, and state transitions.
+- PlayMode covers scene bootstrap, dense contacts, expression progression,
+  blue wind direction, the single legitimate wheel joint, free creature
+  rotation, calm warmup, signed wheel travel, visual/collider ground contact,
+  readable plank angle, camera-follow inputs, strongest-gust catch matrices,
+  neutral/wrong fallability, and interruption-safe failure.
+- Current rolling-core receipt: `13/13` EditMode and `15/15` PlayMode pass.
 
-## Deterministic physics matrix
+## Deterministic rolling matrix
 
-For the single wind profile:
+For the strongest force in the single wind profile:
 
-1. Neutral angle establishes the baseline.
-2. One constant hold at 22% or 78% of the screen width survives the entire
-   maximum first gust; the test does not feed a changing angle.
-3. Correct hold produces less downwind displacement and survives at least as
-   long as neutral and wrong input on the same strongest gust.
-4. Repeat with the opposite gust direction.
-5. Repeat with three and five creatures.
-6. On the maximum gust, neutral and wrong input both collapse while correct
-   input completes the gust.
-7. Separately start neutral, allow `0.35 s` of physical wind, then apply one
-   unchanged touch at 32%/68% width. Repeat the maximum gust in both directions
-   with three and five creatures.
+1. Neutral establishes the failure baseline.
+2. Correct steady wheel travel completes the gust in both directions with
+   three and five creatures.
+3. Wrong travel and neutral both collapse sooner on the same seed.
+4. A broad constant mid-range input works for three; the taller five-friend
+   tower requires a stronger but still constant input.
+5. A second human-repeatable scenario starts neutral, allows `0.35 s` of
+   physical wind, performs one full rescue swipe, then holds a fixed follow
+   amount. It completes both directions and tower sizes without tower-state
+   feedback.
+6. The wheel's collider remains within `0.18` world units of the road throughout
+   a strong five-friend catch.
+
+The runtime never feeds a scripted target angle, body position, current tower
+lean, or perfect per-frame correction into these proofs.
 
 ## Interaction matrix
 
-- Horizontal touch position maps continuously to signed authority outside a
-  small center dead zone.
-- The useful response saturates inside the outer quarter; the bezel is not a
-  required target.
-- The touched end rises, and the beam responds during the pre-gust teaching
-  window.
-- Direction text names which end to raise.
-- Release returns the beam toward neutral.
+- Touch-down establishes a local origin anywhere outside UI.
+- Horizontal displacement maps continuously to wheel travel; the bezel is not
+  a target.
+- Holding displacement maintains travel. Returning near the origin coasts or
+  brakes. Release does not snap or rotate the plank.
+- The wheel spins consistently with translation while the plank remains
+  dynamic and readable.
+- Camera follows vehicle travel and preserves a useful look-ahead.
 - Pause freezes time, physics, particles, and score.
 - App focus loss pauses safely.
-- Retry rebuilds bodies, faces, crown, particles, wind seed, and score without loading a new scene.
+- Retry rebuilds vehicle, bodies, faces, crown, particles, wind seed, and route
+  state without a scene load.
+
+## Upcoming proof additions
+
+- Articulated appendage lag, blink/gaze variability, personality thresholds,
+  visible weak grip creation, grip break, and no-immortality matrix.
+- Badge trigger contact, first-route Rabbit/Jelly join stops, route finish, and
+  local progression persistence.
+- Cloud looping, windmill rotation, parallax ratios, camera bounds, and terrain
+  seam visibility.
+- Impact squash, ground dust, crown/debris arcs, result hold, finish
+  celebration, and Reduced Motion semantics.
 
 ## Presentation matrix
 
-- Capture start, calm, building gust, near-save, airborne collapse, first impact, and results at iPhone portrait aspect.
-- Compare each capture against `ART_DIRECTION.md`.
-- Verify reduced motion keeps semantic feedback without camera shake or prolonged slow motion.
-- Verify UI inside representative notch and Dynamic Island safe areas.
-
-Current Metal captures cover calm start, active direct tilt with a single
-direction prompt and cyan streaks, airborne/impact collapse with distinct faces
-and crown, and results. Near-save timing and actual notch rendering remain
-device checks.
+- Capture title, calm travel, wheel catch, gust, badge pickup, five-friend
+  stack, collapse flight, first ground impact, finish, and Retry at native
+  portrait aspect.
+- Compare each capture against `ART_DIRECTION.md` and the two concept frames.
+- Verify wheel and road visually touch, the plank visibly rests above the
+  wheel, and world layers do not obscure controls or bodies.
+- Current actual-physics Metal captures are stored in
+  `.agent/tasks/issue-4-rolling-world-final/raw/`.
 
 ## Device gate
 
-Toolchain and delivery proof are complete: Unity exports a non-Development Xcode
-project; Xcode produces a valid signed arm64 app; CoreDevice confirms install
-and launch on the paired iPhone.
+The next physical-iPhone gate must verify:
 
-The remaining owner gate is another physical playtest:
+- A fresh player understands touch, slide, catch, and return-to-origin without
+  an explanation.
+- Rolling the wheel under the lean visibly changes the outcome.
+- The wheel never appears to float, skate, or penetrate on the flat first
+  route.
+- Soft and strong gusts read differently without a meter or direction text.
+- Neutral/wrong play still creates a believable fall.
+- Camera follow, touch latency, haptics, safe areas, interruption behavior,
+  frame pacing, thermal behavior, and voluntary Retry feel acceptable.
 
-- Dragging and holding the indicated outer side visibly raises that end before
-  wind begins.
-- A delayed moderate hold and an early strong hold both survive the strongest
-  gust without chasing a changing angle.
-- Soft and strong gusts read differently through cyan streaks, audio, faces,
-  and motion without an intensity HUD.
-- The touched-end instruction is understood without explanation.
-- Neutral/wrong play still produces a believable collapse.
-- Characters sit close, trust the beam ends, and change expressions clearly.
-- Cyan wind direction is visible before force; no development console appears.
-- Stable 60 fps target on the selected baseline device.
-- Touch latency, haptics, audio interruption, thermal behavior, safe areas, and background/foreground transitions.
-- Fresh-player comprehension and voluntary Retry.
+Articulation, route content, minimal UI, and final presentation still require
+their own automated, visual, and device passes before release.

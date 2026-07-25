@@ -97,6 +97,35 @@
 - Creature count and reduced motion remain setup options. Existing Normal score
   slots remain the persistence key so local records are not lost.
 
+## 2026-07-25 — rolling-world core replacement
+
+- The stationary direct-angle mechanic was superseded by the owner-approved
+  travelling design. Native gameplay now drives a physical star wheel on a
+  continuous road; the plank remains dynamic and connects through one native
+  `WheelJoint2D`.
+- Touch uses displacement from its own touch-down origin. A square-root
+  mid-range gives a forgiving steady catch band, while the outer portion adds
+  bounded rescue speed for delayed reactions. No tower state selects direction
+  or position.
+- Removed the old plank-angle gust cancellation and downwind velocity damper.
+  Wind now acts directly on the bodies, while wheel travel catches their
+  displacement through contact physics.
+- A heavier wheel and road friction keep the physical collider grounded
+  without a tether or position snap. The generated wheel sprite's measured
+  opaque fill is separated from the physics root so the visible circle also
+  reaches the road.
+- Failure no longer triggers at an invisible absolute horizontal boundary.
+  Height/order loss and road impact own failure, which also preserves a longer
+  visible fall.
+- Camera x follows the wheel with smoothing and velocity look-ahead; the baked
+  background and wind field follow until full parallax layers replace them.
+- Built-in image generation produced the alpha terracotta road tile. Explicit
+  `#00FF00` removal replaced rejected border auto-detection, which had sampled
+  the orange terrain.
+- The first proof uses existing rigid torso sprites deliberately. Articulated
+  character rigs, route content, minimal UI, and final fall presentation remain
+  the next production gates.
+
 ## Tooling constraint
 
 - Active developer directory is `/Applications/Xcode.app/Contents/Developer`; Xcode `26.6` is licensed and its first-launch setup is complete.

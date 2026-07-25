@@ -50,6 +50,17 @@ namespace WobbleStack.Runtime
             return GetOrCreate("background", texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f));
         }
 
+        public static Sprite Road()
+        {
+            Texture2D texture = Resources.Load<Texture2D>("WobbleStack/Art/road-tile");
+            float visibleHeight = texture.height * 0.58f;
+            return GetOrCreate(
+                "road",
+                texture,
+                new Rect(0f, 0f, texture.width, visibleHeight),
+                new Vector2(0.5f, 0.5f));
+        }
+
         public static Sprite Character(CharacterKind kind)
         {
             Texture2D texture = Resources.Load<Texture2D>("WobbleStack/Art/characters-chroma");

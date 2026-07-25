@@ -1,0 +1,27 @@
+{
+  "task": "issue-4-rolling-world-final",
+  "result": "PHASE_PASS_CONTINUE",
+  "phase": "rolling-core",
+  "verified": {
+    "AC1": "PASS_FLAT_ROAD_SLICE",
+    "AC2": "PASS_CORE_PENDING_AUTHORED_ROUTE",
+    "AC5": "PARTIAL_ROAD_ONLY",
+    "AC8": "PARTIAL_LOCAL_PROOF_ONLY"
+  },
+  "receipts": {
+    "editmode": "13/13",
+    "playmode": "15/15",
+    "mac_smoke": "PASS",
+    "captures": [
+      "raw/rolling-core-start.png",
+      "raw/rolling-core-playing.png"
+    ]
+  },
+  "pending": [
+    "articulated character rigs and visible breakable grips",
+    "character-specific emotion, blink, gaze, and secondary motion",
+    "parallax, clouds, windmill, route, badges, join stops, and finish",
+    "minimal UI and final collapse presentation",
+    "fresh signed iPhone install and owner release gate"
+  ]
+}

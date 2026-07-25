@@ -81,6 +81,22 @@ namespace WobbleStack.Domain
             return centered < 0f ? -remapped : remapped;
         }
 
+        public static float GetRelativeDriveAmount(
+            float pointerOriginX,
+            float currentPointerX,
+            float screenWidth,
+            float travelFraction)
+        {
+            if (screenWidth <= 0f || travelFraction <= 0f)
+            {
+                return 0f;
+            }
+
+            float travel = screenWidth * travelFraction;
+            float normalizedDrag = Clamp((currentPointerX - pointerOriginX) / travel, -1f, 1f);
+            return GetControlAmount((normalizedDrag + 1f) * 0.5f);
+        }
+
         public static float GetWindPreviewEnvelope(float secondsUntilGust)
         {
             if (secondsUntilGust <= 0f || secondsUntilGust >= WindPreviewSeconds)

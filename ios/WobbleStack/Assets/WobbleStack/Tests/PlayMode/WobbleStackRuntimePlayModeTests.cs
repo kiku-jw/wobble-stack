@@ -153,7 +153,7 @@ namespace WobbleStack.Runtime.Tests
 
         [UnityTest]
         [Order(7)]
-        public IEnumerator DynamicTowerHasNoHiddenConstraintsAndReachesTheFirstGust()
+        public IEnumerator RollingVehicleUsesOneWheelJointAndCreaturesStayFree()
         {
             yield return WaitForBootstrap();
             WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
@@ -162,10 +162,15 @@ namespace WobbleStack.Runtime.Tests
             game.ConfigureGameplayProbe(0f, 1, 0f, 5, 1.4f);
             Rigidbody2D[] bodies = GetCreatureBodies().ToArray();
             Assert.That(bodies.Length, Is.EqualTo(5));
-            Assert.That(Object.FindObjectsByType<Joint2D>(FindObjectsSortMode.None), Is.Empty);
+            Joint2D[] joints = Object.FindObjectsByType<Joint2D>(FindObjectsSortMode.None);
+            Assert.That(joints.Length, Is.EqualTo(1));
+            Assert.That(joints[0], Is.InstanceOf<WheelJoint2D>());
+            Assert.That(joints[0].gameObject.name, Is.EqualTo("Seesaw Beam"));
+            Assert.That(joints[0].connectedBody.gameObject.name, Is.EqualTo("Star Wheel"));
             foreach (Rigidbody2D body in bodies)
             {
                 Assert.That(body.freezeRotation, Is.False, $"{body.name} had hidden rotation locking.");
+                Assert.That(body.GetComponents<Joint2D>(), Is.Empty, $"{body.name} had a hidden creature joint.");
             }
 
             Time.timeScale = 6f;
@@ -183,30 +188,88 @@ namespace WobbleStack.Runtime.Tests
 
         [UnityTest]
         [Order(8)]
-        public IEnumerator HumanSideHoldMovesTheBeamBeforeWindStarts()
+        public IEnumerator RelativeDriveRollsTheGroundedWheelBeforeWindStarts()
         {
             yield return WaitForBootstrap();
             WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
             Assert.That(game, Is.Not.Null);
-            float touchAmount = WobbleStackRules.GetControlAmount(0.82f);
-            game.ConfigureGameplayProbe(WobbleStackRules.GustForceMin, 1, touchAmount, 3, 1.4f);
+            const float driveAmount = 0.72f;
+            game.ConfigureGameplayProbe(0f, 1, driveAmount, 3, 1.4f);
+            Vector2 initialWheelPosition = game.GetGameplayProbeWheelPosition();
+            float initialWheelRotation = game.GetGameplayProbeWheelRotation();
 
-            for (int step = 0; step < 5; step += 1)
+            for (int step = 0; step < 45; step += 1)
             {
                 yield return new WaitForFixedUpdate();
             }
 
-            Transform beam = GameObject.Find("Seesaw Beam").transform;
-            Vector3 leftEnd = beam.TransformPoint(Vector3.left);
-            Vector3 rightEnd = beam.TransformPoint(Vector3.right);
-            Assert.That(beam.eulerAngles.z, Is.GreaterThan(3f));
-            Assert.That(rightEnd.y, Is.GreaterThan(leftEnd.y), "Touching right must visibly raise the right beam end.");
+            Vector2 wheelPosition = game.GetGameplayProbeWheelPosition();
+            float wheelRotation = game.GetGameplayProbeWheelRotation();
+            Rigidbody2D beam = GameObject.Find("Seesaw Beam").GetComponent<Rigidbody2D>();
+            CircleCollider2D wheel = GameObject.Find("Star Wheel").GetComponent<CircleCollider2D>();
+            BoxCollider2D road = GameObject.Find("Road").GetComponent<BoxCollider2D>();
+            Assert.That(beam.bodyType, Is.EqualTo(RigidbodyType2D.Dynamic));
+            Assert.That(wheelPosition.x, Is.GreaterThan(initialWheelPosition.x + 0.12f));
+            Assert.That(Mathf.Abs(Mathf.DeltaAngle(initialWheelRotation, wheelRotation)), Is.GreaterThan(8f));
+            Assert.That(Mathf.Abs(wheel.bounds.min.y - road.bounds.max.y), Is.LessThan(0.12f));
+            Assert.That(
+                Mathf.Abs(game.GetGameplayProbePlatformRotation()),
+                Is.LessThan(28f),
+                "Ordinary wheel travel turned the plank edge-on.");
             Assert.That(game.GetGameplayProbePhase(), Is.EqualTo(GamePhase.Playing));
         }
 
         [UnityTest]
         [Order(9)]
-        public IEnumerator DelayedImpreciseCorrectionSurvivesStrongestGustMatrix()
+        public IEnumerator StarWheelStaysGroundedThroughAStrongFiveFriendCatch()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            game.ConfigureGameplayProbe(
+                WobbleStackRules.GustForceMax,
+                1,
+                0.8f,
+                5,
+                WobbleStackRules.GustDurationMax);
+            CircleCollider2D wheel = GameObject.Find("Star Wheel").GetComponent<CircleCollider2D>();
+            BoxCollider2D road = GameObject.Find("Road").GetComponent<BoxCollider2D>();
+            float maximumGap = 0f;
+
+            for (int step = 0; step < 180; step += 1)
+            {
+                yield return new WaitForFixedUpdate();
+                maximumGap = Mathf.Max(maximumGap, wheel.bounds.min.y - road.bounds.max.y);
+            }
+
+            Assert.That(maximumGap, Is.LessThan(0.18f), $"The star wheel visibly left the road by {maximumGap:0.000} world units.");
+            Assert.That(game.GetGameplayProbePhase(), Is.EqualTo(GamePhase.Playing));
+        }
+
+        [UnityTest]
+        [Order(10)]
+        public IEnumerator CameraFollowsHorizontalWheelTravel()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            game.ConfigureGameplayProbe(0f, 1, 0.72f, 3, 2f);
+            float initialCameraX = game.GetGameplayProbeCameraX();
+
+            for (int step = 0; step < 90; step += 1)
+            {
+                yield return new WaitForFixedUpdate();
+                yield return null;
+            }
+
+            float wheelX = game.GetGameplayProbeWheelPosition().x;
+            float cameraX = game.GetGameplayProbeCameraX();
+            Assert.That(cameraX, Is.GreaterThan(initialCameraX + 0.1f));
+            Assert.That(Mathf.Abs(cameraX - wheelX), Is.LessThan(2.6f));
+            Assert.That(game.GetGameplayProbePhase(), Is.EqualTo(GamePhase.Playing));
+        }
+
+        [UnityTest]
+        [Order(11)]
+        public IEnumerator DelayedBroadCatchGestureSurvivesStrongestGustMatrix()
         {
             yield return WaitForBootstrap();
             WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
@@ -228,14 +291,14 @@ namespace WobbleStack.Runtime.Tests
                     Assert.That(
                         measurement.Completed,
                         Is.True,
-                        $"{creatureCount} creatures, direction {direction} did not survive a delayed imprecise correction: {measurement}.");
+                        $"{creatureCount} creatures, direction {direction} did not survive a delayed broad catch gesture: {measurement}.");
                 }
             }
         }
 
         [UnityTest]
-        [Order(10)]
-        public IEnumerator CorrectCounterTiltSurvivesStrongestGustAcrossTowerSizes()
+        [Order(12)]
+        public IEnumerator SteadyWheelCatchSurvivesStrongestGustAcrossTowerSizes()
         {
             yield return WaitForBootstrap();
             WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
@@ -245,7 +308,7 @@ namespace WobbleStack.Runtime.Tests
             {
                 foreach (int direction in new[] { -1, 1 })
                 {
-                    float humanHold = GetHumanHoldAmount(direction);
+                    float humanHold = GetSteadyCatchAmount(direction, creatureCount);
                     TowerMeasurement measurement = default;
                     yield return MeasureTower(
                         game,
@@ -265,15 +328,15 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(11)]
-        public IEnumerator CorrectCounterTiltOutperformsNeutralAndWrongTiltOnTheSameGust()
+        [Order(13)]
+        public IEnumerator CorrectWheelTravelOutperformsNeutralAndWrongTravelOnTheSameGust()
         {
             yield return WaitForBootstrap();
             WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
             Assert.That(game, Is.Not.Null);
             foreach (int direction in new[] { -1, 1 })
             {
-                float humanHold = GetHumanHoldAmount(direction);
+                float humanHold = GetSteadyCatchAmount(direction, 5);
                 TowerMeasurement neutral = default;
                 yield return MeasureTower(
                     game,
@@ -307,7 +370,7 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(12)]
+        [Order(14)]
         public IEnumerator NeutralAndWrongInputCollapseUnderTheStrongestGust()
         {
             yield return WaitForBootstrap();
@@ -315,7 +378,7 @@ namespace WobbleStack.Runtime.Tests
             Assert.That(game, Is.Not.Null);
             foreach (int direction in new[] { -1, 1 })
             {
-                float humanHold = GetHumanHoldAmount(direction);
+                float humanHold = GetSteadyCatchAmount(direction, 5);
                 TowerMeasurement neutral = default;
                 yield return MeasureTower(
                     game,
@@ -353,7 +416,7 @@ namespace WobbleStack.Runtime.Tests
         }
 
         [UnityTest]
-        [Order(13)]
+        [Order(15)]
         public IEnumerator FailureBeatFreezesDuringApplicationInterruption()
         {
             yield return WaitForBootstrap();
@@ -400,10 +463,10 @@ namespace WobbleStack.Runtime.Tests
             yield return new WaitForFixedUpdate();
         }
 
-        private static float GetHumanHoldAmount(int direction)
+        private static float GetSteadyCatchAmount(int direction, int creatureCount)
         {
-            float normalizedScreenX = direction < 0 ? 0.22f : 0.78f;
-            return WobbleStackRules.GetControlAmount(normalizedScreenX);
+            float magnitude = creatureCount <= 3 ? 0.4f : 0.8f;
+            return direction * magnitude;
         }
 
         private static IEnumerator MeasureTower(
@@ -441,6 +504,7 @@ namespace WobbleStack.Runtime.Tests
             }
 
             finalMeanX = bodies.Count == 0 ? 0f : finalMeanX / bodies.Count;
+            finalMeanX -= game.GetGameplayProbeWheelPosition().x;
             TowerMeasurement measurement = new TowerMeasurement(
                 maxDrift,
                 finalMeanX,
@@ -460,8 +524,9 @@ namespace WobbleStack.Runtime.Tests
         {
             int totalSteps = Mathf.CeilToInt((0.9f + durationSeconds) / Time.fixedDeltaTime);
             int reactionSteps = Mathf.CeilToInt((0.7f + 0.35f) / Time.fixedDeltaTime);
-            float normalizedScreenX = direction < 0 ? 0.32f : 0.68f;
-            float impreciseHold = WobbleStackRules.GetControlAmount(normalizedScreenX);
+            float catchSeconds = creatureCount == 3 ? 0.7f : 1.5f;
+            int catchSteps = Mathf.CeilToInt(catchSeconds / Time.fixedDeltaTime);
+            float settleAmount = creatureCount == 3 ? 0.4f : 1f;
             game.ConfigureGameplayProbe(force, direction, 0f, creatureCount, durationSeconds);
             Time.timeScale = 6f;
             float maxDrift = 0f;
@@ -470,7 +535,11 @@ namespace WobbleStack.Runtime.Tests
             {
                 if (step == reactionSteps)
                 {
-                    game.SetGameplayProbeControlAmount(impreciseHold);
+                    game.SetGameplayProbeControlAmount(direction);
+                }
+                else if (step == reactionSteps + catchSteps)
+                {
+                    game.SetGameplayProbeControlAmount(direction * settleAmount);
                 }
 
                 yield return new WaitForFixedUpdate();
@@ -492,6 +561,7 @@ namespace WobbleStack.Runtime.Tests
             }
 
             finalMeanX = bodies.Count == 0 ? 0f : finalMeanX / bodies.Count;
+            finalMeanX -= game.GetGameplayProbeWheelPosition().x;
             onComplete(new TowerMeasurement(
                 maxDrift,
                 finalMeanX,
@@ -510,27 +580,27 @@ namespace WobbleStack.Runtime.Tests
             Assert.That(
                 correct.DownwindDisplacement(direction),
                 Is.LessThan(neutral.DownwindDisplacement(direction)),
-                $"Expected counter-tilt to reduce downwind displacement for {directionName} wind. " +
+                $"Expected correct wheel travel to reduce downwind displacement for {directionName} wind. " +
                 $"Neutral: {neutral}; correct: {correct}; wrong: {wrong}.");
             Assert.That(
                 correct.DownwindDisplacement(direction),
                 Is.LessThan(wrong.DownwindDisplacement(direction)),
-                $"Expected counter-tilt to beat wrong tilt on downwind displacement for {directionName} wind. " +
+                $"Expected correct wheel travel to beat wrong travel on downwind displacement for {directionName} wind. " +
                 $"Neutral: {neutral}; correct: {correct}; wrong: {wrong}.");
             Assert.That(
                 correct.SurvivedSteps,
                 Is.GreaterThanOrEqualTo(neutral.SurvivedSteps),
-                $"Expected counter-tilt to survive at least as long as neutral for {directionName} wind. " +
+                $"Expected correct wheel travel to survive at least as long as neutral for {directionName} wind. " +
                 $"Neutral: {neutral}; correct: {correct}; wrong: {wrong}.");
             Assert.That(
                 correct.SurvivedSteps,
                 Is.GreaterThanOrEqualTo(wrong.SurvivedSteps),
-                $"Expected counter-tilt to survive at least as long as wrong tilt for {directionName} wind. " +
+                $"Expected correct wheel travel to survive at least as long as wrong travel for {directionName} wind. " +
                 $"Neutral: {neutral}; correct: {correct}; wrong: {wrong}.");
             Assert.That(
                 correct.Completed,
                 Is.True,
-                $"Expected counter-tilt to complete the {directionName} gust. " +
+                $"Expected correct wheel travel to complete the {directionName} gust. " +
                 $"Neutral: {neutral}; correct: {correct}; wrong: {wrong}.");
         }
 

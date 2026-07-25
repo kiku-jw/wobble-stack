@@ -1,0 +1,46 @@
+# Rolling-world final — evidence
+
+Result: phase pass, continue
+
+## Verified in this phase
+
+- AC1 grounded rolling vehicle: pass for the flat-road vertical slice.
+- AC2 travel camera and readable balance: pass for horizontal follow and the
+  strongest deterministic catch matrix; authored route space remains pending.
+- AC5 living world: generated repeating clay road pass only; clouds, windmill,
+  and full parallax remain pending.
+- AC8 release proof: local compile/test/Metal capture pass; fresh iPhone export
+  remains pending until the next cohesive device build.
+
+## Receipts
+
+- Unity `6000.3.19f1` EditMode: `13/13`.
+- Unity `6000.3.19f1` PlayMode: `15/15`.
+- Mac smoke build: pass.
+- Actual-physics portrait captures:
+  `raw/rolling-core-start.png` and `raw/rolling-core-playing.png`.
+- Test reports: `raw/editmode.xml` and `raw/playmode.xml`.
+
+## Physics claims proved
+
+- One `WheelJoint2D` connects the dynamic plank to the dynamic star wheel.
+- Creature bodies remain jointless and freely rotating in this phase.
+- Signed wheel input moves in the finger direction before wind.
+- Touch-down origin drives the wheel from anywhere outside UI; release
+  disables the motor instead of applying hidden stabilization.
+- The camera follows real wheel travel and resets to the route origin on Retry.
+- The visible wheel/circle collider remains grounded through a strong
+  five-friend catch.
+- Correct steady travel completes maximum gusts in both directions with three
+  and five bodies.
+- A delayed broad rescue gesture completes the same matrix.
+- Neutral and wrong travel still collapse.
+
+## Pending acceptance
+
+- AC3 articulated dense stack.
+- AC4 character-specific life/emotion.
+- Remaining AC5 parallax/cloud/windmill work.
+- AC6 journey, badges, joins, persistence, and minimal UI.
+- AC7 finished save/fall/finish presentation.
+- Full AC8 iPhone install, performance, owner feel, and release verdict.
