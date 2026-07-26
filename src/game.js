@@ -14,6 +14,7 @@ import {
 } from "./game-logic.js";
 import {
   ROUTES,
+  createShuffledOrder,
   getBadgeScreenY,
   getCounterSupportOffset,
   getRoute,
@@ -49,6 +50,14 @@ const REDUCED_IMPACT_SLOWMO_DURATION_MS = 100;
 const REDUCED_FAILURE_TIMEOUT_MS = 1150;
 const REDUCED_FAILURE_IMPACT_HOLD_MS = 180;
 const PROGRESS_KEY = "wobble-stack-journey-v1";
+const MUSIC_VOLUME_KEY = "wobble-stack-music-volume-v1";
+const DEFAULT_MUSIC_VOLUME = 0.5;
+const MUSIC_TRACKS = Object.freeze([
+  "assets/music/sunny-clay-parade-a.mp3",
+  "assets/music/sunny-clay-parade-b.mp3",
+  "assets/music/sunny-clay-parade-c.mp3",
+  "assets/music/bouncy-clay-parade.mp3",
+].map((path) => new URL(path, document.baseURI).href));
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const canvas = document.querySelector("#game-canvas");
@@ -78,6 +87,8 @@ const finishRoutesButton = document.querySelector("#finish-routes-button");
 const pauseOverlay = document.querySelector("#pause-overlay");
 const resumeButton = document.querySelector("#resume-button");
 const pauseRoutesButton = document.querySelector("#pause-routes-button");
+const musicVolumeInputs = document.querySelectorAll("[data-music-volume]");
+const musicVolumeOutputs = document.querySelectorAll("[data-music-volume-output]");
 const thumbCue = document.querySelector("#thumb-cue");
 const journeyMessage = document.querySelector("#journey-message");
 const liveStatus = document.querySelector("#live-status");
@@ -124,6 +135,11 @@ let resetArmed = false;
 let resetArmTimer = null;
 let finishTimer = null;
 let progressData = readProgress();
+let musicVolume = readMusicVolume();
+let musicQueue = [];
+let currentMusicTrack = null;
+let musicActivated = false;
+const musicPlayer = new Audio();
 
 const creatureSpecs = [
   {
@@ -183,6 +199,7 @@ const creatureSpecs = [
   },
 ];
 
+configureMusic();
 setupCanvas();
 bindControls();
 requestAnimationFrame(frame);
@@ -225,6 +242,9 @@ function bindControls() {
   resumeButton.addEventListener("click", resumeRun);
   nextRouteButton.addEventListener("click", startNextRoute);
   resetProgressButton.addEventListener("click", handleResetProgress);
+  musicVolumeInputs.forEach((input) => {
+    input.addEventListener("input", () => setMusicVolume(input.value));
+  });
 
   canvas.addEventListener("pointerdown", (event) => {
     if (state !== "playing") return;
@@ -276,7 +296,69 @@ function bindControls() {
   });
 
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden && state === "playing") pauseRun();
+    if (!document.hidden) return;
+    if (state === "playing") pauseRun();
+    else pauseMusic();
+  });
+}
+
+function configureMusic() {
+  musicPlayer.preload = "metadata";
+  musicPlayer.volume = musicVolume;
+  musicPlayer.addEventListener("ended", playNextMusicTrack);
+  syncMusicVolumeControls();
+}
+
+function startMusic() {
+  musicActivated = true;
+  if (!currentMusicTrack) selectNextMusicTrack();
+  musicPlayer.play().catch(() => {
+    // A later Play or Resume gesture retries when the browser blocks autoplay.
+  });
+}
+
+function pauseMusic() {
+  musicPlayer.pause();
+}
+
+function playNextMusicTrack() {
+  if (!selectNextMusicTrack() || !musicActivated || document.hidden) return;
+  musicPlayer.play().catch(() => {
+    // Keep the playlist queued for the next explicit user gesture.
+  });
+}
+
+function selectNextMusicTrack() {
+  if (musicQueue.length === 0) {
+    musicQueue = createShuffledOrder(MUSIC_TRACKS, Math.random, currentMusicTrack);
+  }
+
+  const nextTrack = musicQueue.shift();
+  if (!nextTrack) return false;
+  currentMusicTrack = nextTrack;
+  musicPlayer.src = nextTrack;
+  return true;
+}
+
+function setMusicVolume(value) {
+  const percentage = clamp(Math.round(Number(value) || 0), 0, 100);
+  musicVolume = percentage / 100;
+  musicPlayer.volume = musicVolume;
+  syncMusicVolumeControls();
+  writeMusicVolume();
+}
+
+function syncMusicVolumeControls() {
+  const percentage = Math.round(musicVolume * 100);
+
+  musicVolumeInputs.forEach((input) => {
+    input.value = String(percentage);
+    input.setAttribute("aria-valuetext", `${percentage} percent`);
+  });
+
+  musicVolumeOutputs.forEach((output) => {
+    output.value = `${percentage}%`;
+    output.textContent = `${percentage}%`;
   });
 }
 
@@ -440,6 +522,7 @@ function createFriendshipLinks(lowerCreature, upperCreature) {
 }
 
 function startRun() {
+  startMusic();
   resetJourney();
   runCount += 1;
   random = createSeededRandom(7907 + selectedRouteIndex * 2003 + runCount * 101);
@@ -468,6 +551,7 @@ function pauseRun() {
   pointerActive = false;
   pointerControl = 0;
   keyboardDirection = 0;
+  pauseMusic();
   canvas.classList.remove("is-grabbing");
   pauseOverlay.hidden = false;
   thumbCue.classList.remove("is-visible");
@@ -478,6 +562,7 @@ function pauseRun() {
 
 function resumeRun() {
   if (state !== "paused") return;
+  startMusic();
   state = "playing";
   pauseOverlay.hidden = true;
   liveStatus.textContent = "Journey resumed.";
@@ -486,6 +571,7 @@ function resumeRun() {
 }
 
 function showRouteSelect() {
+  pauseMusic();
   state = "ready";
   hideOutcomeOverlays();
   startOverlay.hidden = false;
@@ -1636,6 +1722,27 @@ function writeProgress() {
   }
 }
 
+function readMusicVolume() {
+  try {
+    const storedVolume = window.localStorage.getItem(MUSIC_VOLUME_KEY);
+    if (storedVolume === null) return DEFAULT_MUSIC_VOLUME;
+    const parsedVolume = Number(storedVolume);
+    return Number.isFinite(parsedVolume)
+      ? clamp(parsedVolume, 0, 1)
+      : DEFAULT_MUSIC_VOLUME;
+  } catch {
+    return DEFAULT_MUSIC_VOLUME;
+  }
+}
+
+function writeMusicVolume() {
+  try {
+    window.localStorage.setItem(MUSIC_VOLUME_KEY, String(musicVolume));
+  } catch {
+    // Music still works when private browsing blocks preference storage.
+  }
+}
+
 if (new URLSearchParams(window.location.search).has("debug")) {
   window.__WOBBLE_DEBUG__ = {
     getState: () => state,
@@ -1673,6 +1780,24 @@ if (new URLSearchParams(window.location.search).has("debug")) {
       selectedRoute: progressData.selectedRoute,
       bestBadges: [...progressData.bestBadges],
     }),
+    getMusicState: () => ({
+      volume: musicVolume,
+      paused: musicPlayer.paused,
+      currentTrack: currentMusicTrack
+        ? new URL(currentMusicTrack).pathname.split("/").pop()
+        : null,
+      queuedTracks: musicQueue.map((track) => new URL(track).pathname.split("/").pop()),
+    }),
+    setMusicVolume: (percentage) => {
+      setMusicVolume(percentage);
+      return musicVolume;
+    },
+    nextMusicTrack: () => {
+      playNextMusicTrack();
+      return currentMusicTrack
+        ? new URL(currentMusicTrack).pathname.split("/").pop()
+        : null;
+    },
     start: () => {
       if (state !== "ready" && state !== "results" && state !== "finished") return false;
       startRun();

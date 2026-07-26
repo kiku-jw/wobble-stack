@@ -82,7 +82,20 @@
 
           <button id="start-button" class="primary-button" type="button">Start the journey</button>
           <div class="start-footer">
-            <p>Slide to roll the wheel · or use ← →</p>
+            <label class="music-control" for="music-volume-start">
+              <span class="music-control-label"><span aria-hidden="true">♫</span> Music</span>
+              <input
+                id="music-volume-start"
+                data-music-volume
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value="50"
+                aria-label="Music volume"
+              />
+              <output data-music-volume-output for="music-volume-start">50%</output>
+            </label>
             <button id="reset-progress-button" class="text-button" type="button">Reset progress</button>
           </div>
         </div>
@@ -118,6 +131,20 @@
             <p class="eyebrow">HOLD THAT WOBBLE</p>
             <h2>Paused</h2>
           </div>
+          <label class="music-control pause-music-control" for="music-volume-pause">
+            <span class="music-control-label"><span aria-hidden="true">♫</span> Music</span>
+            <input
+              id="music-volume-pause"
+              data-music-volume
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              value="50"
+              aria-label="Music volume"
+            />
+            <output data-music-volume-output for="music-volume-pause">50%</output>
+          </label>
           <button id="resume-button" class="primary-button" type="button">Keep rolling</button>
           <button id="pause-routes-button" class="secondary-button" type="button">Choose road</button>
         </div>

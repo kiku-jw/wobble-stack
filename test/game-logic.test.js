@@ -16,6 +16,7 @@ import {
 } from "../src/game-logic.js";
 import {
   ROUTES,
+  createShuffledOrder,
   getBadgeScreenY,
   getCounterSupportOffset,
   getRoute,
@@ -190,4 +191,16 @@ test("keyboard support accounts for both the board slope and explicit counter fo
   assert.ok(support < 20);
   assert.equal(mirrored, -support);
   assert.equal(getCounterSupportOffset(0.0001, 1, 0, 0.8, 44, 0.23), 0);
+});
+
+test("music shuffle exhausts every track and avoids a boundary repeat", () => {
+  const tracks = ["a", "b", "c", "d"];
+  const firstOrder = createShuffledOrder(tracks, () => 0);
+  const nextOrder = createShuffledOrder(tracks, () => 0, firstOrder.at(-1));
+
+  assert.deepEqual([...firstOrder].sort(), tracks);
+  assert.equal(new Set(firstOrder).size, tracks.length);
+  assert.deepEqual([...nextOrder].sort(), tracks);
+  assert.notEqual(nextOrder[0], firstOrder.at(-1));
+  assert.deepEqual(tracks, ["a", "b", "c", "d"]);
 });

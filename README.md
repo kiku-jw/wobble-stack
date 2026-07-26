@@ -23,7 +23,8 @@ The GitHub Pages edition now carries the actual game loop: a grounded star
 wheel, a moving clay road, three finite journeys, variable wind, 7/8/9 festival
 badges, authored bumps, two first-route friend joins, character-specific
 emotions, comic impact poses, first-impact slow motion, pause, Retry, local
-unlock progress, and responsive touch/keyboard controls.
+unlock progress, four shuffled parade tracks, and responsive touch/keyboard
+controls.
 
 The Unity 6 iPhone client lives in `ios/WobbleStack`. It keeps the more detailed
 native joint animation, sound, and haptics while sharing the same story, routes,
@@ -42,6 +43,8 @@ or backend.
 - **Goal:** reach the windmill with every creature and collect festival badges
   by touching them with the living stack.
 - **Pause:** use the button in the top-right corner or press Escape.
+- **Music:** starts after Play, defaults to 50%, and can be adjusted from the
+  road selector or pause menu. The preference stays on the device.
 
 There is one game mode: every gust independently samples a different intensity,
 and the wind itself—not a meter or difficulty label—shows how strong it is.
@@ -76,6 +79,8 @@ pnpm build
   Normal-like wind, with occasional soft and strong outliers.
 - Moving wind streaks show direction while their speed, density, and opacity build with force.
 - Creatures fall at normal speed; the first ground impact triggers a brief slow-motion beat.
+- One native audio player walks a shuffled four-track playlist without an
+  immediate repeat between shuffle cycles.
 - Three authored routes store unlocks and best badge counts locally; nothing is
   sent anywhere.
 

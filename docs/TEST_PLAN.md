@@ -21,6 +21,8 @@ Assertions cover:
 - wind streak travel speed increases monotonically with visual intensity;
 - stack layouts for 3–5 creatures stay in contact with the beam and each other;
 - failure results wait for either the configured impact hold or the hard timeout.
+- the music shuffle includes all four tracks exactly once per cycle and avoids
+  an immediate repeat at the cycle boundary.
 
 ## Browser smoke
 
@@ -35,7 +37,13 @@ Assertions cover:
 8. Press Retry; confirm score, bodies, beam, face state, and hazard timing reset without navigation.
 9. Pause and resume; confirm time and physics stop while paused.
 10. Repeat input using Left/Right or A/D and Enter/Space.
-11. Check browser console for uncaught errors.
+11. From a clean browser profile, confirm Music reads 50% and no MP3 is
+    requested before Play.
+12. Press Play and confirm exactly one shuffled track starts. Pause must pause
+    it; Resume must continue it.
+13. Change Music in either menu, reload, and confirm both controls restore the
+    same saved value.
+14. Check browser console for uncaught errors.
 
 ## Calibration matrix
 

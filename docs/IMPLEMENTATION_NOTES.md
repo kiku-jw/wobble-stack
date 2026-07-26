@@ -24,7 +24,8 @@ The team-selection frame is explicitly deferred. It is evidence for possible fut
 - Matter.js owns collision and gravity. The prototype does not invent a physics engine.
 - A single direct target-angle input is used. Alternate kernels and configurable control architecture are deferred.
 - Interface accent is coral. Purple appears only as one creature color from the reference, not as a generic UI theme.
-- No sound assets, analytics, haptics framework, save schema, routing, or service worker.
+- Browser music uses one native `Audio` element; there is no Web Audio graph,
+  audio framework, analytics, haptics framework, routing, or service worker.
 - Local storage holds per-setup best times and the last setup, and gracefully degrades when unavailable.
 
 ## M4 reference lock
@@ -107,6 +108,31 @@ The team-selection frame is explicitly deferred. It is evidence for possible fut
   reusable widget or scheduler.
 - New code is limited to bounded force sampling and intensity normalization;
   the net production diff removes substantially more code than it adds.
+
+## M9 browser music
+
+- Four owner-supplied parade tracks form one shuffled bag. Every track plays
+  once before reshuffling, and the first track of a new bag cannot immediately
+  repeat the previous one.
+- A single native `Audio` element owns playback. Only the current track receives
+  a source URL, with metadata-only preload before playback.
+- The first `play()` call stays inside the Play gesture for mobile autoplay
+  compatibility. Pause, Resume, page hiding, Retry, and route selection reuse
+  that same player and position.
+- Music defaults to 50%. Synchronized native range controls live in the start
+  and pause menus; the preference is stored separately from journey progress
+  and falls back safely when storage is unavailable.
+- Public MP3 exports are metadata-free, 128 kbps, and normalized around
+  `-16 LUFS` with a ceiling no higher than `-1.5 dBTP`.
+
+### M9 lazy-senior receipt
+
+- Lower rung: one platform `Audio` element, two native range inputs, and the
+  existing local-storage boundary.
+- GitHub prior art: skipped because the feature is repo-local media playback,
+  not a reusable protocol or package.
+- No Web Audio graph, mixer abstraction, module, dependency, worker, analyser,
+  or playlist state machine was added.
 
 ## lazy-senior receipt
 

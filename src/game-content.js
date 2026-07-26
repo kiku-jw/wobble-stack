@@ -101,3 +101,26 @@ export function getCounterSupportOffset(
   const normalizedAngle = clamp(requiredAngle / maxPlatformAngle, 0, 0.8);
   return Math.sign(direction) * normalizedAngle * maxSupportOffset;
 }
+
+export function createShuffledOrder(items, random = Math.random, previousItem = null) {
+  const order = [...items];
+
+  for (let index = order.length - 1; index > 0; index -= 1) {
+    const sample = clamp(Number(random()) || 0, 0, 0.999999);
+    const swapIndex = Math.floor(sample * (index + 1));
+    const item = order[index];
+    order[index] = order[swapIndex];
+    order[swapIndex] = item;
+  }
+
+  if (order.length > 1 && order[0] === previousItem) {
+    const swapIndex = order.findIndex((item) => item !== previousItem);
+    if (swapIndex > 0) {
+      const item = order[0];
+      order[0] = order[swapIndex];
+      order[swapIndex] = item;
+    }
+  }
+
+  return order;
+}

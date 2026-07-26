@@ -40,7 +40,8 @@ button {
 }
 
 button:focus-visible,
-canvas:focus-visible {
+canvas:focus-visible,
+input[type="range"]:focus-visible {
   outline: 3px solid #fff3ad;
   outline-offset: 3px;
 }
@@ -446,14 +447,53 @@ canvas:focus-visible {
   font-weight: 700;
 }
 
-.start-footer p {
-  margin: 0;
-}
-
 .start-footer .text-button {
   min-height: 44px;
   padding: 2px 0 2px 8px;
   font-size: 9px;
+}
+
+.music-control {
+  display: grid;
+  min-width: 0;
+  min-height: 44px;
+  align-items: center;
+  grid-template-columns: auto minmax(58px, 1fr) 32px;
+  gap: 7px;
+  color: rgba(255, 246, 222, 0.82);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.music-control-label {
+  white-space: nowrap;
+}
+
+.music-control-label > span {
+  color: #ffd970;
+  font-size: 12px;
+}
+
+.music-control input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  accent-color: #ffd970;
+  cursor: pointer;
+}
+
+.music-control output {
+  color: #ffe49a;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.start-footer .music-control {
+  width: min(215px, calc(100% - 82px));
 }
 
 .result-overlay,
@@ -498,6 +538,14 @@ canvas:focus-visible {
 
 .pause-overlay {
   justify-content: center;
+}
+
+.pause-music-control {
+  width: min(300px, 100%);
+  padding: 0 13px;
+  border: 1px solid rgba(255, 240, 213, 0.2);
+  border-radius: 14px;
+  background: rgba(100, 57, 57, 0.5);
 }
 
 .pause-overlay > .primary-button,
