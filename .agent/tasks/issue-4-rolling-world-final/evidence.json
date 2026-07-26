@@ -10,12 +10,17 @@
     "AC5": "PASS",
     "AC6": "PASS",
     "AC7": "PASS",
-    "AC8": "PARTIAL_LOCAL_PROOF_ONLY"
+    "AC8": "PASS_DEVICE_PIPELINE_OWNER_FEEL_PENDING"
   },
   "receipts": {
     "editmode": "13/13",
     "playmode": "25/25",
     "mac_smoke": "PASS",
+    "ios_export": "PASS_NON_DEVELOPMENT",
+    "ios_release_build": "PASS_ARM64",
+    "ios_signature": "PASS_STRICT",
+    "ios_install": "PASS",
+    "ios_launch": "PASS_LIVE_PROCESS",
     "captures": [
       "raw/route-start.jpg",
       "raw/route-playing.jpg",
@@ -24,7 +29,6 @@
     ]
   },
   "pending": [
-    "fresh non-Development arm64 iPhone export, sign, install, and launch",
     "physical-device performance and owner feel verdict"
   ]
 }

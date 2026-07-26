@@ -1,6 +1,6 @@
 # Rolling-world final — evidence
 
-Result: native feature-complete candidate; physical iPhone feel gate pending
+Result: installed native candidate; owner physical-iPhone feel gate pending
 
 ## Verified in this phase
 
@@ -21,8 +21,9 @@ Result: native feature-complete candidate; physical iPhone feel gate pending
   stretch/flail, dazed faces, crown arc, layered dust, colored toy chips,
   impact-only slow motion, haptic/audio hooks, camera impulse, near-save relief,
   and finish celebration.
-- AC8 release proof: local compile/test/Metal capture pass; fresh iPhone export,
-  install, launch, performance, and owner feel remain pending.
+- AC8 release proof: local compile/test/Metal capture and fresh iPhone
+  export/sign/install/launch pass. Physical performance and owner feel remain
+  pending.
 
 ## Receipts
 
@@ -40,6 +41,12 @@ Result: native feature-complete candidate; physical iPhone feel gate pending
   `raw/route-finish.jpg`.
 - Travelling-route reports:
   `raw/route-editmode.xml` and `raw/route-playmode.xml`.
+- Device pipeline for revision `29a1316`: non-Development Unity export, Xcode
+  Release `arm64` build, strict signature check, distinct app/framework bundle
+  identifiers, CoreDevice replacement install, installed-app readback, launch,
+  and live-process readback all pass. Signing identities, provisioning data,
+  and physical-device identifiers are intentionally not committed. Sanitized
+  receipt: `raw/device-release-29a1316.md`.
 
 ## Physics claims proved
 
@@ -47,8 +54,9 @@ Result: native feature-complete candidate; physical iPhone feel gate pending
 - Creature bodies remain freely rotating. Only four disabled-at-rest,
   max-distance, weak hand grips supplement the one vehicle joint.
 - Signed wheel input moves in the finger direction before wind.
-- Touch-down origin drives the wheel from anywhere outside UI; release
-  disables the motor instead of applying hidden stabilization.
+- Touch-down origin drives the wheel from anywhere outside UI; finger input
+  replaces the calm cruise motor, and release resumes the gentle physical
+  forward roll without applying hidden stabilization.
 - The camera follows real wheel travel and resets to the route origin on Retry.
 - The visible wheel/circle collider remains grounded through a strong
   five-friend catch.
@@ -67,6 +75,5 @@ Result: native feature-complete candidate; physical iPhone feel gate pending
 
 ## Pending acceptance
 
-- Fresh non-Development iOS export, signed arm64 build, install, and launch.
 - Physical-device performance, readable control, first-route pacing, Retry,
   and owner feel verdict.

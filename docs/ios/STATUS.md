@@ -1,16 +1,15 @@
 # iPhone status
 
-Updated: 2026-07-25
+Updated: 2026-07-26
 
 ## Current
 
-- Phase: M3 rolling-world native candidate, automated and visual gates passed.
+- Phase: M3 rolling-world native candidate installed and running on iPhone.
 - Canonical task: `kiku-jw/wobble-stack#4`.
-- Next actor: Agent, exporting and installing the current source revision on
-  the paired iPhone; owner feel approval follows.
-- Blocker: none for local production. Subjective control remains a physical
-  iPhone gate; App Store distribution remains a separate Apple Developer
-  Program boundary.
+- Next actor: Owner, testing control clarity, pacing, performance, and Retry
+  feel on the running device build.
+- Blocker: none for the current device playtest. App Store distribution remains
+  a separate Apple Developer Program boundary.
 
 ## Verified native candidate
 
@@ -45,10 +44,13 @@ Updated: 2026-07-25
   canonical proof bundle and reflected in the README.
 - Unity batch compile, `13/13` EditMode, `25/25` PlayMode, Mac smoke build, and
   inspected portrait Metal captures pass.
+- Revision `29a1316` produced a non-Development Unity iOS export and signed
+  Release `arm64` app. Strict code-sign verification passed; CoreDevice
+  confirmed install, installed-app readback, launch, and a live process on the
+  paired iPhone.
 
 ## Remaining release gate
 
-- Fresh non-Development iOS export, signed arm64 build, install, and launch.
 - Physical-device performance, gesture readability, first-route pacing, Retry,
   and voluntary-Retry owner verdict.
 - TestFlight and App Store distribution remain separate Apple account gates.

@@ -4,9 +4,8 @@
   "review": "full native automated and visual proof",
   "findings": [],
   "residual_risk": [
-    "Desktop deterministic proofs do not establish physical thumb feel.",
     "Physical-device performance and voluntary Retry still require owner observation.",
     "TestFlight and App Store distribution remain separate Apple account gates."
   ],
-  "next_gate": "fresh signed iPhone install, launch, and owner feel verdict"
+  "next_gate": "owner physical-device feel verdict"
 }
