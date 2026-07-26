@@ -4,13 +4,15 @@
 
 - Batch project import and C# compile with Unity `6000.3.19f1`.
 - EditMode covers gust sampling, preview/envelope timing, direction, input
-  bounds, setup clamping, and state transitions.
+  bounds, relative touch drive, setup bounds retained for persistence
+  compatibility, and state transitions.
 - PlayMode covers scene bootstrap, dense contacts, expression progression,
   blue wind direction, the single legitimate wheel joint, free creature
   rotation, calm warmup, signed wheel travel, visual/collider ground contact,
   readable plank angle, camera-follow inputs, strongest-gust catch matrices,
-  neutral/wrong fallability, and interruption-safe failure.
-- Current rolling-core receipt: `13/13` EditMode and `15/15` PlayMode pass.
+  neutral/wrong fallability, weak grip release, parallax, pickups, friend joins,
+  complete first-route travel, finish, and interruption-safe failure.
+- Current native-candidate receipt: `13/13` EditMode and `25/25` PlayMode pass.
 
 ## Deterministic rolling matrix
 
@@ -37,17 +39,21 @@ lean, or perfect per-frame correction into these proofs.
 - Touch-down establishes a local origin anywhere outside UI.
 - Horizontal displacement maps continuously to wheel travel; the bezel is not
   a target.
-- Holding displacement maintains travel. Returning near the origin coasts or
-  brakes. Release does not snap or rotate the plank.
+- Holding displacement maintains travel. Returning near the origin brakes.
+  Release resumes the gentle physical cruise and never snaps or rotates the
+  plank.
 - The wheel spins consistently with translation while the plank remains
   dynamic and readable.
-- Camera follows vehicle travel and preserves a useful look-ahead.
+- Camera follows local vehicle travel and preserves a useful look-ahead.
+- A physical-wheel odometer advances route space while calm; balance
+  corrections cannot reverse route progress and no vehicle body receives a
+  scripted travel offset.
 - Pause freezes time, physics, particles, and score.
 - App focus loss pauses safely.
 - Retry rebuilds vehicle, bodies, faces, crown, particles, wind seed, and route
   state without a scene load.
 
-## Upcoming proof additions
+## Route and presentation automation
 
 - Articulated appendage lag, blink/gaze variability, personality thresholds,
   visible weak grip creation, grip break, and no-immortality matrix.
@@ -57,6 +63,10 @@ lean, or perfect per-frame correction into these proofs.
   seam visibility.
 - Impact squash, ground dust, crown/debris arcs, result hold, finish
   celebration, and Reduced Motion semantics.
+
+The current suite proves the runtime presence and state changes above. Fine
+visual quality, seam visibility, gesture clarity, and motion comfort remain
+human inspection gates rather than pixel assertions.
 
 ## Presentation matrix
 
@@ -83,5 +93,6 @@ The next physical-iPhone gate must verify:
 - Camera follow, touch latency, haptics, safe areas, interruption behavior,
   frame pacing, thermal behavior, and voluntary Retry feel acceptable.
 
-Articulation, route content, minimal UI, and final presentation still require
-their own automated, visual, and device passes before release.
+Articulation, route content, minimal UI, and final presentation have automated
+and inspected-capture receipts. The fresh signed device run and owner feel
+verdict remain mandatory before release.

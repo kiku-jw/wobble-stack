@@ -1,27 +1,30 @@
 {
   "task": "issue-4-rolling-world-final",
-  "result": "PHASE_PASS_CONTINUE",
-  "phase": "rolling-core",
+  "result": "NATIVE_CANDIDATE_PASS",
+  "phase": "release-candidate",
   "verified": {
-    "AC1": "PASS_FLAT_ROAD_SLICE",
-    "AC2": "PASS_CORE_PENDING_AUTHORED_ROUTE",
-    "AC5": "PARTIAL_ROAD_ONLY",
+    "AC1": "PASS",
+    "AC2": "PASS",
+    "AC3": "PASS",
+    "AC4": "PASS",
+    "AC5": "PASS",
+    "AC6": "PASS",
+    "AC7": "PASS",
     "AC8": "PARTIAL_LOCAL_PROOF_ONLY"
   },
   "receipts": {
     "editmode": "13/13",
-    "playmode": "15/15",
+    "playmode": "25/25",
     "mac_smoke": "PASS",
     "captures": [
-      "raw/rolling-core-start.png",
-      "raw/rolling-core-playing.png"
+      "raw/route-start.jpg",
+      "raw/route-playing.jpg",
+      "raw/route-impact.jpg",
+      "raw/route-finish.jpg"
     ]
   },
   "pending": [
-    "articulated character rigs and visible breakable grips",
-    "character-specific emotion, blink, gaze, and secondary motion",
-    "parallax, clouds, windmill, route, badges, join stops, and finish",
-    "minimal UI and final collapse presentation",
-    "fresh signed iPhone install and owner release gate"
+    "fresh non-Development arm64 iPhone export, sign, install, and launch",
+    "physical-device performance and owner feel verdict"
   ]
 }

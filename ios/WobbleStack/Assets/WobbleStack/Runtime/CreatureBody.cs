@@ -8,16 +8,20 @@ namespace WobbleStack.Runtime
         private WobbleStackGame _game;
         private CreatureRig _rig;
         private CreatureBody _lowerNeighbor;
+        private Rigidbody2D _recoveryAnchor;
         private Collider2D _collider;
         private DistanceJoint2D _gripJoint;
         private float _signedWind;
         private float _windIntensity;
         private float _gripEndsAt;
         private float _gripCooldownUntil;
+        private float _recoveryGripMinimumUntil;
         private int _stackIndex;
         private bool _gripActive;
         private bool _gripUsed;
         private bool _impacted;
+        private bool _recoveryGripRequested;
+        private bool _platformHoldActive;
 
         public Rigidbody2D Body { get; private set; }
 
@@ -25,11 +29,13 @@ namespace WobbleStack.Runtime
 
         public CreatureRig Rig => _rig;
 
-        public bool HasActiveGrip => _gripActive;
+        public bool HasActiveGrip => _gripActive || _platformHoldActive;
 
         public bool HasGripJoint => _gripJoint != null;
 
         public bool GripWasUsed => _gripUsed;
+
+        public bool IsRecoveryGripRequested => _recoveryGripRequested;
 
         public bool IsFalling { get; private set; }
 
@@ -49,14 +55,29 @@ namespace WobbleStack.Runtime
         {
             _lowerNeighbor = lowerNeighbor;
             _stackIndex = stackIndex;
+            CreateGripJoint();
+            _gripCooldownUntil = Time.time + (stackIndex * 0.11f);
+        }
+
+        private void CreateGripJoint()
+        {
+            if (_gripJoint != null || _lowerNeighbor == null)
+            {
+                return;
+            }
+
             _gripJoint = gameObject.AddComponent<DistanceJoint2D>();
             _gripJoint.enabled = false;
-            _gripJoint.connectedBody = lowerNeighbor.Body;
+            _gripJoint.connectedBody = _lowerNeighbor.Body;
             _gripJoint.autoConfigureConnectedAnchor = false;
             _gripJoint.maxDistanceOnly = true;
             _gripJoint.enableCollision = true;
             _gripJoint.breakForce = GetGripBreakForce();
-            _gripCooldownUntil = Time.time + (stackIndex * 0.11f);
+        }
+
+        public void ConfigureRecoveryAnchor(Rigidbody2D recoveryAnchor)
+        {
+            _recoveryAnchor = recoveryAnchor;
         }
 
         public void ResetReaction()
@@ -65,7 +86,10 @@ namespace WobbleStack.Runtime
             _signedWind = 0f;
             _windIntensity = 0f;
             EndGrip(false);
+            EndPlatformHold();
             _gripUsed = false;
+            _recoveryGripRequested = false;
+            _recoveryGripMinimumUntil = 0f;
             IsFalling = false;
             _rig.ResetReaction();
         }
@@ -87,6 +111,7 @@ namespace WobbleStack.Runtime
             _impacted = true;
             IsFalling = false;
             EndGrip(true);
+            EndPlatformHold();
             _rig.ShowImpactReaction();
         }
 
@@ -98,7 +123,10 @@ namespace WobbleStack.Runtime
             }
 
             IsFalling = true;
+            _recoveryGripRequested = false;
+            _recoveryGripMinimumUntil = 0f;
             EndGrip(true);
+            EndPlatformHold();
             _rig.ShowFallReaction();
 
             float alternatingDirection = (_stackIndex & 1) == 0 ? -1f : 1f;
@@ -109,10 +137,53 @@ namespace WobbleStack.Runtime
             Body.AddTorque(alternatingDirection * (0.055f + (_stackIndex * 0.012f)), ForceMode2D.Impulse);
         }
 
+        public void ShowReliefReaction()
+        {
+            if (_impacted)
+            {
+                return;
+            }
+
+            IsFalling = false;
+            EndGrip(false);
+            EndPlatformHold();
+            _rig.ShowReliefReaction();
+        }
+
+        public void SetRecoveryGrip(bool requested)
+        {
+            _recoveryGripRequested =
+                requested ||
+                Time.time < _recoveryGripMinimumUntil;
+            if (!_recoveryGripRequested)
+            {
+                EndPlatformHold();
+            }
+
+            if (_recoveryGripRequested)
+            {
+                _gripCooldownUntil = Mathf.Min(_gripCooldownUntil, Time.time);
+            }
+        }
+
+        public void HoldRecoveryGripFor(float seconds)
+        {
+            _recoveryGripMinimumUntil = Mathf.Max(
+                _recoveryGripMinimumUntil,
+                Time.time + Mathf.Max(0f, seconds));
+            SetRecoveryGrip(true);
+        }
+
         private void FixedUpdate()
         {
-            if (_impacted || _lowerNeighbor == null || Body.bodyType != RigidbodyType2D.Dynamic)
+            if (_impacted || Body.bodyType != RigidbodyType2D.Dynamic)
             {
+                return;
+            }
+
+            if (_lowerNeighbor == null)
+            {
+                UpdatePlatformHold();
                 return;
             }
 
@@ -123,6 +194,12 @@ namespace WobbleStack.Runtime
                     EndGrip(true);
                 }
 
+                return;
+            }
+
+            if (_recoveryGripRequested && Time.time >= _gripCooldownUntil)
+            {
+                BeginGrip(true);
                 return;
             }
 
@@ -137,18 +214,26 @@ namespace WobbleStack.Runtime
             float danger = Mathf.Max(relativeSpeed * 0.75f, Mathf.Max(relativeAngle / 16f, horizontalOffset));
             if (danger >= GetGripDangerThreshold())
             {
-                BeginGrip();
+                BeginGrip(false);
             }
         }
 
-        private void BeginGrip()
+        private void BeginGrip(bool recovering)
         {
-            if (_gripJoint == null || _lowerNeighbor == null)
+            if (_lowerNeighbor == null)
             {
                 return;
             }
 
-            bool useLeftArm = _signedWind >= 0f;
+            CreateGripJoint();
+            if (_gripJoint == null)
+            {
+                return;
+            }
+
+            bool useLeftArm = recovering
+                ? Body.position.x >= _lowerNeighbor.Body.position.x
+                : _signedWind >= 0f;
             float side = useLeftArm ? -1f : 1f;
             float upperHalfHeight = _collider.bounds.extents.y;
             Collider2D lowerCollider = _lowerNeighbor.GetComponent<Collider2D>();
@@ -157,19 +242,60 @@ namespace WobbleStack.Runtime
             Vector2 connectedAnchor = new Vector2(side * lowerCollider.bounds.extents.x * 0.22f, lowerHalfHeight * 0.12f);
             Vector2 anchorWorld = Body.GetPoint(anchor);
             Vector2 connectedWorld = _lowerNeighbor.Body.GetPoint(connectedAnchor);
+            float currentDistance = Vector2.Distance(anchorWorld, connectedWorld);
 
             _gripJoint.anchor = anchor;
             _gripJoint.connectedAnchor = connectedAnchor;
-            _gripJoint.distance = Vector2.Distance(anchorWorld, connectedWorld) + 0.14f;
-            _gripJoint.breakForce = GetGripBreakForce();
+            _gripJoint.distance = recovering
+                ? Mathf.Max(
+                    Mathf.Abs(anchorWorld.y - connectedWorld.y) + 0.02f,
+                    currentDistance - 0.18f)
+                : currentDistance + 0.14f;
+            _gripJoint.breakForce = recovering
+                ? Mathf.Max(100f, GetGripBreakForce() * 12f)
+                : GetGripBreakForce();
             _gripJoint.enabled = true;
             _gripActive = true;
             _gripUsed = true;
-            _gripEndsAt = Time.time + GetGripDuration();
+            _gripEndsAt = Time.time + (recovering ? 1.3f : GetGripDuration());
             Vector2 visibleAnchor = new Vector2(
                 side * lowerCollider.bounds.extents.x * 0.55f,
                 lowerHalfHeight * 0.42f);
             _rig.SetGripTarget(_lowerNeighbor.transform, visibleAnchor, useLeftArm);
+        }
+
+        private void UpdatePlatformHold()
+        {
+            if (!_recoveryGripRequested || _recoveryAnchor == null)
+            {
+                EndPlatformHold();
+                return;
+            }
+
+            if (!_platformHoldActive)
+            {
+                bool useLeftArm = Body.position.x >= _recoveryAnchor.position.x;
+                float side = useLeftArm ? -1f : 1f;
+                Vector2 worldAnchor = new Vector2(
+                    Body.position.x + (side * _collider.bounds.extents.x * 0.32f),
+                    _recoveryAnchor.position.y + 0.42f);
+                Vector2 localAnchor = _recoveryAnchor.transform.InverseTransformPoint(worldAnchor);
+                _rig.SetGripTarget(_recoveryAnchor.transform, localAnchor, useLeftArm);
+                _platformHoldActive = true;
+                _gripUsed = true;
+            }
+
+        }
+
+        private void EndPlatformHold()
+        {
+            if (!_platformHoldActive)
+            {
+                return;
+            }
+
+            _platformHoldActive = false;
+            _rig.ClearGripTarget();
         }
 
         private void EndGrip(bool startCooldown)
@@ -183,7 +309,8 @@ namespace WobbleStack.Runtime
             _rig.ClearGripTarget();
             if (startCooldown)
             {
-                _gripCooldownUntil = Time.time + GetGripCooldown();
+                _gripCooldownUntil = Time.time +
+                    (_recoveryGripRequested ? 0.18f : GetGripCooldown());
             }
         }
 
@@ -197,12 +324,13 @@ namespace WobbleStack.Runtime
             _gripJoint = null;
             _gripActive = false;
             _rig.ClearGripTarget();
-            _gripCooldownUntil = Time.time + GetGripCooldown();
+            _gripCooldownUntil = Time.time +
+                (_recoveryGripRequested ? 0.18f : GetGripCooldown());
         }
 
         private float GetGripWindThreshold()
         {
-            return Mathf.Min(0.58f, 0.24f + (_stackIndex * 0.075f));
+            return Mathf.Min(0.46f, 0.2f + (_stackIndex * 0.055f));
         }
 
         private float GetGripDangerThreshold()
@@ -225,9 +353,9 @@ namespace WobbleStack.Runtime
             switch (Kind)
             {
                 case CharacterKind.Rabbit:
-                    return 0.72f;
+                    return 0.9f;
                 case CharacterKind.Jelly:
-                    return 0.58f;
+                    return 0.7f;
                 case CharacterKind.Cube:
                     return 0.4f;
                 default:
@@ -245,9 +373,9 @@ namespace WobbleStack.Runtime
             switch (Kind)
             {
                 case CharacterKind.Rabbit:
-                    return 1.8f;
+                    return 3.2f;
                 case CharacterKind.Jelly:
-                    return 1.45f;
+                    return 2.4f;
                 case CharacterKind.Cube:
                     return 1.1f;
                 default:

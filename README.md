@@ -8,9 +8,10 @@ tear the tower apart.
 [![Deploy GitHub Pages](https://github.com/kiku-jw/wobble-stack/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/kiku-jw/wobble-stack/actions/workflows/deploy-pages.yml)
 
 <p align="center">
-  <img src="docs/ios/screenshots/start.jpg" width="240" alt="Wobble Stack iPhone start screen" />
-  <img src="docs/ios/screenshots/gameplay.jpg" width="240" alt="Five clay creatures balancing while a star wheel rolls on a clay road" />
-  <img src="docs/ios/screenshots/collapse.jpg" width="240" alt="Five clay creatures flying apart with comic impact reactions" />
+  <img src="docs/ios/screenshots/start.jpg" width="210" alt="Wobble Stack iPhone start screen" />
+  <img src="docs/ios/screenshots/gameplay.jpg" width="210" alt="Four clay creatures balancing while a star wheel rolls on a clay road" />
+  <img src="docs/ios/screenshots/collapse.jpg" width="210" alt="Five clay creatures flying apart with comic impact reactions" />
+  <img src="docs/ios/screenshots/finish.jpg" width="210" alt="All five friends arriving at the sunset windmill festival" />
 </p>
 
 ## What it is
@@ -22,27 +23,30 @@ instant retry?
 The public GitHub Pages build remains the lightweight Matter.js prototype. The
 current iPhone production client lives in `ios/WobbleStack`: a Unity 6 build
 whose dynamic star wheel rolls on a clay road, drives a freely reacting plank,
-and carries the tower through deterministic variable-intensity gusts. The
-travelling camera, pause/results/Retry flows, impact slow motion,
-calm/panic/impact expressions, generated sound, haptic hooks, reduced motion,
-safe areas, and app icon are already present; articulated characters, routes,
-collectibles, and final UI are in production.
+and carries the tower through three handcrafted variable-intensity journeys.
+Five articulated personalities blink, look, brace, panic, briefly grab one
+another, tumble, and react to impact. Parallax scenery, drifting clouds, a
+turning windmill, optional badges, two first-route friend joins, local route
+odometer, finish celebration, impact slow motion, sound, haptics, safe areas,
+Reduced Motion, pause, and instant Retry are all implemented without a backend
+or runtime content SDK.
 
 ## Controls
 
 - **iPhone:** touch anywhere outside UI, then slide left or right from that
-  touch-down point to roll the wheel. Move the wheel under the leaning tower;
-  return toward the starting point to coast or brake.
+  touch-down point to roll the wheel. Use short counter-slides to put the wheel
+  back under a developing lean; release to resume the gentle forward roll.
 - **Web prototype:** drag left/right with touch or mouse, or use Left/Right or
   A/D.
-- **Goal:** carry every creature toward the windmill and keep them off the road
-  as each visible gust builds.
+- **Goal:** reach the windmill with every creature and collect festival badges
+  by touching them with the living stack.
 - **Pause:** use the button in the top-right corner or press Escape.
 
 There is one game mode: every gust independently samples a different intensity,
 and the wind itself—not a meter or difficulty label—shows how strong it is.
 The first route will begin with three friends and add Rabbit and Jelly King at
-safe stops; setup selection is being removed in favor of that journey.
+safe stops. Completing a route records its best badge count and opens the next
+road.
 
 ## Run the web prototype locally
 
@@ -113,12 +117,11 @@ top of this README are rendered from the current Unity build.
   <img src="docs/concepts/comedic-collapse.png" width="300" alt="Concept art showing the creature tower collapsing" />
 </p>
 
-The rolling-core gate now passes deterministic physics and Metal capture:
-correct wheel travel beats neutral/wrong travel, the wheel remains grounded,
-and a delayed broad rescue gesture is survivable. The next production gate is
-articulated character life—limbs, ears, grips, blink/gaze, personality, and a
-readable impact—followed by the first travelling route and another physical
-iPhone feel test.
+The native production slice now passes deterministic rolling, strongest-gust,
+friend-join, badge, finish, parallax, articulation, and collapse checks plus
+inspected portrait Metal captures. The signed-device pipeline is proven, but a
+fresh physical-iPhone feel pass remains mandatory after every material control
+change.
 
 ## License
 

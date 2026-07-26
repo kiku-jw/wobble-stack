@@ -27,8 +27,9 @@ recovering the golden festival badges scattered along the road.
 - Exactly five version-1 characters. Personality depth takes priority over a
   catalogue, currency, or shop.
 - One continuously varied gust model with no difficulty or intensity HUD.
-- Three badge pickups per route at different heights, collected by creature
-  contact and persisted as route mastery.
+- Seven, eight, and nine authored badge pickups across the three routes at
+  different heights, collected by creature contact and persisted as each
+  route's best count.
 - Start, travel, pause/settings, collapse, Retry, route finish, and route
   selection flows.
 - Sound, haptics, reduced motion, safe areas, interruption-safe pause, and local
@@ -38,7 +39,8 @@ recovering the golden festival badges scattered along the road.
 
 1. Touch anywhere outside UI and slide relative to the touch-down point.
 2. Roll the wheel under the direction in which the stack is leaning; return
-   toward the touch-down point to coast or brake.
+   toward the touch-down point to brake, then release to resume the gentle
+   forward journey.
 3. Read gust buildup from blue wind, appendages, faces, and sound rather than
    text or a meter.
 4. Travel toward the windmill, collect optional badges with the creatures, and

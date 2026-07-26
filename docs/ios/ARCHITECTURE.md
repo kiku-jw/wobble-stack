@@ -34,9 +34,15 @@ stationary beam is no longer authoritative for native gameplay.
   suspension; code never assigns a target plank angle.
 - Drive: thumb displacement relative to touch-down maps to signed wheel motor
   speed. Mid-range input has a broad catch band; the outer range adds a short
-  rescue-speed boost. Returning near the origin while touching applies bounded
-  motor braking; releasing the finger disables the motor and lets the vehicle
-  coast physically.
+  rescue-speed boost. Calm travel applies a gentle physical cruise motor;
+  finger input replaces, rather than adds to, that cruise. Returning near the
+  touch-down origin while touching applies bounded motor braking; releasing
+  resumes the gentle forward roll.
+- Route distance: an odometer integrates the wheel's absolute angular surface
+  speed while calm. It drives authored route layers independently from local
+  wheel position, so counter-steering cannot reverse the journey and no wheel,
+  plank, or creature receives a scripted common-frame translation. Blue
+  preview, active gusts, safe stops, and route finish pause the odometer.
 - Camera: horizontal smoothing, dead-zone-like lag, and velocity look-ahead
   follow the wheel. Camera impulse is layered on top and disabled by Reduced
   Motion.
@@ -49,27 +55,28 @@ stationary beam is no longer authoritative for native gameplay.
   on physical loss of height/order or road impact, not crossing an invisible
   horizontal line.
 
-## Character rig target
+## Character rig
 
 - Each character keeps one dynamic torso collider for robust stack physics.
 - Visible feet, arms, ears, leaves, wings, crest, jelly skirt, and crown are
   separate sprite parts driven by damped secondary motion.
-- Hands use two-bone visual reach toward nearby authored grip anchors. A
-  contacted grip may create one weak breakable joint whose visible hands show
-  the connection; no permanent tether, rotation lock, or positional
-  auto-balance is allowed.
+- One visible arm may reach toward an authored lower-body anchor while one weak
+  max-distance joint briefly supplements a dangerous contact. It is
+  breakable, time-limited, staggered, and cooldown-gated; no permanent tether,
+  rotation lock, or positional auto-balance is allowed.
 - Personality state combines calm, anticipation, effort, panic, relief,
   impact, and dazed behavior with irregular blink and gaze timing.
 
-## World and progression target
+## World and progression
 
 - Camera-relative background, slower distant layers, world-space midground,
   physical road, and faster foreground form the parallax stack.
 - Clouds translate on independent deterministic loops. Windmill blades rotate
   as separate sprites; no video runtime is needed.
-- First route uses three bodies, then authored join stops rebuild the safe
-  stationary stack with Rabbit and Jelly. Five is the final active roster.
-- Badge triggers are world-space collectibles and record the best count per
+- First route uses three bodies, then authored join stops add Rabbit and Jelly
+  to the current moving stack after a short calm window. Five is the final
+  active roster.
+- Badge triggers live in authored route space and record the best count per
   route. No server or economy is introduced.
 
 ## Art pipeline

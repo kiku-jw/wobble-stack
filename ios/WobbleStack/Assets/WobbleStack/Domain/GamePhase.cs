@@ -7,5 +7,6 @@ namespace WobbleStack.Domain
         Paused = 2,
         Failing = 3,
         Results = 4,
+        Finishing = 5,
     }
 }

@@ -279,15 +279,18 @@ namespace WobbleStack.Domain.Tests
             Assert.That(WobbleStackRules.CanTransition(GamePhase.Ready, GamePhase.Playing), Is.True);
             Assert.That(WobbleStackRules.CanTransition(GamePhase.Playing, GamePhase.Paused), Is.True);
             Assert.That(WobbleStackRules.CanTransition(GamePhase.Playing, GamePhase.Failing), Is.True);
+            Assert.That(WobbleStackRules.CanTransition(GamePhase.Playing, GamePhase.Finishing), Is.True);
             Assert.That(WobbleStackRules.CanTransition(GamePhase.Paused, GamePhase.Playing), Is.True);
             Assert.That(WobbleStackRules.CanTransition(GamePhase.Paused, GamePhase.Ready), Is.True);
             Assert.That(WobbleStackRules.CanTransition(GamePhase.Failing, GamePhase.Results), Is.True);
+            Assert.That(WobbleStackRules.CanTransition(GamePhase.Finishing, GamePhase.Results), Is.True);
             Assert.That(WobbleStackRules.CanTransition(GamePhase.Results, GamePhase.Ready), Is.True);
             Assert.That(WobbleStackRules.CanTransition(GamePhase.Results, GamePhase.Playing), Is.True);
 
             Assert.That(WobbleStackRules.CanTransition(GamePhase.Ready, GamePhase.Results), Is.False);
             Assert.That(WobbleStackRules.CanTransition(GamePhase.Playing, GamePhase.Results), Is.False);
             Assert.That(WobbleStackRules.CanTransition(GamePhase.Failing, GamePhase.Playing), Is.False);
+            Assert.That(WobbleStackRules.CanTransition(GamePhase.Finishing, GamePhase.Playing), Is.False);
             Assert.That(WobbleStackRules.CanTransition(GamePhase.Paused, GamePhase.Results), Is.False);
         }
     }

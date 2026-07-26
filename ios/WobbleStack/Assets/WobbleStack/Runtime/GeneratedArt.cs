@@ -48,11 +48,26 @@ namespace WobbleStack.Runtime
         RightBlush
     }
 
+    internal enum WorldProp
+    {
+        CloudLeft,
+        CloudMiddle,
+        CloudRight,
+        OrchardTree,
+        Mesa,
+        FestivalArch,
+        WindmillTower,
+        WindmillRotor,
+        SafeStop
+    }
+
     internal static class GeneratedArt
     {
         private const float PixelsPerUnit = 100f;
         private static readonly Dictionary<string, Sprite> Sprites = new Dictionary<string, Sprite>();
         private static Material _chromaMaterial;
+        private static Material _worldChromaMaterial;
+        private static Material _opaqueSpriteMaterial;
 
         public static Material ChromaMaterial
         {
@@ -74,9 +89,58 @@ namespace WobbleStack.Runtime
                     name = "Generated Art Chroma"
                 };
                 _chromaMaterial.SetColor("_KeyColor", Color.magenta);
-                _chromaMaterial.SetFloat("_Threshold", 0.24f);
-                _chromaMaterial.SetFloat("_Softness", 0.055f);
+                _chromaMaterial.SetFloat("_Threshold", 0.33f);
+                _chromaMaterial.SetFloat("_Softness", 0.07f);
                 return _chromaMaterial;
+            }
+        }
+
+        public static Material WorldChromaMaterial
+        {
+            get
+            {
+                if (_worldChromaMaterial != null)
+                {
+                    return _worldChromaMaterial;
+                }
+
+                Shader shader = Resources.Load<Shader>("WobbleStack/Art/ChromaKeySprite");
+                if (shader == null)
+                {
+                    throw new System.InvalidOperationException("Missing Wobble Stack chroma shader resource.");
+                }
+
+                _worldChromaMaterial = new Material(shader)
+                {
+                    name = "Generated World Chroma"
+                };
+                _worldChromaMaterial.SetColor("_KeyColor", Color.magenta);
+                _worldChromaMaterial.SetFloat("_Threshold", 0.48f);
+                _worldChromaMaterial.SetFloat("_Softness", 0.085f);
+                return _worldChromaMaterial;
+            }
+        }
+
+        public static Material OpaqueSpriteMaterial
+        {
+            get
+            {
+                if (_opaqueSpriteMaterial != null)
+                {
+                    return _opaqueSpriteMaterial;
+                }
+
+                Shader shader = Shader.Find("Sprites/Default");
+                if (shader == null)
+                {
+                    throw new System.InvalidOperationException("Missing Unity default sprite shader.");
+                }
+
+                _opaqueSpriteMaterial = new Material(shader)
+                {
+                    name = "Generated Opaque Sprite"
+                };
+                return _opaqueSpriteMaterial;
             }
         }
 
@@ -95,6 +159,23 @@ namespace WobbleStack.Runtime
                 texture,
                 new Rect(0f, 0f, texture.width, visibleHeight),
                 new Vector2(0.5f, 0.5f));
+        }
+
+        public static Sprite RouteSky()
+        {
+            Texture2D texture = Resources.Load<Texture2D>("WobbleStack/Art/route-sky");
+            return GetOrCreate(
+                "route-sky",
+                texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f));
+        }
+
+        public static Sprite World(WorldProp prop)
+        {
+            Texture2D texture = Resources.Load<Texture2D>("WobbleStack/Art/world-props");
+            GetWorldPropGeometry(prop, out Rect rect, out Vector2 pivot);
+            return GetOrCreate($"world-{prop}", texture, rect, pivot);
         }
 
         public static Sprite Character(CharacterKind kind)
@@ -473,6 +554,49 @@ namespace WobbleStack.Runtime
             }
         }
 
+        private static void GetWorldPropGeometry(
+            WorldProp prop,
+            out Rect rect,
+            out Vector2 pivot)
+        {
+            pivot = new Vector2(0.5f, 0.5f);
+            switch (prop)
+            {
+                case WorldProp.CloudLeft:
+                    rect = new Rect(42f, 1150f, 293f, 180f);
+                    break;
+                case WorldProp.CloudMiddle:
+                    rect = new Rect(377f, 1157f, 290f, 196f);
+                    break;
+                case WorldProp.CloudRight:
+                    rect = new Rect(698f, 1144f, 288f, 194f);
+                    break;
+                case WorldProp.OrchardTree:
+                    rect = new Rect(39f, 653f, 256f, 369f);
+                    pivot = new Vector2(0.5f, 0.02f);
+                    break;
+                case WorldProp.Mesa:
+                    rect = new Rect(340f, 648f, 310f, 269f);
+                    pivot = new Vector2(0.5f, 0.02f);
+                    break;
+                case WorldProp.FestivalArch:
+                    rect = new Rect(667f, 661f, 329f, 309f);
+                    pivot = new Vector2(0.5f, 0.02f);
+                    break;
+                case WorldProp.WindmillTower:
+                    rect = new Rect(38f, 162f, 260f, 407f);
+                    pivot = new Vector2(0.5f, 0.02f);
+                    break;
+                case WorldProp.WindmillRotor:
+                    rect = new Rect(344f, 187f, 318f, 330f);
+                    break;
+                default:
+                    rect = new Rect(705f, 170f, 260f, 310f);
+                    pivot = new Vector2(0.5f, 0.02f);
+                    break;
+            }
+        }
+
         public static Sprite Beam()
         {
             Texture2D texture = Resources.Load<Texture2D>("WobbleStack/Art/props-ui-chroma");
@@ -530,6 +654,18 @@ namespace WobbleStack.Runtime
             {
                 Object.Destroy(_chromaMaterial);
                 _chromaMaterial = null;
+            }
+
+            if (_worldChromaMaterial != null)
+            {
+                Object.Destroy(_worldChromaMaterial);
+                _worldChromaMaterial = null;
+            }
+
+            if (_opaqueSpriteMaterial != null)
+            {
+                Object.Destroy(_opaqueSpriteMaterial);
+                _opaqueSpriteMaterial = null;
             }
         }
 

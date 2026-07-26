@@ -1,30 +1,33 @@
 # Rolling-world final — evidence
 
-Result: phase pass, continue
+Result: native feature-complete candidate; physical iPhone feel gate pending
 
 ## Verified in this phase
 
 - AC1 grounded rolling vehicle: pass for the flat-road vertical slice.
-- AC2 travel camera and readable balance: pass for horizontal follow and the
-  strongest deterministic catch matrix; authored route space remains pending.
+- AC2 travel camera and readable balance: pass for horizontal follow,
+  human-like first-stop travel, and the strongest deterministic catch matrix.
 - AC3 dense articulated stack: pass. Five distinct rigs, torso-following
   colliders, secondary motion, visual hand reach, and four breakable weak grips
   are active without rotation locks or permanent tethers.
 - AC4 character-specific life/emotion: pass for calm, alert, effort, panic,
   relief, falling, impact, irregular blink, and independent gaze behavior.
-- AC5 living world: generated repeating clay road pass only; clouds, windmill,
-  and full parallax remain pending.
-- AC7 fall presentation: phase pass for grip release, free tumbling, falling
+- AC5 living world: pass. Empty route sky, four drifting clouds, far/mid/front
+  parallax, route landmarks, and independently rotating windmill are active.
+- AC6 journey and progression: pass. Three routes, `7/8/9` badges, two
+  first-route joins, best counts, unlocks, finish flow, and minimal gameplay UI
+  are implemented.
+- AC7 fall presentation: pass for grip release, free tumbling, falling
   stretch/flail, dazed faces, crown arc, layered dust, colored toy chips,
-  impact-only slow motion, haptic/audio hooks, and camera impulse. Finish
-  celebration remains pending.
-- AC8 release proof: local compile/test/Metal capture pass; fresh iPhone export
-  remains pending until the next cohesive device build.
+  impact-only slow motion, haptic/audio hooks, camera impulse, near-save relief,
+  and finish celebration.
+- AC8 release proof: local compile/test/Metal capture pass; fresh iPhone export,
+  install, launch, performance, and owner feel remain pending.
 
 ## Receipts
 
 - Unity `6000.3.19f1` EditMode: `13/13`.
-- Unity `6000.3.19f1` PlayMode: `19/19`.
+- Unity `6000.3.19f1` PlayMode: `25/25`.
 - Mac smoke build: pass.
 - Actual-physics portrait captures:
   `raw/rolling-core-start.png` and `raw/rolling-core-playing.png`.
@@ -32,6 +35,11 @@ Result: phase pass, continue
   `raw/articulated-start.jpg` and `raw/articulated-impact.jpg`.
 - Current articulation reports:
   `raw/articulated-editmode.xml` and `raw/articulated-playmode.xml`.
+- Travelling-route captures:
+  `raw/route-start.jpg`, `raw/route-playing.jpg`, `raw/route-impact.jpg`, and
+  `raw/route-finish.jpg`.
+- Travelling-route reports:
+  `raw/route-editmode.xml` and `raw/route-playmode.xml`.
 
 ## Physics claims proved
 
@@ -48,10 +56,17 @@ Result: phase pass, continue
   and five bodies.
 - A delayed broad rescue gesture completes the same matrix.
 - Neutral and wrong travel still collapse.
+- A physical-wheel odometer advances the authored route without translating
+  the vehicle or letting a leftward balance correction erase journey progress.
+- A human-like full-route probe reaches both friend stops and the festival
+  finish while preserving the physical-wheel, join, and badge flow.
+- Creature contact collects each badge once; two authored stops add Rabbit and
+  Jelly; finish transitions through relief and celebration to route results.
+- Four clouds move independently, the camera drives parallax, and the windmill
+  rotor changes angle.
 
 ## Pending acceptance
 
-- Remaining AC5 parallax/cloud/windmill work.
-- AC6 journey, badges, joins, persistence, and minimal UI.
-- Remaining AC7 near-save and finish presentation.
-- Full AC8 iPhone install, performance, owner feel, and release verdict.
+- Fresh non-Development iOS export, signed arm64 build, install, and launch.
+- Physical-device performance, readable control, first-route pacing, Retry,
+  and owner feel verdict.

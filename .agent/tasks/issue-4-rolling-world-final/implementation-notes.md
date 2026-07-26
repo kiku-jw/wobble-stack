@@ -58,3 +58,29 @@
   motion, haptic/audio hooks, and squash make the collapse readable.
 - Articulation result: `13/13` EditMode, `19/19` PlayMode, Mac smoke build, and
   inspected calm-stack and collapse Metal captures.
+
+## Travelling-route receipt
+
+- Added three authored finite routes, `7/8/9` world-space badges, two
+  first-route friend joins, per-route best counts, route unlocks, finish
+  celebration, and one five-character roster. No shop, currency, backend,
+  online mode, procedural route system, or difficulty selector was added.
+- Generated one empty route sky and one isolated clay environment sheet.
+  Explicit crop rectangles and pivots feed four drifting clouds, two parallax
+  scenery depths, foreground props, safe stops, festival arch, and an
+  independently rotating windmill rotor.
+- Kept route movement and tower balance legible by separating their jobs:
+  calm travel uses a gentle physical wheel motor, while finger displacement
+  replaces that cruise and remains the exclusive catch control. A route
+  odometer integrates absolute wheel angular surface speed independently from
+  local balance corrections. Preview, active wind, safe stops, and finish
+  pause the odometer. No vehicle body is translated or assigned an angle.
+- The first-run instruction now says exactly what the gesture does and pairs it
+  with a brief horizontal thumb track. Gameplay HUD contains only badge count
+  and Pause; Reduced Motion moved into Pause.
+- A human-like automated drive alternates forward roll with short
+  counter-slides, survives, and reaches the first friend stop inside thirty
+  seconds. Strongest-gust, wrong-input, wheel-grounding, pickup-trigger, joins,
+  finish, parallax, and UI proofs pass in the same suite.
+- Travelling-route result: `13/13` EditMode, `25/25` PlayMode, Mac smoke build,
+  and inspected start, journey, impact, and festival-finish Metal captures.

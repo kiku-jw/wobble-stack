@@ -127,9 +127,15 @@ namespace WobbleStack.Runtime
                 _reliefUntil = Time.time + GetReliefDuration();
             }
 
+            if (Time.time < _reliefUntil)
+            {
+                SetEmotion(CreatureEmotion.Relief);
+                return;
+            }
+
             if (_windIntensity <= 0.04f)
             {
-                SetEmotion(Time.time < _reliefUntil ? CreatureEmotion.Relief : CreatureEmotion.Calm);
+                SetEmotion(CreatureEmotion.Calm);
                 return;
             }
 
@@ -167,6 +173,19 @@ namespace WobbleStack.Runtime
             _impactKick = Mathf.Max(_impactKick, 0.24f);
             ClearGripTarget();
             SetEmotion(CreatureEmotion.Panic);
+        }
+
+        public void ShowReliefReaction()
+        {
+            if (_emotion == CreatureEmotion.Impact)
+            {
+                return;
+            }
+
+            _falling = false;
+            _reliefUntil = Time.time + GetReliefDuration();
+            ClearGripTarget();
+            SetEmotion(CreatureEmotion.Relief);
         }
 
         public void SetGripTarget(Transform target, Vector2 localAnchor, bool useLeftArm)

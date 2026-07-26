@@ -4,7 +4,7 @@
     <properties>
       <property name="platform" value="EditMode" />
     </properties>
-    <test-suite type="Assembly" id="1016" name="WobbleStack.Domain.Tests.dll" fullname="/Users/nick/dev/wobble-stack/ios/WobbleStack/Library/ScriptAssemblies/WobbleStack.Domain.Tests.dll" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-07-25 21:49:54Z" end-time="2026-07-25 21:49:54Z" duration="0.014668" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <test-suite type="Assembly" id="1016" name="WobbleStack.Domain.Tests.dll" fullname="WobbleStack.Domain.Tests.dll" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-07-25 21:49:54Z" end-time="2026-07-25 21:49:54Z" duration="0.014668" total="13" passed="13" failed="0" inconclusive="0" skipped="0" asserts="0">
       <properties>
         <property name="_PID" value="58485" />
         <property name="_APPDOMAIN" value="Unity Child Domain" />

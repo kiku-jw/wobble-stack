@@ -27,6 +27,13 @@ Assets:
 - `rig-face-parts.png`: one original 1536 × 1024 shared expression kit with
   separate eyes, pupils, brows, blinks, blushes, and calm, uncertain, effort,
   panic, grit, joy, and dazed mouths over `#FF00FF` chroma.
+- `route-sky.png`: one original 1024 × 1536 empty sunset journey background
+  with layered clay mountains and no baked clouds, road, windmill, characters,
+  text, or UI.
+- `world-props.png`: one original 1024 × 1536 environment sheet over
+  `#FF00FF` chroma. It separates three clouds, an orchard tree, a distant
+  mesa, a festival arch, a bladeless windmill tower, its rotor, and a safe-stop
+  marker for independent parallax and animation.
 
 Generation receipt for `road-tile.png`:
 
@@ -51,6 +58,20 @@ Generation receipt for the articulated rig sheets:
 - Runtime crops use explicit component rectangles and pivots; the original
   chroma sheets are preserved unchanged and keyed by the existing material.
 
+Generation receipt for the travelling world:
+
+- Built-in OpenAI image generation, one generation for the empty route sky and
+  one for the isolated world-prop sheet.
+- The sky prompt requested a portrait stop-motion clay sunset valley with
+  generous clean gameplay space and specifically excluded clouds, windmill,
+  road, characters, text, and UI.
+- The prop prompt requested a coherent clay asset sheet on explicit
+  `#FF00FF`: three clouds, orchard tree, mesa, festival arch, separate
+  windmill tower and rotor, and one star safe-stop marker.
+- Runtime crops use explicit rectangles and pivots. Clouds drift independently,
+  the rotor turns in Unity, and route layers provide parallax without a video
+  runtime or third-party animation SDK.
+
 SHA-256:
 
 - `rig-pear.png`: `1bbd8ef87c2893ddb94c352e3190ed6bd9231d48bba4d6963f11f0b373b37528`
@@ -59,6 +80,8 @@ SHA-256:
 - `rig-rabbit.png`: `8eea1976838b22780f652938a2f5669d1a65bbe0596510adb3dcf28dbe534a02`
 - `rig-jelly.png`: `837fbdc42f974b11b29b4aa242b1c15d4ed6a53a76db69847625caabb90e5514`
 - `rig-face-parts.png`: `8ad3063c71b4ee89365df69da8250e2ac62f6e23840167afc6e1d37a75cd2ad0`
+- `route-sky.png`: `63554604f64b9f2f1fce0f890250ba911aee82a5e2a9999e28e1e19f8ae004a9`
+- `world-props.png`: `d2c1bb255f852c28dfeef4cffd8c88648f6ab0e4370845be7e318bb06a84b7a3`
 
 Rights and use:
 

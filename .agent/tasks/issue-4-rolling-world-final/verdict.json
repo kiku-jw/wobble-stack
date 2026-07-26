@@ -1,13 +1,12 @@
 {
   "task": "issue-4-rolling-world-final",
-  "verdict": "PHASE_PASS_CONTINUE",
-  "review": "rolling-core automated and visual proof",
+  "verdict": "NATIVE_CANDIDATE_PASS",
+  "review": "full native automated and visual proof",
   "findings": [],
   "residual_risk": [
     "Desktop deterministic proofs do not establish physical thumb feel.",
-    "Existing torso sprites are still rigid and do not meet character acceptance.",
-    "The current baked background only follows the camera and is not final parallax.",
-    "Setup and result UI still contain obsolete controls."
+    "Physical-device performance and voluntary Retry still require owner observation.",
+    "TestFlight and App Store distribution remain separate Apple account gates."
   ],
-  "next_gate": "articulated three-character stack on the rolling first-route slice"
+  "next_gate": "fresh signed iPhone install, launch, and owner feel verdict"
 }

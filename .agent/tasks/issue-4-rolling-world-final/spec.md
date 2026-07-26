@@ -34,8 +34,9 @@ wheel while collecting the golden festival badges scattered along the road.
 
 ## Visual comparison receipt
 
-The current build already matches the concepts in palette, toy material,
-character identity, and portrait composition. It does not yet match their game:
+At scope freeze, the build already matched the concepts in palette, toy
+material, character identity, and portrait composition. It did not yet match
+their game:
 
 - the wheel and plank float above a background floor;
 - the camera and environment never travel;

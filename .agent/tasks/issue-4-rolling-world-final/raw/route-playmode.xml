@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="25" result="Passed" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:47Z" duration="37.1588932">
+  <test-suite type="TestSuite" id="1032" name="Wobble Stack" fullname="Wobble Stack" runstate="Runnable" testcasecount="25" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:47Z" duration="37.158893" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1028" name="WobbleStack.Runtime.PlayMode.Tests.dll" fullname="WobbleStack.Runtime.PlayMode.Tests.dll" runstate="Runnable" testcasecount="25" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:47Z" duration="37.155786" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="98526" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1029" name="WobbleStack" fullname="WobbleStack" runstate="Runnable" testcasecount="25" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:47Z" duration="37.155625" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1030" name="Runtime" fullname="WobbleStack.Runtime" runstate="Runnable" testcasecount="25" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:47Z" duration="37.155526" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1031" name="Tests" fullname="WobbleStack.Runtime.Tests" runstate="Runnable" testcasecount="25" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:47Z" duration="37.155423" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1002" name="WobbleStackRuntimePlayModeTests" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" testcasecount="25" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:47Z" duration="37.154918" total="25" passed="25" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1003" name="BootstrapBuildsPortraitRuntimeScene" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.BootstrapBuildsPortraitRuntimeScene" methodname="BootstrapBuildsPortraitRuntimeScene" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="459003772" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:10Z" duration="0.007524" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="1" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1004" name="ReadyTitleAlwaysShowsTheCompleteFiveFriendConcept" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.ReadyTitleAlwaysShowsTheCompleteFiveFriendConcept" methodname="ReadyTitleAlwaysShowsTheCompleteFiveFriendConcept" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="677847865" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:10Z" duration="0.000626" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="2" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1005" name="StartUsesOnePrimaryActionAndMovesSettingsIntoPause" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.StartUsesOnePrimaryActionAndMovesSettingsIntoPause" methodname="StartUsesOnePrimaryActionAndMovesSettingsIntoPause" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="1608661425" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:10Z" duration="0.000720" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="3" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1006" name="ReadyStackUsesRoundedBeamAndCompactColliderContacts" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.ReadyStackUsesRoundedBeamAndCompactColliderContacts" methodname="ReadyStackUsesRoundedBeamAndCompactColliderContacts" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="1526265486" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:10Z" duration="0.001924" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="4" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1007" name="ArticulatedFacesProgressFromCalmToWindToImpact" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.ArticulatedFacesProgressFromCalmToWindToImpact" methodname="ArticulatedFacesProgressFromCalmToWindToImpact" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="784319422" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:10Z" duration="0.001248" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="5" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1008" name="FiveCharactersHaveDistinctRigsAndDenseVisibleContacts" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.FiveCharactersHaveDistinctRigsAndDenseVisibleContacts" methodname="FiveCharactersHaveDistinctRigsAndDenseVisibleContacts" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="1054469620" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:10Z" duration="0.001148" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="6" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1009" name="PersonalityThresholdsAndBlinkSchedulesDiffer" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.PersonalityThresholdsAndBlinkSchedulesDiffer" methodname="PersonalityThresholdsAndBlinkSchedulesDiffer" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="1621604689" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:10Z" duration="0.000686" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="7" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1010" name="EarsLeavesAndWingsLagBehindPhysicalMotion" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.EarsLeavesAndWingsLagBehindPhysicalMotion" methodname="EarsLeavesAndWingsLagBehindPhysicalMotion" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="833516783" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:10Z" duration="0.232498" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="8" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1011" name="WindStreaksAreCoolBlueAndShowTheirTravelDirection" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.WindStreaksAreCoolBlueAndShowTheirTravelDirection" methodname="WindStreaksAreCoolBlueAndShowTheirTravelDirection" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="1152609155" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:10Z" duration="0.000901" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="9" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1012" name="RollingVehicleUsesOneWheelJointAndOnlyWeakCreatureGrips" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.RollingVehicleUsesOneWheelJointAndOnlyWeakCreatureGrips" methodname="RollingVehicleUsesOneWheelJointAndOnlyWeakCreatureGrips" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="1359118414" result="Passed" start-time="2026-07-26 00:29:10Z" end-time="2026-07-26 00:29:11Z" duration="0.583761" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="10" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1013" name="WeakVisibleGripActivatesAndReleasesWithoutBecomingATether" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.WeakVisibleGripActivatesAndReleasesWithoutBecomingATether" methodname="WeakVisibleGripActivatesAndReleasesWithoutBecomingATether" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="915243530" result="Passed" start-time="2026-07-26 00:29:11Z" end-time="2026-07-26 00:29:11Z" duration="0.208860" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="11" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1014" name="RelativeDriveRollsTheGroundedWheelBeforeWindStarts" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.RelativeDriveRollsTheGroundedWheelBeforeWindStarts" methodname="RelativeDriveRollsTheGroundedWheelBeforeWindStarts" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="1931362539" result="Passed" start-time="2026-07-26 00:29:11Z" end-time="2026-07-26 00:29:12Z" duration="0.749131" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="12" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1015" name="StarWheelStaysGroundedThroughAStrongFiveFriendCatch" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.StarWheelStaysGroundedThroughAStrongFiveFriendCatch" methodname="StarWheelStaysGroundedThroughAStrongFiveFriendCatch" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="1395609882" result="Passed" start-time="2026-07-26 00:29:12Z" end-time="2026-07-26 00:29:15Z" duration="3.000678" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="13" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1016" name="CameraFollowsHorizontalWheelTravel" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.CameraFollowsHorizontalWheelTravel" methodname="CameraFollowsHorizontalWheelTravel" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="1562252913" result="Passed" start-time="2026-07-26 00:29:15Z" end-time="2026-07-26 00:29:16Z" duration="1.499034" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="14" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1017" name="DelayedBroadCatchGestureSurvivesStrongestGustMatrix" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.DelayedBroadCatchGestureSurvivesStrongestGustMatrix" methodname="DelayedBroadCatchGestureSurvivesStrongestGustMatrix" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="1872042063" result="Passed" start-time="2026-07-26 00:29:16Z" end-time="2026-07-26 00:29:21Z" duration="4.210895" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="15" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1018" name="SteadyWheelCatchSurvivesStrongestGustAcrossTowerSizes" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.SteadyWheelCatchSurvivesStrongestGustAcrossTowerSizes" methodname="SteadyWheelCatchSurvivesStrongestGustAcrossTowerSizes" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="1114132238" result="Passed" start-time="2026-07-26 00:29:21Z" end-time="2026-07-26 00:29:25Z" duration="4.210967" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="16" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1019" name="CorrectWheelTravelOutperformsNeutralAndWrongTravelOnTheSameGust" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.CorrectWheelTravelOutperformsNeutralAndWrongTravelOnTheSameGust" methodname="CorrectWheelTravelOutperformsNeutralAndWrongTravelOnTheSameGust" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="1442703025" result="Passed" start-time="2026-07-26 00:29:25Z" end-time="2026-07-26 00:29:30Z" duration="4.903355" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="17" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1020" name="NeutralAndWrongInputCollapseUnderTheStrongestGust" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.NeutralAndWrongInputCollapseUnderTheStrongestGust" methodname="NeutralAndWrongInputCollapseUnderTheStrongestGust" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="683594532" result="Passed" start-time="2026-07-26 00:29:30Z" end-time="2026-07-26 00:29:35Z" duration="4.904989" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="18" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1021" name="FailureBeatFreezesDuringApplicationInterruption" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.FailureBeatFreezesDuringApplicationInterruption" methodname="FailureBeatFreezesDuringApplicationInterruption" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="60241077" result="Passed" start-time="2026-07-26 00:29:35Z" end-time="2026-07-26 00:29:36Z" duration="1.052869" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="19" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1022" name="TravellingWorldBuildsParallaxCloudsWindmillAndRouteBadges" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.TravellingWorldBuildsParallaxCloudsWindmillAndRouteBadges" methodname="TravellingWorldBuildsParallaxCloudsWindmillAndRouteBadges" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="302830269" result="Passed" start-time="2026-07-26 00:29:36Z" end-time="2026-07-26 00:29:36Z" duration="0.122845" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="20" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1023" name="RouteCatalogHasThreeAuthoredIncreasingJourneys" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.RouteCatalogHasThreeAuthoredIncreasingJourneys" methodname="RouteCatalogHasThreeAuthoredIncreasingJourneys" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="362829260" result="Passed" start-time="2026-07-26 00:29:36Z" end-time="2026-07-26 00:29:36Z" duration="0.001024" asserts="0">
+                <properties>
+                  <property name="Order" value="21" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1024" name="CreatureContactCollectsEachFestivalBadgeOnlyOnce" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.CreatureContactCollectsEachFestivalBadgeOnlyOnce" methodname="CreatureContactCollectsEachFestivalBadgeOnlyOnce" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="497732979" result="Passed" start-time="2026-07-26 00:29:36Z" end-time="2026-07-26 00:29:36Z" duration="0.024706" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="22" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1025" name="FirstJourneyAddsTwoFriendsThenCelebratesAtTheFinish" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.FirstJourneyAddsTwoFriendsThenCelebratesAtTheFinish" methodname="FirstJourneyAddsTwoFriendsThenCelebratesAtTheFinish" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="1833435450" result="Passed" start-time="2026-07-26 00:29:36Z" end-time="2026-07-26 00:29:37Z" duration="1.568496" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="23" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1026" name="CalmForwardRollReachesTheFirstFriendStopInTwentySeconds" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.CalmForwardRollReachesTheFirstFriendStopInTwentySeconds" methodname="CalmForwardRollReachesTheFirstFriendStopInTwentySeconds" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="463751748" result="Passed" start-time="2026-07-26 00:29:37Z" end-time="2026-07-26 00:29:39Z" duration="1.494677" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="24" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1027" name="ReadableWindResponsesCanCompleteTheFirstJourney" fullname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests.ReadableWindResponsesCanCompleteTheFirstJourney" methodname="ReadableWindResponsesCanCompleteTheFirstJourney" classname="WobbleStack.Runtime.Tests.WobbleStackRuntimePlayModeTests" runstate="Runnable" seed="717448433" result="Passed" start-time="2026-07-26 00:29:39Z" end-time="2026-07-26 00:29:47Z" duration="8.364289" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="Order" value="25" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: /tmp/wobble-route-play-final6.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

@@ -44,33 +44,27 @@ namespace WobbleStack.Runtime.Tests
 
         [UnityTest]
         [Order(2)]
-        public IEnumerator SetupLoadsMaximumCreatureCountWhenSavedValueExceedsRange()
+        public IEnumerator ReadyTitleAlwaysShowsTheCompleteFiveFriendConcept()
         {
             yield return WaitForBootstrap();
 
             Assert.That(GetCreatureBodies().Count, Is.EqualTo(WobbleStackRules.MaxCreatureCount));
-            Assert.That(GetButtonLabel("Creature Count"), Is.EqualTo("5 FRIENDS"));
+            Assert.That(GameObject.Find("Creature Count"), Is.Null);
         }
 
         [UnityTest]
         [Order(3)]
-        public IEnumerator SetupCreatureCountButtonStaysInsideThreeToFive()
+        public IEnumerator StartUsesOnePrimaryActionAndMovesSettingsIntoPause()
         {
             yield return WaitForBootstrap();
 
-            Button countButton = FindRequiredComponent<Button>("Creature Count");
-
-            yield return Click(countButton);
-            Assert.That(GetCreatureBodies().Count, Is.EqualTo(3));
-            Assert.That(GetButtonLabel("Creature Count"), Is.EqualTo("3 FRIENDS"));
-
-            yield return Click(countButton);
-            Assert.That(GetCreatureBodies().Count, Is.EqualTo(4));
-            Assert.That(GetButtonLabel("Creature Count"), Is.EqualTo("4 FRIENDS"));
-
-            yield return Click(countButton);
-            Assert.That(GetCreatureBodies().Count, Is.EqualTo(5));
-            Assert.That(GetButtonLabel("Creature Count"), Is.EqualTo("5 FRIENDS"));
+            Assert.That(GetButtonLabel("Play"), Is.EqualTo("ROLL"));
+            Assert.That(GameObject.Find("Creature Count"), Is.Null);
+            Assert.That(GameObject.Find("Change Setup"), Is.Null);
+            Transform pause = GameObject.Find("Game UI").transform.Find("Safe Area/Pause Overlay");
+            Assert.That(pause, Is.Not.Null);
+            Assert.That(pause.Find("Motion"), Is.Not.Null);
+            Assert.That(pause.Find("Resume"), Is.Not.Null);
         }
 
         [UnityTest]
@@ -190,7 +184,7 @@ namespace WobbleStack.Runtime.Tests
             game.ConfigureGameplayProbe(0f, 1, 0f, 5, 1.4f);
             CreatureBody rabbit = GetCreatureByKind(GetCreatureComponents(), CharacterKind.Rabbit);
             float before = rabbit.Rig.GetSecondaryMotionProbe();
-            rabbit.Body.angularVelocity = 85f;
+            rabbit.Body.angularVelocity = 100f;
             rabbit.SetWind(0.82f);
 
             for (int step = 0; step < 14; step += 1)
@@ -200,7 +194,10 @@ namespace WobbleStack.Runtime.Tests
             }
 
             float after = rabbit.Rig.GetSecondaryMotionProbe();
-            Assert.That(Mathf.Abs(Mathf.DeltaAngle(before, after)), Is.GreaterThan(3f));
+            Assert.That(
+                Mathf.Abs(Mathf.DeltaAngle(before, after)),
+                Is.GreaterThan(2.5f),
+                "Rabbit ears did not visibly lag behind the physical body.");
         }
 
         [UnityTest]
@@ -603,6 +600,294 @@ namespace WobbleStack.Runtime.Tests
             Time.timeScale = 1f;
         }
 
+        [UnityTest]
+        [Order(20)]
+        public IEnumerator TravellingWorldBuildsParallaxCloudsWindmillAndRouteBadges()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            game.SendMessage("ShowReady");
+            yield return null;
+
+            TravellingWorld world = game.GetTravellingWorldProbe();
+            Assert.That(world, Is.Not.Null);
+            Assert.That(world.CloudCount, Is.EqualTo(4));
+            Assert.That(world.BadgeCount, Is.EqualTo(7));
+            Assert.That(GameObject.Find("Empty Sunset"), Is.Not.Null);
+            Assert.That(GameObject.Find("Sunset Stage"), Is.Null);
+            Assert.That(Object.FindObjectsByType<RoutePickup>(FindObjectsSortMode.None).Length, Is.EqualTo(7));
+
+            world.SetCameraX(20f);
+            Assert.That(GameObject.Find("Route Sky").transform.position.x, Is.EqualTo(20f).Within(0.01f));
+            Assert.That(GameObject.Find("Route 1 Far").transform.position.x, Is.EqualTo(15.2f).Within(0.02f));
+            Assert.That(GameObject.Find("Route 1 Gameplay").transform.position.x, Is.EqualTo(0f).Within(0.01f));
+
+            float before = world.WindmillRotation;
+            yield return new WaitForSecondsRealtime(0.12f);
+            float after = world.WindmillRotation;
+            Assert.That(Mathf.Abs(Mathf.DeltaAngle(before, after)), Is.GreaterThan(0.5f));
+        }
+
+        [Test]
+        [Order(21)]
+        public void RouteCatalogHasThreeAuthoredIncreasingJourneys()
+        {
+            RouteDefinition orchard = RouteDefinition.Get(0);
+            RouteDefinition clouds = RouteDefinition.Get(1);
+            RouteDefinition windmill = RouteDefinition.Get(2);
+
+            Assert.That(RouteDefinition.Count, Is.EqualTo(3));
+            Assert.That(orchard.Title, Is.EqualTo("ORCHARD ROAD"));
+            Assert.That(orchard.InitialCreatureCount, Is.EqualTo(3));
+            Assert.That(orchard.JoinStops.Length, Is.EqualTo(2));
+            Assert.That(orchard.Badges.Length, Is.EqualTo(7));
+            Assert.That(clouds.InitialCreatureCount, Is.EqualTo(5));
+            Assert.That(clouds.Badges.Length, Is.EqualTo(8));
+            Assert.That(windmill.Badges.Length, Is.EqualTo(9));
+            Assert.That(orchard.FinishX, Is.LessThan(clouds.FinishX));
+            Assert.That(clouds.FinishX, Is.LessThan(windmill.FinishX));
+        }
+
+        [UnityTest]
+        [Order(22)]
+        public IEnumerator CreatureContactCollectsEachFestivalBadgeOnlyOnce()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            game.SendMessage("ShowReady");
+            game.ConfigureGameplayProbe(0f, 1, 0f, 3, 1.4f);
+            RoutePickup[] pickups = Object.FindObjectsByType<RoutePickup>(FindObjectsSortMode.None);
+            Assert.That(pickups.Length, Is.EqualTo(7));
+
+            CreatureBody collector = GetCreatureByKind(GetCreatureComponents(), CharacterKind.Pear);
+            collector.Body.position = pickups[0].transform.position;
+            collector.Body.linearVelocity = Vector2.zero;
+            Physics2D.SyncTransforms();
+            yield return new WaitForFixedUpdate();
+            Assert.That(game.GetRouteProbeBadgeCount(), Is.EqualTo(1));
+            Assert.That(pickups[0].IsCollected, Is.True);
+            Assert.That(pickups[0].gameObject.activeSelf, Is.False);
+
+            yield return new WaitForFixedUpdate();
+            Assert.That(game.GetRouteProbeBadgeCount(), Is.EqualTo(1));
+        }
+
+        [UnityTest]
+        [Order(23)]
+        public IEnumerator FirstJourneyAddsTwoFriendsThenCelebratesAtTheFinish()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            game.SendMessage("ShowReady");
+            yield return null;
+            Button play = FindRequiredComponent<Button>("Play");
+            yield return Click(play);
+            Assert.That(GetCreatureBodies().Count, Is.EqualTo(3));
+
+            game.SetRouteProbeProgress(17.6f);
+            game.SendMessage("UpdateRouteProgress");
+            Assert.That(GetCreatureBodies().Count, Is.EqualTo(4));
+            Assert.That(GetCreatureComponents().Exists(creature => creature.Kind == CharacterKind.Rabbit), Is.True);
+
+            game.SetRouteProbeProgress(33.6f);
+            game.SendMessage("UpdateRouteProgress");
+            Assert.That(GetCreatureBodies().Count, Is.EqualTo(5));
+            Assert.That(GetCreatureComponents().Exists(creature => creature.Kind == CharacterKind.Jelly), Is.True);
+
+            game.SendMessage("BeginFinish");
+            Assert.That(game.GetGameplayProbePhase(), Is.EqualTo(GamePhase.Finishing));
+            foreach (CreatureBody creature in GetCreatureComponents())
+            {
+                Assert.That(creature.Rig.Emotion, Is.EqualTo(CreatureEmotion.Relief));
+            }
+
+            yield return new WaitForSecondsRealtime(1.55f);
+            Assert.That(game.GetGameplayProbePhase(), Is.EqualTo(GamePhase.Results));
+            Assert.That(GetButtonLabel("Result Action"), Is.EqualTo("NEXT ROAD"));
+            Time.timeScale = 1f;
+        }
+
+        [UnityTest]
+        [Order(24)]
+        public IEnumerator CalmForwardRollReachesTheFirstFriendStopInTwentySeconds()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            game.ConfigureGameplayProbe(0f, 1, 0.72f, 3, 20f);
+            Time.timeScale = 6f;
+            int survivedSteps = 0;
+            float firstStop = RouteDefinition.Get(0).JoinStops[0];
+            for (int step = 0;
+                step < 1200 &&
+                game.GetGameplayProbePhase() == GamePhase.Playing &&
+                game.GetGameplayProbeWheelPosition().x <= firstStop;
+                step += 1)
+            {
+                yield return new WaitForFixedUpdate();
+                survivedSteps += 1;
+            }
+
+            float travelled = game.GetGameplayProbeWheelPosition().x;
+            Time.timeScale = 1f;
+            Assert.That(
+                game.GetGameplayProbePhase(),
+                Is.EqualTo(GamePhase.Playing),
+                $"Calm forward roll failed after {survivedSteps / 60f:0.0}s at x={travelled:0.00}; " +
+                $"drift={game.GetGameplayProbeMaxDrift():0.00}; " +
+                $"beam={game.GetGameplayProbePlatformRotation():0.0}; " +
+                $"reason={game.GetGameplayProbeFailureReason()}.");
+            Assert.That(
+                travelled,
+                Is.GreaterThan(firstStop),
+                $"Twenty-second calm travel reached only x={travelled:0.00}.");
+        }
+
+        [UnityTest]
+        [Order(25)]
+        public IEnumerator ReadableWindResponsesCanCompleteTheFirstJourney()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            game.SendMessage("ShowReady");
+            yield return null;
+            yield return Click(FindRequiredComponent<Button>("Play"));
+            Time.timeScale = 6f;
+            int survivedSteps = 0;
+            bool wasRecovering = false;
+            bool wasGustActive = false;
+            float recoveryExitDrift = 0f;
+            float recoveryExitBeam = 0f;
+            string gustStartState = "none";
+            string gustHistory = string.Empty;
+            int activeGripPeak = 0;
+            for (int step = 0;
+                step < 9000 &&
+                game.GetGameplayProbePhase() == GamePhase.Playing;
+                step += 1)
+            {
+                float control;
+                bool useForwardCruise = false;
+                bool recovering = game.GetGameplayProbePostGustRecovery();
+                if (wasRecovering && !recovering)
+                {
+                    recoveryExitDrift = game.GetGameplayProbeMeanDrift();
+                    recoveryExitBeam = game.GetGameplayProbePlatformRotation();
+                }
+
+                wasRecovering = recovering;
+                bool gustActive = game.GetGameplayProbeGustActive();
+                if (!wasGustActive && gustActive)
+                {
+                    activeGripPeak = 0;
+                    gustStartState =
+                        $"x={game.GetGameplayProbeWheelPosition().x:0.00}," +
+                        $"mean={game.GetGameplayProbeMeanDrift():0.00}," +
+                        $"max={game.GetGameplayProbeMaxDrift():0.00}," +
+                        $"beam={game.GetGameplayProbePlatformRotation():0.0}," +
+                        $"spin={game.GetGameplayProbePlatformAngularVelocity():0.0}," +
+                        $"platform-v={game.GetGameplayProbePlatformVelocity():0.00}," +
+                        $"wheel-v={game.GetGameplayProbeWheelVelocity():0.00}," +
+                        $"friends={GetCreatureBodies().Count}";
+                    gustHistory +=
+                        $"{game.GetGameplayProbeWindDirection()}@" +
+                        $"{game.GetGameplayProbeWindForce():0.000000}:" +
+                        $"{game.GetGameplayProbeWheelPosition().x:0.0}|";
+                }
+
+                wasGustActive = gustActive;
+                if (gustActive)
+                {
+                    int activeGrips = 0;
+                    foreach (CreatureBody creature in GetCreatureComponents())
+                    {
+                        if (creature.HasActiveGrip)
+                        {
+                            activeGrips += 1;
+                        }
+                    }
+
+                    activeGripPeak = Mathf.Max(activeGripPeak, activeGrips);
+                }
+
+                if (recovering)
+                {
+                    float meanDrift = game.GetGameplayProbeMeanDrift();
+                    control = Mathf.Clamp(
+                        0.1f + (meanDrift * 0.65f),
+                        -0.55f,
+                        0.35f);
+                }
+                else
+                {
+                    float meanDrift = game.GetGameplayProbeMeanDrift();
+                    if (game.GetGameplayProbeGustActive())
+                    {
+                        float relativeVelocity =
+                            game.GetGameplayProbeMeanCreatureVelocity() -
+                            game.GetGameplayProbeWheelVelocity();
+                        control = Mathf.Clamp(
+                            GetResponsiveCatchAmount(
+                                game.GetGameplayProbeWindDirection(),
+                                GetCreatureBodies().Count,
+                                game.GetGameplayProbeWindForce()) +
+                            (meanDrift * 0.45f) +
+                            (relativeVelocity * 0.25f) +
+                            0.12f,
+                            -1f,
+                            1f);
+                    }
+                    else if (game.GetGameplayProbeWindBalanceWindow())
+                    {
+                        control = Mathf.Clamp(
+                            0.05f + (meanDrift * 0.65f),
+                            -0.6f,
+                            0.3f);
+                    }
+                    else
+                    {
+                        control = 0f;
+                        useForwardCruise = true;
+                    }
+                }
+
+                if (useForwardCruise)
+                {
+                    game.ReleaseGameplayProbeControl();
+                }
+                else
+                {
+                    game.SetGameplayProbeControlAmount(control);
+                }
+
+                yield return new WaitForFixedUpdate();
+                survivedSteps += 1;
+            }
+
+            float travelled = game.GetGameplayProbeWheelPosition().x;
+            float routeProgress = game.GetRouteProbeProgress();
+            GamePhase phase = game.GetGameplayProbePhase();
+            Time.timeScale = 1f;
+            Assert.That(
+                phase,
+                Is.EqualTo(GamePhase.Finishing),
+                $"First journey ended as {phase} after {survivedSteps / 60f:0.0}s at " +
+                $"route={routeProgress:0.00}, x={travelled:0.00}; " +
+                $"beam={game.GetGameplayProbePlatformRotation():0.0}; " +
+                $"drift={game.GetGameplayProbeMeanDrift():0.00}; " +
+                $"wind={game.GetGameplayProbeWindDirection()}@" +
+                $"{game.GetGameplayProbeWindForce():0.000000}; " +
+                $"active={game.GetGameplayProbeGustActive()}; " +
+                $"gust-start=[{gustStartState}]; " +
+                $"history=[{gustHistory}]; " +
+                $"grip-peak={activeGripPeak}; " +
+                $"recovery-exit={recoveryExitDrift:0.00}/{recoveryExitBeam:0.0}; " +
+                $"reason={game.GetGameplayProbeFailureReason()}.");
+            Assert.That(GetCreatureBodies().Count, Is.EqualTo(5));
+            Assert.That(
+                routeProgress,
+                Is.GreaterThanOrEqualTo(game.GetRouteProbeFinishX()));
+        }
+
         private static IEnumerator WaitForBootstrap()
         {
             int frames = 0;
@@ -624,8 +909,21 @@ namespace WobbleStack.Runtime.Tests
 
         private static float GetSteadyCatchAmount(int direction, int creatureCount)
         {
-            float magnitude = creatureCount <= 3 ? 0.4f : 0.8f;
+            float magnitude = creatureCount <= 3
+                ? 0.4f
+                : creatureCount == 4
+                    ? 0.6f
+                    : 0.68f;
             return direction * magnitude;
+        }
+
+        private static float GetResponsiveCatchAmount(
+            int direction,
+            int creatureCount,
+            float force)
+        {
+            float forceRatio = Mathf.Clamp01(force / WobbleStackRules.GustForceMax);
+            return GetSteadyCatchAmount(direction, creatureCount) * forceRatio;
         }
 
         private static IEnumerator MeasureTower(
@@ -638,7 +936,10 @@ namespace WobbleStack.Runtime.Tests
             System.Action<TowerMeasurement> onComplete)
         {
             int totalSteps = Mathf.CeilToInt((0.9f + durationSeconds) / Time.fixedDeltaTime);
+            game.SendMessage("ShowReady");
+            yield return null;
             game.ConfigureGameplayProbe(force, direction, controlAmount, creatureCount, durationSeconds);
+            yield return null;
             Time.timeScale = 6f;
             float maxDrift = 0f;
             int survivedSteps = 0;
@@ -683,10 +984,13 @@ namespace WobbleStack.Runtime.Tests
         {
             int totalSteps = Mathf.CeilToInt((0.9f + durationSeconds) / Time.fixedDeltaTime);
             int reactionSteps = Mathf.CeilToInt((0.7f + 0.35f) / Time.fixedDeltaTime);
-            float catchSeconds = creatureCount == 3 ? 0.7f : 1.5f;
+            float catchSeconds = creatureCount == 3 ? 0.2f : 0.7f;
             int catchSteps = Mathf.CeilToInt(catchSeconds / Time.fixedDeltaTime);
-            float settleAmount = creatureCount == 3 ? 0.4f : 1f;
+            float settleAmount = creatureCount == 3 ? 0.4f : 0.68f;
+            game.SendMessage("ShowReady");
+            yield return null;
             game.ConfigureGameplayProbe(force, direction, 0f, creatureCount, durationSeconds);
+            yield return null;
             Time.timeScale = 6f;
             float maxDrift = 0f;
             int survivedSteps = 0;

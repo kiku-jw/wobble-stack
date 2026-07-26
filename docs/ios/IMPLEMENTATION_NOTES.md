@@ -90,7 +90,7 @@
 - The owner accepted the delayed-correction build: the first gust is now
   survivable through normal beam input.
 - Deleted player-selectable difficulty and retained one continuous
-  `0.000055–0.000135` gust range. A squared uniform sample keeps most gusts near
+  `0.000055–0.000120` gust range. A squared uniform sample keeps most gusts near
   the accepted Normal feel while allowing occasional soft and strong outliers.
 - Preview and active cyan streaks scale with sampled force; the game adds no
   intensity meter, tier name, number, or badge.
@@ -125,6 +125,54 @@
 - The first proof uses existing rigid torso sprites deliberately. Articulated
   character rigs, route content, minimal UI, and final fall presentation remain
   the next production gates.
+
+## 2026-07-25 — articulated five-friend cast
+
+- Replaced baked full-character sprites with five generated clay part sheets
+  plus a shared face vocabulary. Native child transforms, not an Animator,
+  skeletal package, or runtime service, drive arms, feet, wings, ears, leaves,
+  crown, pupils, brows, blinks, and mouths.
+- Acceleration, angular velocity, wind, fall speed, and impact feed damped
+  secondary motion. Each character has different emotion thresholds, gaze and
+  blink timing, appendage response, and relief behavior.
+- Torso-sized colliders keep the painted silhouettes in dense visual contact.
+  Upper friends may make one short, weak, visible, breakable hand grip during
+  measured wind danger; the grip releases, cools down, and never becomes a
+  permanent tether.
+- Collapse now releases grips and layers tumbling, appendage flail, dazed
+  faces, crown flight, dust, colored toy chips, camera impulse, haptics, sound,
+  and impact-only slow motion.
+
+## 2026-07-25 — travelling routes and final native loop
+
+- Authored three finite roads: Orchard Road, Cloud Bridge, and Windmill Hill.
+  The first begins with Pear, Cube, and Bird, then adds Rabbit and Jelly at two
+  safe stops. Five remains the complete version-1 roster.
+- Added world-space badge triggers, per-route best counts, route unlocks, a
+  festival finish, relief reactions, and a brief finish celebration. The UI
+  now keeps only badge count and Pause during play; Reduced Motion lives inside
+  Pause and difficulty/count setup was removed.
+- Generated one empty route sky and one isolated prop sheet. Native parallax
+  layers move mesas and trees, four clouds drift on separate loops, and the
+  windmill rotor turns independently. The generated source sheets remain
+  unchanged and are cropped/keyed at runtime.
+- Calm travel uses a gentle physical wheel motor. Touch displacement replaces
+  that cruise speed while the finger is down, so a counter-slide can roll the
+  wheel under the tower without fighting an added forward input.
+- Route distance is an odometer derived from the wheel's absolute angular
+  surface speed. It scrolls authored route layers independently from the
+  wheel's local balance corrections, so a necessary leftward catch does not
+  erase journey progress and no vehicle body receives a scripted translation.
+- Blue preview and active gusts pause route distance. The same physical wheel
+  motor remains the only player balance control.
+- A deterministic human-like pacing proof alternates a forward roll with short
+  counter-slides and reaches the first friend stop inside thirty seconds.
+  Strongest-gust proofs still require correct travel and still reject neutral
+  and wrong input.
+- Native Unity primitives won the dependency ladder throughout:
+  `Rigidbody2D`, `WheelJoint2D`, sprite transforms, triggers, local
+  `PlayerPrefs`, and the existing render-capture path. No runtime package,
+  backend, analytics SDK, video layer, or content framework was added.
 
 ## Tooling constraint
 

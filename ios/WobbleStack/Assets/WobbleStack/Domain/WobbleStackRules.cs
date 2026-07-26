@@ -10,7 +10,7 @@ namespace WobbleStack.Domain
         public const float FirstGustRestSeconds = 2.8f;
         public const float WindPreviewSeconds = 1.3f;
         public const float GustForceMin = 0.000055f;
-        public const float GustForceMax = 0.000135f;
+        public const float GustForceMax = 0.00012f;
         public const float GustRestMin = 2.2f;
         public const float GustRestMax = 3.8f;
         public const float GustDurationMin = 3.8f;
@@ -196,13 +196,17 @@ namespace WobbleStack.Domain
                 case GamePhase.Ready:
                     return to == GamePhase.Playing;
                 case GamePhase.Playing:
-                    return to == GamePhase.Paused || to == GamePhase.Failing;
+                    return to == GamePhase.Paused ||
+                        to == GamePhase.Failing ||
+                        to == GamePhase.Finishing;
                 case GamePhase.Paused:
                     return to == GamePhase.Playing || to == GamePhase.Ready;
                 case GamePhase.Failing:
                     return to == GamePhase.Results;
                 case GamePhase.Results:
                     return to == GamePhase.Ready || to == GamePhase.Playing;
+                case GamePhase.Finishing:
+                    return to == GamePhase.Results;
                 default:
                     return false;
             }

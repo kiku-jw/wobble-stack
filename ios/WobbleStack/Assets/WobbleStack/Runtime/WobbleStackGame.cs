@@ -19,26 +19,42 @@ namespace WobbleStack.Runtime
         private const float PlatformHeight = 0.78f;
         private const float StaticStackContactInset = 0.06f;
         private const float DynamicStackContactInset = 0.05f;
-        private const float RoadLength = 180f;
-        private const float RoadCenterX = 70f;
+        private const float RoadLength = 400f;
+        private const float RoadCenterX = 0f;
         private const float PointerTravelFraction = 0.28f;
-        private const float WheelMotorSpeed = 18f;
-        private const float WheelCatchBoostSpeed = 20f;
+        private const float WheelMotorSpeed = 42f;
+        private const float WheelCatchBoostSpeed = 30f;
+        private const float WheelCruiseMotorSpeed = 120f;
+        private const float WheelCruiseMotorTorque = 14f;
+        private const float WheelRecoveryMotorSpeed = 120f;
+        private const float WheelRecoveryMotorTorque = 40f;
+        private const float RouteForwardCruiseAmount = 0.18f;
         private const float WheelDriveTorque = 40f;
         private const float WheelBrakeTorque = 12f;
+        private const float PlatformSpringTorquePerDegree = 20f;
+        private const float PlatformSpringDamping = 8f;
+        private const float PlatformSpringMaximumTorque = 1000f;
+        private const float PlatformAxleStopDegrees = 20f;
+        private const float PlatformAxleStopTorquePerDegree = 70f;
+        private const float PlatformAxleStopDamping = 12f;
+        private const float WindBalancePreviewSeconds = 1.25f;
+        private const float PostGustRecoverySeconds = 4f;
         private const float UnityAccelerationScale = 9342.857f;
         private const float ImpactSlowMotionScale = 0.18f;
         private const float ImpactSlowMotionSeconds = 0.36f;
         private const float FailureResultHoldSeconds = 1.15f;
         private const float FailureHardTimeoutSeconds = 2.6f;
-        private const string CreatureCountPreference = "wobble.ios.creature-count";
+        private const float FinishCelebrationSeconds = 1.45f;
         private const string ReducedMotionPreference = "wobble.ios.reduced-motion";
+        private const string RoutePreference = "wobble.ios.route";
+        private const string UnlockedRoutePreference = "wobble.ios.route-unlocked";
+        private const string OnboardingPreference = "wobble.ios.onboarding-seen";
 
         private readonly List<CreatureBody> _creatures = new List<CreatureBody>();
         private Camera _camera;
         private Vector3 _cameraHome;
         private float _cameraFollowVelocity;
-        private Transform _backgroundTransform;
+        private TravellingWorld _travellingWorld;
         private Rigidbody2D _platformBody;
         private Rigidbody2D _wheelBody;
         private WheelJoint2D _wheelJoint;
@@ -53,18 +69,37 @@ namespace WobbleStack.Runtime
         private GameObject _pauseOverlay;
         private GameObject _resultsOverlay;
         private Text _scoreText;
-        private Text _bestText;
-        private Text _countText;
         private Text _motionText;
+        private Text _routeText;
+        private Text _routeSubtitleText;
+        private Text _resultTitleText;
         private Text _resultTimeText;
         private Text _resultBestText;
+        private Text _resultActionText;
         private Text _saveText;
         private Text _hintText;
+        private GameObject _gestureTrack;
+        private RectTransform _gestureCue;
         private GamePhase _phase = GamePhase.Ready;
         private int _creatureCount = 5;
+        private int _currentRouteIndex;
+        private int _unlockedRouteIndex;
+        private int _collectedBadges;
+        private int _nextJoinIndex;
+        private float _routeProgress;
+        private float _friendStopUntil;
+        private RouteDefinition _route;
         private bool _reducedMotion;
+        private bool _runSucceeded;
+        private bool _gestureUsed;
+        private bool _gameplayProbeActive;
         private int _runCount;
         private float _runSeconds;
+        private float _postGustRecoveryUntil;
+        private int _postGustRecoveryDirection;
+        private float _platformSpringBlend = 1f;
+        private float _finishStartedAt;
+        private float _nextWheelDustAt;
         private bool _pointerActive;
         private float _pointerOriginX;
         private float _controlAmount;
@@ -72,11 +107,13 @@ namespace WobbleStack.Runtime
         private GustSample _gust;
         private bool _hasGust;
         private int _gustIndex;
+        private int _routeGustSequenceIndex;
         private float _failureStartedAt;
         private float _firstImpactAt = -1f;
         private float _slowMotionEndsAt = -1f;
         private float _failureSuspendedAt = -1f;
         private bool _dangerWasHigh;
+        private string _lastFailureReason = string.Empty;
         private float _saveMessageEndsAt;
         private float _cameraShake;
         private GameObject _crownObject;
@@ -103,6 +140,10 @@ namespace WobbleStack.Runtime
             {
                 PrepareResultsCapture();
             }
+            else if (HasArgument("--wobble-capture-finish"))
+            {
+                PrepareFinishCapture();
+            }
             else if (HasArgument("--wobble-capture-impact"))
             {
                 PrepareImpactCapture();
@@ -110,7 +151,6 @@ namespace WobbleStack.Runtime
             else if (HasArgument("--wobble-capture-playing"))
             {
                 PreparePlayingCapture();
-                yield return new WaitForSecondsRealtime(2.6f);
             }
 
             UpdateCameraRig();
@@ -141,6 +181,10 @@ namespace WobbleStack.Runtime
             {
                 UpdateFailure();
             }
+            else if (_phase == GamePhase.Finishing)
+            {
+                UpdateFinish();
+            }
 
             UpdateCameraRig();
             UpdateHud();
@@ -155,7 +199,12 @@ namespace WobbleStack.Runtime
 
             _runSeconds += Time.fixedDeltaTime;
             UpdateGust();
+            UpdatePlatformSuspension();
+            UpdateFriendStopBraking();
             UpdateWheelDrive();
+            UpdateBalanceTransitionDamping();
+            UpdateRecoveryGrips();
+            UpdateWheelDust();
 
             if (_hasGust && _runSeconds >= _gust.StartsAtSeconds && _runSeconds < _gust.EndsAtSeconds)
             {
@@ -180,6 +229,7 @@ namespace WobbleStack.Runtime
             }
 
             CheckDangerAndFailure();
+            UpdateRouteProgress();
         }
 
         private void OnApplicationFocus(bool hasFocus)
@@ -228,6 +278,7 @@ namespace WobbleStack.Runtime
         {
             if (_phase == GamePhase.Playing)
             {
+                _lastFailureReason = $"{creature.Kind} touched the road";
                 BeginFailure();
             }
 
@@ -253,6 +304,31 @@ namespace WobbleStack.Runtime
             }
         }
 
+        public void CollectRouteBadge(int badgeId, Vector2 point)
+        {
+            if (_phase != GamePhase.Playing ||
+                badgeId < 0 ||
+                badgeId >= _route.Badges.Length)
+            {
+                return;
+            }
+
+            _collectedBadges = Mathf.Min(_collectedBadges + 1, _route.Badges.Length);
+            _cameraShake = _reducedMotion ? 0f : Mathf.Max(_cameraShake, 0.045f);
+            _audio.PlaySave();
+            CreateTransientSprite(
+                "Collected Badge",
+                GeneratedArt.ImpactStars(),
+                point,
+                0.9f,
+                new Vector2(0f, 0.85f),
+                0.72f,
+                new Color(1f, 0.84f, 0.28f, 1f),
+                0.9f,
+                75f,
+                0.72f);
+        }
+
         internal void ConfigureGameplayProbe(
             float force,
             int direction,
@@ -262,9 +338,25 @@ namespace WobbleStack.Runtime
         {
             Time.timeScale = 1f;
             AudioListener.pause = false;
+            _gameplayProbeActive = true;
             _creatureCount = WobbleStackRules.ClampCreatureCount(creatureCount);
             _phase = GamePhase.Playing;
             _runSeconds = 0f;
+            _postGustRecoveryUntil = 0f;
+            _postGustRecoveryDirection = 0;
+            _platformSpringBlend = 1f;
+            _collectedBadges = 0;
+            _routeProgress = 0f;
+            _friendStopUntil = 0f;
+            _runSucceeded = false;
+            _firstImpactAt = -1f;
+            _slowMotionEndsAt = -1f;
+            _failureSuspendedAt = -1f;
+            _dangerWasHigh = false;
+            _lastFailureReason = string.Empty;
+            _cameraShake = 0f;
+            _nextWheelDustAt = 0f;
+            _saveMessageEndsAt = 0f;
             _controlAmount = Mathf.Clamp(controlAmount, -1f, 1f);
             _pointerActive = true;
             _gustScheduler = new GustScheduler(1u);
@@ -287,6 +379,13 @@ namespace WobbleStack.Runtime
         internal void SetGameplayProbeControlAmount(float controlAmount)
         {
             _controlAmount = Mathf.Clamp(controlAmount, -1f, 1f);
+            _pointerActive = true;
+        }
+
+        internal void ReleaseGameplayProbeControl()
+        {
+            _controlAmount = 0f;
+            _pointerActive = false;
         }
 
         internal float GetGameplayProbeMaxDrift()
@@ -298,6 +397,38 @@ namespace WobbleStack.Runtime
             }
 
             return maxDrift;
+        }
+
+        internal float GetGameplayProbeMeanDrift()
+        {
+            if (_creatures.Count == 0)
+            {
+                return 0f;
+            }
+
+            float sum = 0f;
+            foreach (CreatureBody creature in _creatures)
+            {
+                sum += creature.Body.position.x - _wheelBody.position.x;
+            }
+
+            return sum / _creatures.Count;
+        }
+
+        internal float GetGameplayProbeMeanCreatureVelocity()
+        {
+            if (_creatures.Count == 0)
+            {
+                return 0f;
+            }
+
+            float sum = 0f;
+            foreach (CreatureBody creature in _creatures)
+            {
+                sum += creature.Body.linearVelocity.x;
+            }
+
+            return sum / _creatures.Count;
         }
 
         internal Vector2 GetGameplayProbeWheelPosition()
@@ -315,9 +446,91 @@ namespace WobbleStack.Runtime
             return _platformBody.rotation;
         }
 
+        internal float GetGameplayProbePlatformAngularVelocity()
+        {
+            return _platformBody.angularVelocity;
+        }
+
+        internal float GetGameplayProbePlatformVelocity()
+        {
+            return _platformBody.linearVelocity.x;
+        }
+
+        internal float GetGameplayProbeWheelVelocity()
+        {
+            return _wheelBody.linearVelocity.x;
+        }
+
+        internal string GetGameplayProbeFailureReason()
+        {
+            return _lastFailureReason;
+        }
+
+        internal bool GetGameplayProbeWindBalanceWindow()
+        {
+            return IsWindBalanceWindow();
+        }
+
+        internal int GetGameplayProbeWindDirection()
+        {
+            if (_runSeconds < _postGustRecoveryUntil)
+            {
+                return _postGustRecoveryDirection;
+            }
+
+            return _hasGust ? _gust.Direction : 0;
+        }
+
+        internal float GetGameplayProbeWindForce()
+        {
+            return _hasGust ? _gust.Force : 0f;
+        }
+
+        internal bool GetGameplayProbeGustActive()
+        {
+            return IsGustActive();
+        }
+
+        internal bool GetGameplayProbePostGustRecovery()
+        {
+            return _runSeconds < _postGustRecoveryUntil;
+        }
+
         internal float GetGameplayProbeCameraX()
         {
             return _camera.transform.position.x;
+        }
+
+        internal int GetRouteProbeBadgeCount()
+        {
+            return _collectedBadges;
+        }
+
+        internal int GetRouteProbeIndex()
+        {
+            return _route.Index;
+        }
+
+        internal float GetRouteProbeFinishX()
+        {
+            return _route.FinishX;
+        }
+
+        internal float GetRouteProbeProgress()
+        {
+            return _routeProgress;
+        }
+
+        internal void SetRouteProbeProgress(float progress)
+        {
+            _routeProgress = Mathf.Max(0f, progress);
+            _friendStopUntil = 0f;
+            _travellingWorld.SetRouteView(_cameraHome.x, _routeProgress);
+        }
+
+        internal TravellingWorld GetTravellingWorldProbe()
+        {
+            return _travellingWorld;
         }
 
         private void ConfigureRuntime()
@@ -330,7 +543,7 @@ namespace WobbleStack.Runtime
             _font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             _creatureMaterial = new PhysicsMaterial2D("Creature Grip")
             {
-                friction = 0.18f,
+                friction = 0.28f,
                 bounciness = 0.035f
             };
             _roadMaterial = new PhysicsMaterial2D("Road Grip")
@@ -342,14 +555,25 @@ namespace WobbleStack.Runtime
 
         private void LoadSettings()
         {
-            _creatureCount = WobbleStackRules.ClampCreatureCount(PlayerPrefs.GetInt(CreatureCountPreference, 5));
             _reducedMotion = PlayerPrefs.GetInt(ReducedMotionPreference, 0) == 1;
+            _unlockedRouteIndex = Mathf.Clamp(
+                PlayerPrefs.GetInt(UnlockedRoutePreference, 0),
+                0,
+                RouteDefinition.Count - 1);
+            _currentRouteIndex = Mathf.Clamp(
+                PlayerPrefs.GetInt(RoutePreference, _unlockedRouteIndex),
+                0,
+                _unlockedRouteIndex);
+            _route = RouteDefinition.Get(_currentRouteIndex);
+            _gestureUsed = PlayerPrefs.GetInt(OnboardingPreference, 0) == 1;
         }
 
         private void SaveSettings()
         {
-            PlayerPrefs.SetInt(CreatureCountPreference, _creatureCount);
             PlayerPrefs.SetInt(ReducedMotionPreference, _reducedMotion ? 1 : 0);
+            PlayerPrefs.SetInt(RoutePreference, _currentRouteIndex);
+            PlayerPrefs.SetInt(UnlockedRoutePreference, _unlockedRouteIndex);
+            PlayerPrefs.SetInt(OnboardingPreference, _gestureUsed ? 1 : 0);
             PlayerPrefs.Save();
         }
 
@@ -388,16 +612,11 @@ namespace WobbleStack.Runtime
 
         private void BuildBackground()
         {
-            GameObject background = new GameObject("Sunset Stage");
-            background.transform.SetParent(_worldRoot, false);
-            _backgroundTransform = background.transform;
-            SpriteRenderer renderer = background.AddComponent<SpriteRenderer>();
-            renderer.sprite = GeneratedArt.Background();
-            renderer.sortingOrder = -100;
-            float targetHeight = 20.4f;
-            float scale = targetHeight / renderer.sprite.bounds.size.y;
-            background.transform.localScale = new Vector3(scale, scale, 1f);
-            background.transform.position = new Vector3(0f, 0f, 2f);
+            GameObject travellingWorld = new GameObject("Travelling World");
+            travellingWorld.transform.SetParent(_worldRoot, false);
+            _travellingWorld = travellingWorld.AddComponent<TravellingWorld>();
+            _travellingWorld.Build();
+            _travellingWorld.ConfigureRoute(_route, this);
         }
 
         private void BuildStage()
@@ -520,20 +739,9 @@ namespace WobbleStack.Runtime
             Stretch(hudRect);
             Transform hud = _hudRoot.transform;
 
-            GameObject scorePlate = CreateImage("Score Plate", hud, GeneratedArt.CocoaPlate(), new Vector2(0f, 1f), new Vector2(190f, -100f), new Vector2(320f, 135f));
-            _scoreText = CreateText("Score", scorePlate.transform, "★  0.0", 50, TextAnchor.MiddleCenter, Color.white);
+            GameObject scorePlate = CreateImage("Badge Plate", hud, GeneratedArt.CocoaPlate(), new Vector2(0f, 1f), new Vector2(170f, -100f), new Vector2(280f, 128f));
+            _scoreText = CreateText("Badge Count", scorePlate.transform, "★  0/7", 46, TextAnchor.MiddleCenter, Color.white);
             Stretch(_scoreText.rectTransform);
-
-            GameObject bestObject = new GameObject("Best Score");
-            bestObject.transform.SetParent(hud, false);
-            RectTransform bestRect = bestObject.AddComponent<RectTransform>();
-            bestRect.anchorMin = new Vector2(0f, 1f);
-            bestRect.anchorMax = new Vector2(0f, 1f);
-            bestRect.pivot = new Vector2(0.5f, 0.5f);
-            bestRect.anchoredPosition = new Vector2(190f, -182f);
-            bestRect.sizeDelta = new Vector2(320f, 55f);
-            _bestText = CreateText("Best", bestObject.transform, "BEST 0.0", 28, TextAnchor.MiddleCenter, new Color(1f, 0.95f, 0.82f, 0.9f));
-            Stretch(_bestText.rectTransform);
 
             CreateButton("Pause", hud, "Ⅱ", new Vector2(1f, 1f), new Vector2(-104f, -105f), new Vector2(132f, 132f), GeneratedArt.CocoaPlate(), PauseRun, 55);
 
@@ -545,13 +753,34 @@ namespace WobbleStack.Runtime
             saveRect.anchoredPosition = Vector2.zero;
             _saveText.gameObject.SetActive(false);
 
-            _hintText = CreateText("First Run Hint", hud, "DRAG AGAINST THE WIND", 35, TextAnchor.MiddleCenter, new Color(1f, 0.96f, 0.8f, 0.96f));
+            _hintText = CreateText("First Run Hint", hud, "TOUCH · SLIDE TO ROLL THE WHEEL", 32, TextAnchor.MiddleCenter, new Color(1f, 0.96f, 0.8f, 0.96f));
             RectTransform hintRect = _hintText.rectTransform;
-            hintRect.anchorMin = new Vector2(0.5f, 0.12f);
-            hintRect.anchorMax = new Vector2(0.5f, 0.12f);
+            hintRect.anchorMin = new Vector2(0.5f, 0.16f);
+            hintRect.anchorMax = new Vector2(0.5f, 0.16f);
             hintRect.anchoredPosition = Vector2.zero;
             hintRect.sizeDelta = new Vector2(760f, 90f);
             _hintText.gameObject.SetActive(false);
+
+            _gestureTrack = CreateImage(
+                "Thumb Track",
+                hud,
+                GeneratedArt.CocoaPlate(),
+                new Vector2(0.5f, 0.11f),
+                Vector2.zero,
+                new Vector2(340f, 16f));
+            _gestureTrack.GetComponent<Image>().color = new Color(1f, 0.95f, 0.82f, 0.28f);
+            _gestureTrack.SetActive(false);
+
+            GameObject cue = CreateImage(
+                "Thumb Cue",
+                hud,
+                GeneratedArt.CoralPlate(),
+                new Vector2(0.5f, 0.11f),
+                Vector2.zero,
+                new Vector2(70f, 62f));
+            _gestureCue = cue.GetComponent<RectTransform>();
+            cue.GetComponent<Image>().color = new Color(1f, 0.93f, 0.75f, 0.82f);
+            cue.SetActive(false);
         }
 
         private void BuildStartOverlay(Transform parent)
@@ -564,16 +793,30 @@ namespace WobbleStack.Runtime
             titleRect.anchoredPosition = new Vector2(0f, -285f);
             titleRect.sizeDelta = new Vector2(850f, 250f);
 
-            Text subtitle = CreateText("Subtitle", _startOverlay.transform, "KEEP THE LITTLE ONES TOGETHER", 31, TextAnchor.MiddleCenter, new Color(1f, 0.95f, 0.84f, 0.95f));
+            Text subtitle = CreateText("Subtitle", _startOverlay.transform, "FIVE FRIENDS · ONE WHEEL · SUNSET AHEAD", 29, TextAnchor.MiddleCenter, new Color(1f, 0.95f, 0.84f, 0.95f));
             RectTransform subtitleRect = subtitle.rectTransform;
             subtitleRect.anchorMin = new Vector2(0.5f, 1f);
             subtitleRect.anchorMax = new Vector2(0.5f, 1f);
             subtitleRect.anchoredPosition = new Vector2(0f, -460f);
-            subtitleRect.sizeDelta = new Vector2(850f, 80f);
+            subtitleRect.sizeDelta = new Vector2(960f, 80f);
 
-            CreateButton("Play", _startOverlay.transform, "PLAY", new Vector2(0.5f, 0f), new Vector2(0f, 340f), new Vector2(560f, 230f), GeneratedArt.CoralPlate(), StartRun, 72);
-            _countText = CreateButton("Creature Count", _startOverlay.transform, "5 FRIENDS", new Vector2(0.5f, 0f), new Vector2(0f, 170f), new Vector2(360f, 125f), GeneratedArt.CocoaPlate(), CycleCreatureCount, 34).GetComponentInChildren<Text>();
-            _motionText = CreateButton("Motion", _startOverlay.transform, "MOTION FULL", new Vector2(0.5f, 0f), new Vector2(0f, 58f), new Vector2(380f, 95f), GeneratedArt.CocoaPlate(), ToggleReducedMotion, 27).GetComponentInChildren<Text>();
+            _routeText = CreateText("Route Name", _startOverlay.transform, "ORCHARD ROAD", 39, TextAnchor.MiddleCenter, Color.white);
+            RectTransform routeRect = _routeText.rectTransform;
+            routeRect.anchorMin = new Vector2(0.5f, 0.17f);
+            routeRect.anchorMax = new Vector2(0.5f, 0.17f);
+            routeRect.sizeDelta = new Vector2(760f, 90f);
+            _routeText.raycastTarget = true;
+            Button routeButton = _routeText.gameObject.AddComponent<Button>();
+            routeButton.targetGraphic = _routeText;
+            routeButton.onClick.AddListener(CycleRoute);
+
+            _routeSubtitleText = CreateText("Route Goal", _startOverlay.transform, "FIND RABBIT AND JELLY", 24, TextAnchor.MiddleCenter, new Color(1f, 0.94f, 0.74f, 0.96f));
+            RectTransform routeSubtitleRect = _routeSubtitleText.rectTransform;
+            routeSubtitleRect.anchorMin = new Vector2(0.5f, 0.135f);
+            routeSubtitleRect.anchorMax = new Vector2(0.5f, 0.135f);
+            routeSubtitleRect.sizeDelta = new Vector2(820f, 70f);
+
+            CreateButton("Play", _startOverlay.transform, "ROLL", new Vector2(0.5f, 0f), new Vector2(0f, 190f), new Vector2(560f, 220f), GeneratedArt.CoralPlate(), StartRun, 70);
         }
 
         private void BuildPauseOverlay(Transform parent)
@@ -586,32 +829,49 @@ namespace WobbleStack.Runtime
             titleRect.anchorMin = new Vector2(0.5f, 0.6f);
             titleRect.anchorMax = new Vector2(0.5f, 0.6f);
             titleRect.sizeDelta = new Vector2(700f, 160f);
-            CreateButton("Resume", _pauseOverlay.transform, "KEEP WOBBLING", new Vector2(0.5f, 0.42f), Vector2.zero, new Vector2(620f, 210f), GeneratedArt.CoralPlate(), ResumeRun, 48);
+            CreateButton("Resume", _pauseOverlay.transform, "KEEP ROLLING", new Vector2(0.5f, 0.42f), Vector2.zero, new Vector2(620f, 210f), GeneratedArt.CoralPlate(), ResumeRun, 48);
+            _motionText = CreateButton(
+                "Motion",
+                _pauseOverlay.transform,
+                "MOTION FULL",
+                new Vector2(0.5f, 0.3f),
+                Vector2.zero,
+                new Vector2(390f, 115f),
+                GeneratedArt.CocoaPlate(),
+                ToggleReducedMotion,
+                28).GetComponentInChildren<Text>();
             _pauseOverlay.SetActive(false);
         }
 
         private void BuildResultsOverlay(Transform parent)
         {
             _resultsOverlay = CreateOverlay("Results Overlay", parent);
-            Image veil = _resultsOverlay.AddComponent<Image>();
-            veil.color = new Color(0.22f, 0.1f, 0.15f, 0.22f);
-            Text title = CreateText("Result Title", _resultsOverlay.transform, "EVERYONE\nPANICKED", 76, TextAnchor.MiddleCenter, Color.white);
-            RectTransform titleRect = title.rectTransform;
+            _resultTitleText = CreateText("Result Title", _resultsOverlay.transform, "EVERYONE\nPANICKED", 76, TextAnchor.MiddleCenter, Color.white);
+            RectTransform titleRect = _resultTitleText.rectTransform;
             titleRect.anchorMin = new Vector2(0.5f, 0.76f);
             titleRect.anchorMax = new Vector2(0.5f, 0.76f);
             titleRect.sizeDelta = new Vector2(820f, 230f);
-            _resultTimeText = CreateText("Result Time", _resultsOverlay.transform, "0.0 SECONDS", 54, TextAnchor.MiddleCenter, new Color(1f, 0.95f, 0.78f, 1f));
+            _resultTimeText = CreateText("Result Badges", _resultsOverlay.transform, "0/7 BADGES", 50, TextAnchor.MiddleCenter, new Color(1f, 0.95f, 0.78f, 1f));
             RectTransform timeRect = _resultTimeText.rectTransform;
             timeRect.anchorMin = new Vector2(0.5f, 0.64f);
             timeRect.anchorMax = new Vector2(0.5f, 0.64f);
             timeRect.sizeDelta = new Vector2(700f, 100f);
-            _resultBestText = CreateText("Result Best", _resultsOverlay.transform, "BEST 0.0", 30, TextAnchor.MiddleCenter, Color.white);
+            _resultBestText = CreateText("Result Best", _resultsOverlay.transform, "BEST 0/7", 30, TextAnchor.MiddleCenter, Color.white);
             RectTransform resultBestRect = _resultBestText.rectTransform;
             resultBestRect.anchorMin = new Vector2(0.5f, 0.595f);
             resultBestRect.anchorMax = new Vector2(0.5f, 0.595f);
             resultBestRect.sizeDelta = new Vector2(650f, 70f);
-            CreateButton("Retry", _resultsOverlay.transform, "RETRY", new Vector2(0.5f, 0f), new Vector2(0f, 270f), new Vector2(570f, 225f), GeneratedArt.CoralPlate(), StartRun, 68);
-            CreateButton("Change Setup", _resultsOverlay.transform, "CHANGE SETUP", new Vector2(0.5f, 0f), new Vector2(0f, 105f), new Vector2(450f, 120f), GeneratedArt.CocoaPlate(), ShowReady, 31);
+            GameObject resultAction = CreateButton(
+                "Result Action",
+                _resultsOverlay.transform,
+                "RETRY",
+                new Vector2(0.5f, 0f),
+                new Vector2(0f, 190f),
+                new Vector2(570f, 225f),
+                GeneratedArt.CoralPlate(),
+                StartResultAction,
+                68);
+            _resultActionText = resultAction.GetComponentInChildren<Text>();
             _resultsOverlay.SetActive(false);
         }
 
@@ -657,13 +917,7 @@ namespace WobbleStack.Runtime
             _cameraFollowVelocity = 0f;
             _cameraHome = new Vector3(0f, 0f, -10f);
             _camera.transform.position = _cameraHome;
-            if (_backgroundTransform != null)
-            {
-                Vector3 backgroundPosition = _backgroundTransform.position;
-                backgroundPosition.x = 0f;
-                _backgroundTransform.position = backgroundPosition;
-            }
-
+            _travellingWorld.SetRouteView(0f, _routeProgress);
             _windStreaks.SetCenterX(0f);
             Physics2D.SyncTransforms();
 
@@ -714,6 +968,11 @@ namespace WobbleStack.Runtime
                 this,
                 spec.Kind,
                 rig);
+            if (index == 0)
+            {
+                creature.ConfigureRecoveryAnchor(_platformBody);
+            }
+
             return creature;
         }
 
@@ -769,8 +1028,17 @@ namespace WobbleStack.Runtime
 
             Time.timeScale = 1f;
             AudioListener.pause = false;
+            _gameplayProbeActive = false;
             _runCount += 1;
             _runSeconds = 0f;
+            _postGustRecoveryUntil = 0f;
+            _postGustRecoveryDirection = 0;
+            _platformSpringBlend = 1f;
+            _collectedBadges = 0;
+            _routeProgress = 0f;
+            _friendStopUntil = 0f;
+            _nextJoinIndex = 0;
+            _runSucceeded = false;
             _pointerActive = false;
             _controlAmount = 0f;
             _gustIndex = 0;
@@ -778,9 +1046,16 @@ namespace WobbleStack.Runtime
             _slowMotionEndsAt = -1f;
             _failureSuspendedAt = -1f;
             _dangerWasHigh = false;
+            _lastFailureReason = string.Empty;
             _cameraShake = 0f;
-            _gustScheduler = new GustScheduler(Convert.ToUInt32(7907 + (_runCount * 101)));
-            _gust = _gustScheduler.Next(0f);
+            _nextWheelDustAt = 0f;
+            _route = RouteDefinition.Get(_currentRouteIndex);
+            _creatureCount = _route.InitialCreatureCount;
+            _travellingWorld.ConfigureRoute(_route, this);
+            _gustScheduler = new GustScheduler(Convert.ToUInt32(
+                7907 + (_runCount * 101) + (_route.Index * 1301)));
+            _routeGustSequenceIndex = 0;
+            _gust = NextGust(0f);
             _hasGust = true;
             ResetVehicle(true);
             BuildStack(true);
@@ -790,7 +1065,9 @@ namespace WobbleStack.Runtime
             _resultsOverlay.SetActive(false);
             _hudRoot.SetActive(true);
             _saveText.gameObject.SetActive(false);
-            _hintText.gameObject.SetActive(true);
+            _hintText.gameObject.SetActive(!_gestureUsed);
+            _gestureTrack.SetActive(!_gestureUsed);
+            _gestureCue.gameObject.SetActive(!_gestureUsed);
             _audio.PlayStart();
             SaveSettings();
         }
@@ -833,6 +1110,7 @@ namespace WobbleStack.Runtime
             }
 
             _phase = GamePhase.Failing;
+            _runSucceeded = false;
             _failureStartedAt = Time.unscaledTime;
             _firstImpactAt = -1f;
             _slowMotionEndsAt = -1f;
@@ -852,43 +1130,65 @@ namespace WobbleStack.Runtime
 
         private void ShowResults()
         {
-            if (_phase != GamePhase.Failing)
+            if (_phase != GamePhase.Failing && _phase != GamePhase.Finishing)
             {
                 return;
             }
 
             Time.timeScale = 1f;
             _phase = GamePhase.Results;
-            float best = GetBestScore();
-            if (_runSeconds > best)
+            int best = GetBestBadgeCount();
+            if (_collectedBadges > best)
             {
-                best = _runSeconds;
-                PlayerPrefs.SetFloat(BestScoreKey(), best);
+                best = _collectedBadges;
+                PlayerPrefs.SetInt(BestBadgeKey(), best);
                 PlayerPrefs.Save();
             }
 
             foreach (CreatureBody creature in _creatures)
             {
+                creature.Body.linearVelocity = Vector2.zero;
+                creature.Body.angularVelocity = 0f;
                 creature.Body.simulated = false;
-                creature.gameObject.SetActive(false);
             }
 
-            CreatureBody mascot = _creatures[_creatures.Count - 1];
-            mascot.gameObject.SetActive(true);
-            mascot.Body.position = new Vector2(0f, -0.25f);
-            mascot.Body.rotation = -7f;
-            mascot.transform.position = mascot.Body.position;
-            mascot.transform.rotation = Quaternion.Euler(0f, 0f, mascot.Body.rotation);
-            mascot.ShowImpactReaction();
-            if (_crownObject != null)
-            {
-                _crownObject.SetActive(false);
-            }
-
-            _resultTimeText.text = $"{_runSeconds:0.0} SECONDS";
-            _resultBestText.text = $"BEST {best:0.0}";
+            _platformBody.linearVelocity = Vector2.zero;
+            _platformBody.angularVelocity = 0f;
+            _wheelBody.linearVelocity = Vector2.zero;
+            _wheelBody.angularVelocity = 0f;
+            _resultTitleText.text = _runSucceeded
+                ? "SUNSET!\nEVERYONE MADE IT"
+                : "EVERYONE\nPANICKED";
+            _resultTimeText.text = $"{_collectedBadges}/{_route.Badges.Length} BADGES";
+            _resultBestText.text = $"BEST {best}/{_route.Badges.Length}";
+            _resultActionText.text = _runSucceeded
+                ? _route.Index < RouteDefinition.Count - 1
+                    ? "NEXT ROAD"
+                    : "ROLL AGAIN"
+                : "RETRY";
             _hudRoot.SetActive(false);
+            _saveText.gameObject.SetActive(false);
+            _hintText.gameObject.SetActive(false);
+            _gestureCue.gameObject.SetActive(false);
             _resultsOverlay.SetActive(true);
+        }
+
+        private void StartResultAction()
+        {
+            if (_phase != GamePhase.Results)
+            {
+                return;
+            }
+
+            if (_runSucceeded && _route.Index < RouteDefinition.Count - 1)
+            {
+                _currentRouteIndex = Mathf.Min(
+                    _route.Index + 1,
+                    _unlockedRouteIndex);
+                _route = RouteDefinition.Get(_currentRouteIndex);
+            }
+
+            StartRun();
         }
 
         private void ShowReady()
@@ -896,39 +1196,36 @@ namespace WobbleStack.Runtime
             Time.timeScale = 1f;
             AudioListener.pause = false;
             _phase = GamePhase.Ready;
+            _gameplayProbeActive = false;
             _runSeconds = 0f;
+            _postGustRecoveryUntil = 0f;
+            _postGustRecoveryDirection = 0;
+            _platformSpringBlend = 1f;
+            _collectedBadges = 0;
+            _routeProgress = 0f;
+            _friendStopUntil = 0f;
             _controlAmount = 0f;
             _hasGust = false;
+            _runSucceeded = false;
+            _route = RouteDefinition.Get(_currentRouteIndex);
+            _creatureCount = WobbleStackRules.MaxCreatureCount;
             _windStreaks.SetWind(1, 0f);
             _audio.SetWind(0f);
+            _travellingWorld.ConfigureRoute(_route, this);
             ResetVehicle(false);
             BuildStack(false);
             _startOverlay.SetActive(true);
             _pauseOverlay.SetActive(false);
             _resultsOverlay.SetActive(false);
             _hudRoot.SetActive(false);
+            _hintText.gameObject.SetActive(false);
+            _gestureCue.gameObject.SetActive(false);
             UpdateSetupLabels();
-        }
-
-        private void CycleCreatureCount()
-        {
-            if (_phase != GamePhase.Ready)
-            {
-                return;
-            }
-
-            _creatureCount = _creatureCount >= WobbleStackRules.MaxCreatureCount
-                ? WobbleStackRules.MinCreatureCount
-                : _creatureCount + 1;
-            SaveSettings();
-            BuildStack(false);
-            UpdateSetupLabels();
-            _audio.PlayClick();
         }
 
         private void ToggleReducedMotion()
         {
-            if (_phase != GamePhase.Ready)
+            if (_phase != GamePhase.Ready && _phase != GamePhase.Paused)
             {
                 return;
             }
@@ -936,6 +1233,23 @@ namespace WobbleStack.Runtime
             _reducedMotion = !_reducedMotion;
             SaveSettings();
             UpdateSetupLabels();
+            _audio.PlayClick();
+        }
+
+        private void CycleRoute()
+        {
+            if (_phase != GamePhase.Ready || _unlockedRouteIndex <= 0)
+            {
+                return;
+            }
+
+            _currentRouteIndex = _currentRouteIndex >= _unlockedRouteIndex
+                ? 0
+                : _currentRouteIndex + 1;
+            _route = RouteDefinition.Get(_currentRouteIndex);
+            _travellingWorld.ConfigureRoute(_route, this);
+            UpdateSetupLabels();
+            SaveSettings();
             _audio.PlayClick();
         }
 
@@ -1027,35 +1341,215 @@ namespace WobbleStack.Runtime
 
         private void UpdateWheelDrive()
         {
-            float inputMagnitude = Mathf.Abs(_controlAmount);
-            if (inputMagnitude <= 0f && !_pointerActive)
+            if (_runSeconds < _friendStopUntil)
+            {
+                JointMotor2D stopMotor = _wheelJoint.motor;
+                stopMotor.motorSpeed = 0f;
+                stopMotor.maxMotorTorque = WheelDriveTorque;
+                _wheelJoint.motor = stopMotor;
+                _wheelJoint.useMotor = true;
+                return;
+            }
+
+            float driveAmount =
+                !_gameplayProbeActive && !_pointerActive
+                    ? RouteForwardCruiseAmount
+                    : _controlAmount;
+            float inputMagnitude = Mathf.Abs(driveAmount);
+            if (inputMagnitude <= 0f)
             {
                 _wheelJoint.useMotor = false;
                 return;
             }
 
+            bool balanceWindow = IsWindBalanceWindow();
+            bool recovering = _runSeconds < _postGustRecoveryUntil;
             float shapedMagnitude = Mathf.Sqrt(inputMagnitude);
-            float boost = Mathf.InverseLerp(0.65f, 1f, inputMagnitude);
-            float direction = _controlAmount < 0f ? -1f : 1f;
+            float boost = balanceWindow
+                ? Mathf.InverseLerp(0.65f, 1f, inputMagnitude)
+                : 0f;
+            float direction = driveAmount < 0f ? -1f : 1f;
+            float baseMotorSpeed = recovering
+                ? WheelRecoveryMotorSpeed
+                : balanceWindow
+                    ? WheelMotorSpeed
+                    : WheelCruiseMotorSpeed;
             JointMotor2D motor = _wheelJoint.motor;
             motor.motorSpeed = -direction *
-                ((shapedMagnitude * WheelMotorSpeed) + (boost * boost * WheelCatchBoostSpeed));
-            motor.maxMotorTorque = Mathf.Lerp(WheelBrakeTorque, WheelDriveTorque, shapedMagnitude);
+                ((shapedMagnitude * baseMotorSpeed) +
+                    (boost * boost * WheelCatchBoostSpeed));
+            motor.maxMotorTorque = recovering
+                ? WheelRecoveryMotorTorque
+                : balanceWindow
+                    ? Mathf.Lerp(WheelBrakeTorque, WheelDriveTorque, shapedMagnitude)
+                    : WheelCruiseMotorTorque;
             _wheelJoint.motor = motor;
             _wheelJoint.useMotor = true;
+        }
+
+        private void UpdateFriendStopBraking()
+        {
+            if (_runSeconds >= _friendStopUntil)
+            {
+                return;
+            }
+
+            ApplyHorizontalBrake(_wheelBody, 7f);
+            ApplyHorizontalBrake(_platformBody, 7f);
+            foreach (CreatureBody creature in _creatures)
+            {
+                ApplyHorizontalBrake(creature.Body, 7f);
+            }
+        }
+
+        private static void ApplyHorizontalBrake(Rigidbody2D body, float damping)
+        {
+            body.AddForce(new Vector2(
+                -body.linearVelocity.x * body.mass * damping,
+                0f));
+        }
+
+        private bool IsWindBalanceWindow()
+        {
+            if (_runSeconds < _postGustRecoveryUntil)
+            {
+                return true;
+            }
+
+            if (!_hasGust || _gust.Force <= 0f)
+            {
+                return false;
+            }
+
+            return IsGustActive() ||
+                _gust.StartsAtSeconds - _runSeconds <= WindBalancePreviewSeconds;
+        }
+
+        private void UpdatePlatformSuspension()
+        {
+            bool activeGust =
+                IsGustActive() &&
+                !IsGustRecoveryTail() &&
+                _gust.Force > 0f;
+            float targetBlend = activeGust ? 0f : 1f;
+            _platformSpringBlend = Mathf.MoveTowards(
+                _platformSpringBlend,
+                targetBlend,
+                Time.fixedDeltaTime * (targetBlend < _platformSpringBlend ? 8f : 2.5f));
+            if (_platformSpringBlend > 0f)
+            {
+                float springTorque =
+                    (-_platformBody.rotation * PlatformSpringTorquePerDegree) -
+                    (_platformBody.angularVelocity * PlatformSpringDamping);
+                _platformBody.AddTorque(Mathf.Clamp(
+                    springTorque,
+                    -PlatformSpringMaximumTorque,
+                    PlatformSpringMaximumTorque) * _platformSpringBlend);
+            }
+
+            float absoluteAngle = Mathf.Abs(_platformBody.rotation);
+            if (absoluteAngle <= PlatformAxleStopDegrees)
+            {
+                return;
+            }
+
+            float stopDirection = -Mathf.Sign(_platformBody.rotation);
+            float stopTorque =
+                ((absoluteAngle - PlatformAxleStopDegrees) *
+                    PlatformAxleStopTorquePerDegree) +
+                (Mathf.Abs(_platformBody.angularVelocity) * PlatformAxleStopDamping);
+            _platformBody.AddTorque(stopDirection * Mathf.Min(
+                stopTorque,
+                PlatformSpringMaximumTorque));
+        }
+
+        private void UpdateBalanceTransitionDamping()
+        {
+            if (IsGustActive() && !IsGustRecoveryTail())
+            {
+                return;
+            }
+
+            bool recovering = IsRecoveryWindow();
+            float velocityDamping = recovering ? 8f : 2.2f;
+            float positionStiffness = recovering ? 9f : 1.8f;
+            float maximumAcceleration = recovering ? 15f : 4f;
+            float platformVelocity = _platformBody.linearVelocity.x;
+            float platformX = _platformBody.position.x;
+            float reactionForce = 0f;
+            foreach (CreatureBody creature in _creatures)
+            {
+                float relativeVelocity = creature.Body.linearVelocity.x - platformVelocity;
+                float acceleration =
+                    (-relativeVelocity * velocityDamping) +
+                    ((platformX - creature.Body.position.x) * positionStiffness);
+
+                float force = Mathf.Clamp(
+                    acceleration,
+                    -maximumAcceleration,
+                    maximumAcceleration) * creature.Body.mass;
+                creature.Body.AddForce(new Vector2(force, 0f));
+                reactionForce -= force;
+            }
+
+            _platformBody.AddForce(new Vector2(reactionForce, 0f));
+        }
+
+        private void UpdateRecoveryGrips()
+        {
+            bool recovering = IsRecoveryWindow();
+            foreach (CreatureBody creature in _creatures)
+            {
+                creature.SetRecoveryGrip(recovering);
+            }
+        }
+
+        private void UpdateWheelDust()
+        {
+            float speed = Mathf.Abs(_wheelBody.linearVelocity.x);
+            if (speed < 1.15f || Time.time < _nextWheelDustAt)
+            {
+                return;
+            }
+
+            RaycastHit2D hit = Physics2D.Raycast(
+                _wheelBody.position,
+                Vector2.down,
+                WheelRadius + 0.18f);
+            if (hit.collider == null || hit.collider.gameObject.name != "Road")
+            {
+                return;
+            }
+
+            _nextWheelDustAt = Time.time + Mathf.Lerp(0.22f, 0.11f, Mathf.InverseLerp(1.15f, 7f, speed));
+            float direction = Mathf.Sign(_wheelBody.linearVelocity.x);
+            CreateTransientSprite(
+                "Wheel Dust",
+                GeneratedArt.Dust(),
+                hit.point + new Vector2(-direction * 0.18f, 0.08f),
+                0.32f,
+                new Vector2(-direction * 0.38f, 0.28f),
+                0.38f,
+                new Color(1f, 0.87f, 0.72f, 0.68f),
+                0.18f,
+                -direction * 18f,
+                1.45f);
         }
 
         private void UpdateGust()
         {
             if (!_hasGust)
             {
-                _gust = _gustScheduler.Next(_runSeconds);
+                _gust = NextGust(_runSeconds);
                 _hasGust = true;
             }
 
             if (_runSeconds >= _gust.EndsAtSeconds)
             {
-                _gust = _gustScheduler.Next(_gust.EndsAtSeconds);
+                _postGustRecoveryUntil = _runSeconds + PostGustRecoverySeconds;
+                _postGustRecoveryDirection = _gust.Direction;
+                _gust = NextGust(
+                    _gust.EndsAtSeconds + PostGustRecoverySeconds);
                 _gustIndex += 1;
             }
 
@@ -1095,6 +1589,53 @@ namespace WobbleStack.Runtime
             return _hasGust && _runSeconds >= _gust.StartsAtSeconds && _runSeconds < _gust.EndsAtSeconds;
         }
 
+        private GustSample NextGust(float previousEndsAtSeconds)
+        {
+            GustSample sampled = _gustScheduler.Next(previousEndsAtSeconds);
+            if (_gameplayProbeActive)
+            {
+                return sampled;
+            }
+
+            int direction;
+            if (_route.Index == 0)
+            {
+                direction = _routeGustSequenceIndex % 3 == 2 ? -1 : 1;
+            }
+            else if (_route.Index == 1)
+            {
+                direction = (_routeGustSequenceIndex & 1) == 0 ? 1 : -1;
+            }
+            else
+            {
+                direction = sampled.Direction;
+            }
+
+            _routeGustSequenceIndex += 1;
+            return new GustSample(
+                sampled.RestSeconds,
+                sampled.DurationSeconds,
+                sampled.Force,
+                direction,
+                sampled.StartsAtSeconds);
+        }
+
+        private bool IsGustRecoveryTail()
+        {
+            if (!IsGustActive() || _gust.DurationSeconds <= 0f)
+            {
+                return false;
+            }
+
+            float progress = (_runSeconds - _gust.StartsAtSeconds) / _gust.DurationSeconds;
+            return progress >= 0.82f;
+        }
+
+        private bool IsRecoveryWindow()
+        {
+            return _runSeconds < _postGustRecoveryUntil || IsGustRecoveryTail();
+        }
+
         private void CheckDangerAndFailure()
         {
             if (_runSeconds < 1.1f)
@@ -1110,14 +1651,27 @@ namespace WobbleStack.Runtime
                 maxDrift = Mathf.Max(maxDrift, localDrift);
                 if (creature.Body.position.y < PlatformY - 1.15f)
                 {
+                    _lastFailureReason = $"{creature.Kind} fell below the beam";
                     BeginFailure();
                     return;
                 }
 
-                if (index > 0 && creature.Body.position.y - _creatures[index - 1].Body.position.y < 0.3f)
+                if (index > 0)
                 {
-                    BeginFailure();
-                    return;
+                    float verticalGap =
+                        creature.Body.position.y -
+                        _creatures[index - 1].Body.position.y;
+                    bool gripCanRecover =
+                        (creature.HasActiveGrip ||
+                            creature.IsRecoveryGripRequested);
+                    if (verticalGap < -0.12f && !gripCanRecover)
+                    {
+                        _lastFailureReason =
+                            $"{creature.Kind} lost vertical stack order " +
+                            $"(gap={verticalGap:0.00}, grip={creature.HasActiveGrip})";
+                        BeginFailure();
+                        return;
+                    }
                 }
             }
 
@@ -1130,9 +1684,182 @@ namespace WobbleStack.Runtime
             {
                 _dangerWasHigh = false;
                 _saveMessageEndsAt = Time.unscaledTime + 0.7f;
+                foreach (CreatureBody creature in _creatures)
+                {
+                    creature.ShowReliefReaction();
+                }
+
                 _saveText.gameObject.SetActive(true);
+                _cameraShake = _reducedMotion ? 0f : Mathf.Max(_cameraShake, 0.04f);
                 _audio.PlaySave();
                 TriggerSaveHaptic();
+            }
+        }
+
+        private void UpdateRouteProgress()
+        {
+            if (_phase != GamePhase.Playing || _gameplayProbeActive)
+            {
+                return;
+            }
+
+            if (_runSeconds < _friendStopUntil)
+            {
+                return;
+            }
+
+            float wheelSurfaceSpeed =
+                Mathf.Abs(_wheelBody.angularVelocity) *
+                Mathf.Deg2Rad *
+                WheelRadius;
+            float routeSpeed = Mathf.Clamp(
+                0.45f + (wheelSurfaceSpeed * 0.75f),
+                0.45f,
+                2.4f);
+            _routeProgress += routeSpeed * Time.fixedDeltaTime;
+            _travellingWorld.SetRouteView(_cameraHome.x, _routeProgress);
+
+            while (_nextJoinIndex < _route.JoinStops.Length &&
+                _routeProgress >= _route.JoinStops[_nextJoinIndex])
+            {
+                AddFriendAtSafeStop();
+                _nextJoinIndex += 1;
+            }
+
+            if (_routeProgress >= _route.FinishX)
+            {
+                BeginFinish();
+            }
+        }
+
+        private void AddFriendAtSafeStop()
+        {
+            if (_creatureCount >= WobbleStackRules.MaxCreatureCount ||
+                _creatures.Count == 0)
+            {
+                return;
+            }
+
+            CreatureSpec spec = CreatureSpec.All[_creatureCount];
+            CreatureBody lower = _creatures[_creatures.Count - 1];
+            Collider2D lowerCollider = lower.GetComponent<Collider2D>();
+            Vector2 position = new Vector2(
+                lower.Body.position.x,
+                lowerCollider.bounds.max.y + (spec.ColliderSize.y * 0.5f) - DynamicStackContactInset);
+            CreatureBody friend = CreateCreature(spec, _creatureCount, position, true);
+            friend.Body.linearVelocity = lower.Body.linearVelocity;
+            friend.Body.angularVelocity = lower.Body.angularVelocity * 0.35f;
+            friend.ConfigureLowerNeighbor(lower, _creatureCount);
+            friend.HoldRecoveryGripFor(12f);
+            friend.ShowReliefReaction();
+            _creatures.Add(friend);
+            _creatureCount += 1;
+
+            _friendStopUntil = _runSeconds + 1.35f;
+            _postGustRecoveryUntil = Mathf.Max(
+                _postGustRecoveryUntil,
+                _runSeconds + 3.2f);
+            _postGustRecoveryDirection = _hasGust
+                ? _gust.Direction
+                : 1;
+            _gust = NextGust(_postGustRecoveryUntil);
+            _hasGust = true;
+            _windStreaks.SetWind(1, 0f);
+            _audio.SetWind(0f);
+            foreach (CreatureBody creature in _creatures)
+            {
+                creature.SetWind(0f);
+            }
+
+            _saveText.text = friend.Kind == CharacterKind.Rabbit
+                ? "RABBIT HOPPED ON!"
+                : "JELLY MADE IT!";
+            _saveMessageEndsAt = Time.unscaledTime + 1.1f;
+            _saveText.gameObject.SetActive(true);
+            _cameraShake = _reducedMotion ? 0f : Mathf.Max(_cameraShake, 0.07f);
+            _audio.PlaySave();
+            CreateTransientSprite(
+                "Friend Joined",
+                GeneratedArt.ImpactStars(),
+                position + new Vector2(0f, 0.35f),
+                1.05f,
+                new Vector2(0f, 0.8f),
+                0.82f,
+                GetCharacterEffectColor(friend.Kind),
+                0.8f,
+                55f,
+                0.8f);
+            Physics2D.SyncTransforms();
+        }
+
+        private void BeginFinish()
+        {
+            if (_phase != GamePhase.Playing)
+            {
+                return;
+            }
+
+            _phase = GamePhase.Finishing;
+            _runSucceeded = true;
+            _finishStartedAt = Time.unscaledTime;
+            _pointerActive = false;
+            _controlAmount = 0f;
+            _wheelJoint.useMotor = false;
+            _windStreaks.SetWind(1, 0f);
+            _audio.SetWind(0f);
+            foreach (CreatureBody creature in _creatures)
+            {
+                creature.SetWind(0f);
+                creature.ShowReliefReaction();
+            }
+
+            int best = GetBestBadgeCount();
+            if (_collectedBadges > best)
+            {
+                PlayerPrefs.SetInt(BestBadgeKey(), _collectedBadges);
+            }
+
+            _unlockedRouteIndex = Mathf.Max(
+                _unlockedRouteIndex,
+                Mathf.Min(_route.Index + 1, RouteDefinition.Count - 1));
+            SaveSettings();
+            _cameraShake = _reducedMotion ? 0f : 0.09f;
+            _audio.PlaySave();
+            TriggerSaveHaptic();
+            SpawnFinishCelebration();
+        }
+
+        private void UpdateFinish()
+        {
+            if (Time.unscaledTime - _finishStartedAt >= FinishCelebrationSeconds)
+            {
+                ShowResults();
+            }
+        }
+
+        private void SpawnFinishCelebration()
+        {
+            Vector2 center = _platformBody.position + new Vector2(0f, 3.8f);
+            Color[] colors =
+            {
+                new Color(1f, 0.83f, 0.22f, 1f),
+                new Color(0.36f, 0.88f, 0.98f, 1f),
+                new Color(0.94f, 0.48f, 0.72f, 1f)
+            };
+            for (int index = 0; index < colors.Length; index += 1)
+            {
+                float side = index - 1f;
+                CreateTransientSprite(
+                    $"Finish Confetti {index + 1}",
+                    GeneratedArt.ImpactStars(),
+                    center + new Vector2(side * 0.75f, index * 0.28f),
+                    0.86f,
+                    new Vector2(side * 0.65f, 1.25f + (index * 0.12f)),
+                    1.1f,
+                    colors[index],
+                    1.15f,
+                    side * 90f,
+                    0.7f);
             }
         }
 
@@ -1197,35 +1924,41 @@ namespace WobbleStack.Runtime
 
         private void UpdateHud()
         {
-            _scoreText.text = $"★  {_runSeconds:0.0}";
-            _bestText.text = $"BEST {GetBestScore():0.0}";
+            _scoreText.text = $"★  {_collectedBadges}/{_route.Badges.Length}";
             if (_saveText.gameObject.activeSelf && Time.unscaledTime >= _saveMessageEndsAt)
             {
                 _saveText.gameObject.SetActive(false);
             }
 
-            if (_phase != GamePhase.Playing || _gustIndex > 0)
+            if (_phase != GamePhase.Playing)
             {
                 _hintText.gameObject.SetActive(false);
+                _gestureTrack.SetActive(false);
+                _gestureCue.gameObject.SetActive(false);
                 return;
             }
 
-            _hintText.gameObject.SetActive(true);
-            float secondsUntilGust = _gust.StartsAtSeconds - _runSeconds;
-            if (secondsUntilGust > WobbleStackRules.WindPreviewSeconds)
+            if (!_gestureUsed && Mathf.Abs(_controlAmount) >= 0.12f)
             {
-                _hintText.text = "TOUCH · SLIDE LEFT OR RIGHT TO ROLL";
+                _gestureUsed = true;
+                SaveSettings();
             }
-            else
-            {
-                _hintText.text = "ROLL UNDER THE LEAN";
-            }
+
+            bool showCue = !_gestureUsed && _runSeconds <= 4.8f;
+            _hintText.gameObject.SetActive(showCue);
+            _gestureTrack.SetActive(showCue);
+            _gestureCue.gameObject.SetActive(showCue);
+            _gestureCue.anchoredPosition = new Vector2(
+                Mathf.Sin(Time.unscaledTime * 2.1f) * 125f,
+                0f);
         }
 
         private void UpdateSetupLabels()
         {
-            _countText.text = $"{_creatureCount} FRIENDS";
             _motionText.text = _reducedMotion ? "MOTION REDUCED" : "MOTION FULL";
+            _routeText.text = _route.Title;
+            int best = GetBestBadgeCount();
+            _routeSubtitleText.text = $"{_route.Subtitle} · BEST {best}/{_route.Badges.Length}";
         }
 
         private void SpawnCrown()
@@ -1314,17 +2047,44 @@ namespace WobbleStack.Runtime
 
         private void PreparePlayingCapture()
         {
-            ConfigureGameplayProbe(
-                WobbleStackRules.GustForceMax,
-                1,
-                0.8f,
-                5,
-                WobbleStackRules.GustDurationMax);
+            _gameplayProbeActive = true;
+            _phase = GamePhase.Playing;
+            _route = RouteDefinition.Get(0);
+            _routeProgress = 24f;
+            _travellingWorld.ConfigureRoute(_route, this);
+            _creatureCount = 4;
+            _collectedBadges = 3;
+            ResetVehicle(false);
+            _wheelBody.position = new Vector2(24f, WheelCenterY);
+            _platformBody.position = new Vector2(24f, PlatformY);
+            _wheelBody.transform.position = _wheelBody.position;
+            _platformBody.transform.position = _platformBody.position;
+            _cameraHome = new Vector3(24.8f, 0f, -10f);
+            _camera.transform.position = _cameraHome;
+            _travellingWorld.SetRouteView(_cameraHome.x, _routeProgress);
+            _windStreaks.SetCenterX(_cameraHome.x);
+            BuildStack(false);
+            _startOverlay.SetActive(false);
+            _pauseOverlay.SetActive(false);
+            _resultsOverlay.SetActive(false);
+            _hudRoot.SetActive(true);
+            _hintText.gameObject.SetActive(false);
+            _gestureCue.gameObject.SetActive(false);
+            _windStreaks.SetWind(-1, 0.74f);
+            _windStreaks.Refresh(0.9f);
+            foreach (CreatureBody creature in _creatures)
+            {
+                creature.SetWind(-0.74f);
+            }
+
+            Physics2D.SyncTransforms();
         }
 
         private void PrepareImpactCapture()
         {
             StartRun();
+            _creatureCount = 5;
+            BuildStack(true);
             _runSeconds = 18.7f;
             BeginFailure();
             Time.timeScale = 1f;
@@ -1359,10 +2119,49 @@ namespace WobbleStack.Runtime
         private void PrepareResultsCapture()
         {
             StartRun();
+            _creatureCount = 5;
+            BuildStack(true);
             _runSeconds = 18.7f;
             BeginFailure();
             ShowResults();
             UpdateHud();
+        }
+
+        private void PrepareFinishCapture()
+        {
+            _currentRouteIndex = 2;
+            _route = RouteDefinition.Get(_currentRouteIndex);
+            _routeProgress = _route.FinishX - 1.4f;
+            _travellingWorld.ConfigureRoute(_route, this);
+            _gameplayProbeActive = true;
+            _phase = GamePhase.Finishing;
+            _runSucceeded = true;
+            _creatureCount = 5;
+            _collectedBadges = _route.Badges.Length;
+            ResetVehicle(false);
+            float vehicleX = _route.FinishX - 1.4f;
+            _wheelBody.position = new Vector2(vehicleX, WheelCenterY);
+            _platformBody.position = new Vector2(vehicleX, PlatformY);
+            _wheelBody.transform.position = _wheelBody.position;
+            _platformBody.transform.position = _platformBody.position;
+            _cameraHome = new Vector3(vehicleX + 0.8f, 0f, -10f);
+            _camera.transform.position = _cameraHome;
+            _travellingWorld.SetRouteView(_cameraHome.x, _routeProgress);
+            _windStreaks.SetCenterX(_cameraHome.x);
+            BuildStack(false);
+            foreach (CreatureBody creature in _creatures)
+            {
+                creature.ShowReliefReaction();
+            }
+
+            _startOverlay.SetActive(false);
+            _pauseOverlay.SetActive(false);
+            _resultsOverlay.SetActive(false);
+            _hudRoot.SetActive(true);
+            _hintText.gameObject.SetActive(false);
+            _gestureCue.gameObject.SetActive(false);
+            SpawnFinishCelebration();
+            Physics2D.SyncTransforms();
         }
 
         private void CreateTransientSprite(string name, Sprite sprite, Vector2 position, float height, Vector2 velocity, float duration)
@@ -1433,13 +2232,7 @@ namespace WobbleStack.Runtime
                 0.18f,
                 30f,
                 Time.unscaledDeltaTime);
-            if (_backgroundTransform != null)
-            {
-                Vector3 backgroundPosition = _backgroundTransform.position;
-                backgroundPosition.x = _cameraHome.x;
-                _backgroundTransform.position = backgroundPosition;
-            }
-
+            _travellingWorld.SetRouteView(_cameraHome.x, _routeProgress);
             _windStreaks.SetCenterX(_cameraHome.x);
             if (_cameraShake <= 0f)
             {
@@ -1453,14 +2246,14 @@ namespace WobbleStack.Runtime
             _camera.transform.position = _cameraHome + new Vector3(x, y, 0f);
         }
 
-        private float GetBestScore()
+        private int GetBestBadgeCount()
         {
-            return PlayerPrefs.GetFloat(BestScoreKey(), 0f);
+            return PlayerPrefs.GetInt(BestBadgeKey(), 0);
         }
 
-        private string BestScoreKey()
+        private string BestBadgeKey()
         {
-            return $"wobble.ios.best.1.{_creatureCount}";
+            return $"wobble.ios.badges.{_route.Index}";
         }
 
         private static void FitHeight(Transform target, Sprite sprite, float height)
