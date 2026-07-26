@@ -8,8 +8,8 @@ Updated: 2026-07-26
 - Canonical task: [GitHub Issue #4](https://github.com/kiku-jw/wobble-stack/issues/4)
 - Distribution: [GitHub Pages](https://kiku-jw.github.io/wobble-stack/)
 - Runtime: Vite, Canvas, Matter.js, no backend
-- Release commit: `a4f0091`
-- Pages workflow: `30199823677` — success
+- Release commit: `1108dc3`
+- Pages workflow: `30205802255` — success
 - Blockers: none
 
 ## What changed
@@ -25,6 +25,11 @@ Updated: 2026-07-26
   two authored safe stops.
 - Added local route unlocks and best badge counts, route selection, reset,
   next-route, Retry, pause, and refresh-safe state.
+- Added four owner-supplied parade tracks in a random bag that plays every
+  melody before reshuffling without an immediate boundary repeat.
+- Added synchronized Music controls to the road selector and pause menu. Music
+  starts only after Play, defaults to 50%, pauses with the game, and preserves
+  the chosen volume locally.
 - Kept one variable wind profile with blue world-space telegraph streaks and no
   difficulty or strength HUD.
 - Kept Matter.js bodies and weak friendship links during play. Collapse releases
@@ -35,8 +40,14 @@ Updated: 2026-07-26
 
 ## Local verification
 
-- `pnpm test`: 14/14 passing.
+- `pnpm test`: 15/15 passing.
 - `pnpm build`: passing production build.
+- All four public MP3s are metadata-free 128 kbps stereo exports. Measured
+  loudness is `-16.1` to `-16.2 LUFS`; total download size is about 12.9 MB,
+  with only the current track assigned to the audio player.
+- Chrome and WebKit both started one random track at 50%, paused and resumed
+  the same player, synchronized the two controls, and restored 35% after
+  reload.
 - Production preview console: 0 errors, 0 warnings.
 - Real pointer drag moved support to `43.80`, changed plank angle to `-0.196`,
   then released to support `0.03` and angle `-0.009`.
@@ -60,4 +71,10 @@ Updated: 2026-07-26
 - Real live drag moved support to `43.80` and plank to `-0.196`; release
   recentered the support while the game remained playing.
 - The public document contains none of the former prototype copy.
+- Before Play, the live WebKit session requested no MP3. Play selected
+  `bouncy-clay-parade.mp3` from a four-track shuffled queue and received it
+  through a successful partial-content response at 50% volume.
+- Live Escape pause changed both the journey and audio state to paused; a second
+  Escape resumed both on the same track.
+- All four public music URLs return HTTP `200` with `audio/mp3`.
 - Live console: 0 errors, 0 warnings.
