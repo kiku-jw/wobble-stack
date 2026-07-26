@@ -41,7 +41,19 @@
     }
   },
   "deployment": {
-    "status": "pending",
-    "url": "https://kiku-jw.github.io/wobble-stack/"
+    "status": "success",
+    "implementationRevision": "a4f00911bf4a8b02ea191f274d0bf2d3657d24ed",
+    "workflowRun": 30199823677,
+    "url": "https://kiku-jw.github.io/wobble-stack/",
+    "live": {
+      "assetStatus": 200,
+      "consoleErrors": 0,
+      "consoleWarnings": 0,
+      "oldPrototypeCopy": false,
+      "heldSupportOffset": 43.79766203979031,
+      "heldPlatformAngle": -0.19602900181390198,
+      "releasedSupportOffset": 0.07701874703775044,
+      "state": "playing"
+    }
   }
 }

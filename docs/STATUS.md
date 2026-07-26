@@ -4,11 +4,13 @@ Updated: 2026-07-26
 
 ## Current state
 
-- Phase: public browser release candidate
+- Phase: public browser release
 - Canonical task: [GitHub Issue #4](https://github.com/kiku-jw/wobble-stack/issues/4)
 - Distribution: [GitHub Pages](https://kiku-jw.github.io/wobble-stack/)
 - Runtime: Vite, Canvas, Matter.js, no backend
-- Blockers: production deployment and live smoke remain
+- Release commit: `a4f0091`
+- Pages workflow: `30199823677` — success
+- Blockers: none
 
 ## What changed
 
@@ -46,7 +48,16 @@ Updated: 2026-07-26
 
 ## Next
 
-- Push the verified revision to `main`.
-- Wait for the Pages workflow and repeat a clean live smoke on the exact commit.
 - Share the Pages URL with testers and use their feedback to tune feel, not to
   add meta systems before the core loop earns Retry.
+
+## Live verification
+
+- Fresh Pages session started Orchard Road with Cloud Bridge and Windmill Hill
+  locked.
+- Public clay sky, wheel, and character assets loaded; direct sky request
+  returned HTTP `200`.
+- Real live drag moved support to `43.80` and plank to `-0.196`; release
+  recentered the support while the game remained playing.
+- The public document contains none of the former prototype copy.
+- Live console: 0 errors, 0 warnings.

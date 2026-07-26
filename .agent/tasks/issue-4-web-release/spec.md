@@ -1,7 +1,8 @@
 # Issue 4 — public web release
 
-Status: Frozen for implementation
+Status: Released
 Frozen: 2026-07-26
+Released: 2026-07-26
 Canonical issue: `kiku-jw/wobble-stack#4`
 
 ## Owner request

@@ -1,10 +1,10 @@
 {
   "task": "issue-4-web-release",
-  "verdict": "PASS_LOCAL_PENDING_DEPLOY",
+  "verdict": "PASS",
   "releaseBlockers": [],
   "residualRisks": [
     "Browser physics approximates the native Unity joint rig.",
     "Control clarity and voluntary Retry still require human tester feedback."
   ],
-  "nextAction": "Publish the verified revision to main and run the live Pages smoke."
+  "nextAction": "Share the Pages URL with human testers and observe control clarity and voluntary Retry."
 }

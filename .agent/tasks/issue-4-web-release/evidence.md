@@ -49,6 +49,7 @@ Playwright production-preview session: `web-port-local`.
 
 - `artifacts/menu-390x844.png`
 - `artifacts/journey-390x844.png`
+- `artifacts/live-journey-390x844.png`
 - `artifacts/impact-390x844.png`
 - `artifacts/finish-390x844.png`
 - `artifacts/menu-320x700.png`
@@ -63,4 +64,18 @@ checked-in Playwright dependency.
 
 ## Deployment
 
-Pending direct-main publication and live Pages smoke.
+- Implementation commit: `a4f0091` (`feat: ship the full browser journey`).
+- GitHub Pages workflow
+  [`30199823677`](https://github.com/kiku-jw/wobble-stack/actions/runs/30199823677)
+  completed successfully for the implementation commit.
+- Fresh live session opened
+  `https://kiku-jw.github.io/wobble-stack/?debug&release=a4f0091`.
+- New-user state exposed only Orchard Road; Cloud Bridge and Windmill Hill were
+  locked.
+- Live real drag moved support to `43.80` and plank to `-0.196`; release
+  returned support to `0.08` while state remained `playing`.
+- Live `route-sky.webp`, `wheel.webp`, and `pear-calm.webp` loaded from the
+  Pages asset path; direct sky request returned HTTP `200`.
+- Live document contained none of `prototype`, `greybox`, `physics toy`, or
+  `nothing here is final`.
+- Live console: 0 errors, 0 warnings.
