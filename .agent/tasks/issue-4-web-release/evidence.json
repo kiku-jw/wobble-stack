@@ -1,0 +1,47 @@
+{
+  "task": "issue-4-web-release",
+  "date": "2026-07-26",
+  "local": {
+    "tests": {
+      "passed": 14,
+      "failed": 0
+    },
+    "build": "pass",
+    "diffCheck": "pass",
+    "console": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "viewports": [
+      "320x700",
+      "390x844",
+      "1280x900"
+    ],
+    "pointer": {
+      "heldSupportOffset": 43.8019648477132,
+      "heldPlatformAngle": -0.19641097740891955,
+      "releasedSupportOffset": 0.02521248227331075,
+      "releasedPlatformAngle": -0.009238300088502894
+    },
+    "counterRun": {
+      "state": "playing",
+      "seconds": 20,
+      "routeProgress": 30.742618000000032,
+      "routeCompletion": 0.8090162631578955,
+      "badges": 6,
+      "creatures": 5
+    },
+    "neutralRun": {
+      "state": "results",
+      "routeProgress": 12.5
+    },
+    "review": {
+      "findings": 0,
+      "releaseBlockers": 0
+    }
+  },
+  "deployment": {
+    "status": "pending",
+    "url": "https://kiku-jw.github.io/wobble-stack/"
+  }
+}

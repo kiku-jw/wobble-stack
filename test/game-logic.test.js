@@ -14,6 +14,15 @@ import {
   layoutStack,
   shouldShowFailureResults,
 } from "../src/game-logic.js";
+import {
+  ROUTES,
+  getBadgeScreenY,
+  getCounterSupportOffset,
+  getRoute,
+  getRouteCompletion,
+  getSupportAngle,
+  getWorldScreenX,
+} from "../src/game-content.js";
 
 test("seeded random repeats the same run", () => {
   const first = createSeededRandom(42);
@@ -142,4 +151,43 @@ test("display helpers keep values bounded and readable", () => {
   assert.equal(clamp(-2, 0, 5), 0);
   assert.equal(formatTime(-3), "0.0");
   assert.equal(formatTime(12.34), "12.3");
+});
+
+test("the browser journey uses the three authored iPhone routes", () => {
+  assert.equal(ROUTES.length, 3);
+  assert.deepEqual(ROUTES.map((route) => route.badgeOffsets.length), [7, 8, 9]);
+  assert.deepEqual(ROUTES.map((route) => route.bumpDistances.length), [1, 2, 3]);
+  assert.deepEqual(ROUTES[0].joinStops.map((stop) => stop.character), ["rabbit", "jelly"]);
+  assert.equal(ROUTES[0].initialCreatures, 3);
+  assert.equal(ROUTES[2].finishDistance, 58);
+  assert.equal(getRoute(-4).id, "orchard");
+  assert.equal(getRoute(50).id, "windmill");
+});
+
+test("route objects move left while the friends travel right", () => {
+  const before = getWorldScreenX(12, 2);
+  const after = getWorldScreenX(12, 4);
+
+  assert.ok(after < before);
+  assert.equal(before - after, 68);
+  assert.equal(getRouteCompletion(19, 38), 0.5);
+  assert.equal(getRouteCompletion(90, 38), 1);
+  assert.ok(getBadgeScreenY(2) < getBadgeScreenY(-2));
+});
+
+test("rolling the wheel under the falling side counter-tilts the board", () => {
+  assert.equal(getSupportAngle(0, 42, 0.34), 0);
+  assert.ok(getSupportAngle(42, 42, 0.34) < 0);
+  assert.ok(getSupportAngle(-42, 42, 0.34) > 0);
+  assert.equal(getSupportAngle(100, 42, 0.34), -0.34);
+});
+
+test("keyboard support accounts for both the board slope and explicit counter force", () => {
+  const support = getCounterSupportOffset(0.0001, 1, 0.00105, 0.8, 44, 0.23);
+  const mirrored = getCounterSupportOffset(0.0001, -1, 0.00105, 0.8, 44, 0.23);
+
+  assert.ok(support > 8);
+  assert.ok(support < 20);
+  assert.equal(mirrored, -support);
+  assert.equal(getCounterSupportOffset(0.0001, 1, 0, 0.8, 44, 0.23), 0);
 });

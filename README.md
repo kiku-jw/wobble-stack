@@ -3,15 +3,14 @@
 Roll one ridiculous wheel under five little disasters while the wind tries to
 tear the tower apart.
 
-[**Play the web prototype**](https://kiku-jw.github.io/wobble-stack/) · Touch, mouse, and keyboard
+[**Play Wobble Stack**](https://kiku-jw.github.io/wobble-stack/) · Touch, mouse, and keyboard
 
 [![Deploy GitHub Pages](https://github.com/kiku-jw/wobble-stack/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/kiku-jw/wobble-stack/actions/workflows/deploy-pages.yml)
 
 <p align="center">
+  <img src="docs/web-gameplay.png" width="240" alt="Five clay friends balancing on the rolling star wheel in the browser game" />
   <img src="docs/ios/screenshots/start.jpg" width="210" alt="Wobble Stack iPhone start screen" />
-  <img src="docs/ios/screenshots/gameplay.jpg" width="210" alt="Four clay creatures balancing while a star wheel rolls on a clay road" />
   <img src="docs/ios/screenshots/collapse.jpg" width="210" alt="Five clay creatures flying apart with comic impact reactions" />
-  <img src="docs/ios/screenshots/finish.jpg" width="210" alt="All five friends arriving at the sunset windmill festival" />
 </p>
 
 ## What it is
@@ -20,19 +19,16 @@ Wobble Stack is a portrait physics game built around one idea: can a single
 thumb create a satisfying cycle of calm, wobble, panic, save, collapse, and
 instant retry?
 
-The public GitHub Pages build remains the lightweight Matter.js prototype. The
-current iPhone production client lives in `ios/WobbleStack`: a Unity 6 build
-whose dynamic star wheel rolls on a clay road, drives a freely reacting plank,
-and carries the tower through three handcrafted variable-intensity journeys.
-Wide thumb slides also move the visible support point beneath the plank and
-give it a short physical weight response.
-Five articulated personalities blink, look, brace, panic, briefly grab one
-another, tumble, and react to impact. Parallax scenery, drifting clouds, a
-turning windmill, moving optional badges, authored road bumps, two first-route
-friend joins, local route odometer, finish celebration, character-specific
-impact poses, impact slow motion, sound, haptics, safe areas, Reduced Motion,
-pause, and instant Retry are all implemented without a backend or runtime
-content SDK.
+The GitHub Pages edition now carries the actual game loop: a grounded star
+wheel, a moving clay road, three finite journeys, variable wind, 7/8/9 festival
+badges, authored bumps, two first-route friend joins, character-specific
+emotions, comic impact poses, first-impact slow motion, pause, Retry, local
+unlock progress, and responsive touch/keyboard controls.
+
+The Unity 6 iPhone client lives in `ios/WobbleStack`. It keeps the more detailed
+native joint animation, sound, and haptics while sharing the same story, routes,
+art direction, and wheel-balance contract. Neither edition requires an account
+or backend.
 
 ## Controls
 
@@ -40,8 +36,9 @@ content SDK.
   touch-down point to roll the wheel. Use short counter-slides to put the wheel
   back under a developing lean; wider slides visibly shift its support beneath
   the plank. Release to resume the gentle forward roll.
-- **Web prototype:** drag left/right with touch or mouse, or use Left/Right or
-  A/D.
+- **Browser:** touch or click anywhere on the stage, then slide relative to
+  that point to roll the wheel under the falling side. Release to recenter.
+  Left/Right and A/D use the same wheel movement.
 - **Goal:** reach the windmill with every creature and collect festival badges
   by touching them with the living stack.
 - **Pause:** use the button in the top-right corner or press Escape.
@@ -52,7 +49,7 @@ The first route will begin with three friends and add Rabbit and Jelly King at
 safe stops. Completing a route records its best badge count and opens the next
 road.
 
-## Run the web prototype locally
+## Run the browser game locally
 
 Requirements: Node.js 22 and pnpm 10.
 
@@ -72,12 +69,15 @@ pnpm build
 
 - Matter.js provides gravity, collision, and rigid-body motion.
 - A custom Canvas renderer draws the stage and up to five characters.
-- Pointer and keyboard input control one target angle for the beam.
+- Relative pointer input moves the visible wheel beneath the plank; its support
+  position drives the bounded plank response. Keyboard control uses the same
+  support model.
 - Seeded gusts vary inside one continuous force range biased toward ordinary
   Normal-like wind, with occasional soft and strong outliers.
 - Moving wind streaks show direction while their speed, density, and opacity build with force.
 - Creatures fall at normal speed; the first ground impact triggers a brief slow-motion beat.
-- Per-setup best times and the last setup are stored locally; nothing is sent anywhere.
+- Three authored routes store unlocks and best badge counts locally; nothing is
+  sent anywhere.
 
 ## iPhone client
 
@@ -113,8 +113,8 @@ Detailed product, art, architecture, and test decisions live in [`docs/ios`](doc
 
 ## Visual direction
 
-The concept frames below established the target. The iPhone screenshots at the
-top of this README are rendered from the current Unity build.
+The concept frames below established the target. The browser capture and iPhone
+screenshots at the top are rendered from the current implementations.
 
 <p align="center">
   <img src="docs/concepts/last-second-save.png" width="300" alt="Concept art showing a last-second balance save" />
