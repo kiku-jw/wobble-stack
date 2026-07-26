@@ -29,6 +29,10 @@ namespace WobbleStack.Runtime
         private const float WheelRecoveryMotorSpeed = 120f;
         private const float WheelRecoveryMotorTorque = 40f;
         private const float RouteForwardCruiseAmount = 0.18f;
+        private const float WheelAxleTravel = 0.72f;
+        private const float WheelAxleTravelSpeed = 1.2f;
+        private const float WheelAxleReturnSpeed = 1.55f;
+        private const float WheelAxleMotionTorque = 8f;
         private const float WheelDriveTorque = 40f;
         private const float WheelBrakeTorque = 12f;
         private const float PlatformSpringTorquePerDegree = 20f;
@@ -58,6 +62,9 @@ namespace WobbleStack.Runtime
         private Rigidbody2D _platformBody;
         private Rigidbody2D _wheelBody;
         private WheelJoint2D _wheelJoint;
+        private Transform _roadVisual;
+        private Transform _wheelVisual;
+        private float _axleWorldOffset;
         private Transform _worldRoot;
         private WindStreaks _windStreaks;
         private GameAudio _audio;
@@ -86,6 +93,7 @@ namespace WobbleStack.Runtime
         private int _unlockedRouteIndex;
         private int _collectedBadges;
         private int _nextJoinIndex;
+        private int _nextRoadBumpIndex;
         private float _routeProgress;
         private float _friendStopUntil;
         private RouteDefinition _route;
@@ -153,6 +161,7 @@ namespace WobbleStack.Runtime
                 PreparePlayingCapture();
             }
 
+            UpdateWheelVisual();
             UpdateCameraRig();
             UpdateHud();
             PortraitCapture.Write(_camera, _canvas, capturePath);
@@ -186,6 +195,7 @@ namespace WobbleStack.Runtime
                 UpdateFinish();
             }
 
+            UpdateWheelVisual();
             UpdateCameraRig();
             UpdateHud();
         }
@@ -199,6 +209,7 @@ namespace WobbleStack.Runtime
 
             _runSeconds += Time.fixedDeltaTime;
             UpdateGust();
+            UpdateWheelAxle();
             UpdatePlatformSuspension();
             UpdateFriendStopBraking();
             UpdateWheelDrive();
@@ -348,6 +359,7 @@ namespace WobbleStack.Runtime
             _collectedBadges = 0;
             _routeProgress = 0f;
             _friendStopUntil = 0f;
+            _nextRoadBumpIndex = 0;
             _runSucceeded = false;
             _firstImpactAt = -1f;
             _slowMotionEndsAt = -1f;
@@ -461,6 +473,19 @@ namespace WobbleStack.Runtime
             return _wheelBody.linearVelocity.x;
         }
 
+        internal float GetGameplayProbeAxleWorldOffset()
+        {
+            Vector2 platformToWheel =
+                new Vector2(_wheelVisual.position.x, _wheelVisual.position.y) -
+                _platformBody.position;
+            return Vector2.Dot(platformToWheel, _platformBody.transform.right);
+        }
+
+        internal float GetRoadVisualWorldXProbe()
+        {
+            return _roadVisual.position.x;
+        }
+
         internal string GetGameplayProbeFailureReason()
         {
             return _lastFailureReason;
@@ -525,12 +550,22 @@ namespace WobbleStack.Runtime
         {
             _routeProgress = Mathf.Max(0f, progress);
             _friendStopUntil = 0f;
-            _travellingWorld.SetRouteView(_cameraHome.x, _routeProgress);
+            SetWorldRouteView(_cameraHome.x);
         }
 
         internal TravellingWorld GetTravellingWorldProbe()
         {
             return _travellingWorld;
+        }
+
+        internal void TriggerRouteBumpProbe(int index)
+        {
+            TriggerRouteBump(index);
+        }
+
+        internal bool IsRouteBumpContactProbe(int index)
+        {
+            return IsRouteBumpAtWheel(index);
         }
 
         private void ConfigureRuntime()
@@ -626,6 +661,7 @@ namespace WobbleStack.Runtime
             road.transform.position = new Vector3(RoadCenterX, GroundSurfaceY - 1.2f, 0f);
             GameObject roadVisual = new GameObject("Road Visual");
             roadVisual.transform.SetParent(road.transform, false);
+            _roadVisual = roadVisual.transform;
             SpriteRenderer roadRenderer = roadVisual.AddComponent<SpriteRenderer>();
             roadRenderer.sprite = GeneratedArt.Road();
             roadRenderer.sortingOrder = -4;
@@ -644,7 +680,9 @@ namespace WobbleStack.Runtime
             wheel.transform.SetParent(_worldRoot, false);
             wheel.transform.position = new Vector3(0f, WheelCenterY, 0f);
             GameObject wheelVisual = new GameObject("Visual");
-            wheelVisual.transform.SetParent(wheel.transform, false);
+            wheelVisual.transform.SetParent(_worldRoot, false);
+            wheelVisual.transform.position = wheel.transform.position;
+            _wheelVisual = wheelVisual.transform;
             SpriteRenderer wheelRenderer = wheelVisual.AddComponent<SpriteRenderer>();
             wheelRenderer.sprite = GeneratedArt.Fulcrum();
             wheelRenderer.material = GeneratedArt.ChromaMaterial;
@@ -914,10 +952,12 @@ namespace WobbleStack.Runtime
             _wheelBody.rotation = 0f;
             _wheelBody.linearVelocity = Vector2.zero;
             _wheelBody.angularVelocity = 0f;
+            _axleWorldOffset = 0f;
+            UpdateWheelVisual();
             _cameraFollowVelocity = 0f;
             _cameraHome = new Vector3(0f, 0f, -10f);
             _camera.transform.position = _cameraHome;
-            _travellingWorld.SetRouteView(0f, _routeProgress);
+            SetWorldRouteView(0f);
             _windStreaks.SetCenterX(0f);
             Physics2D.SyncTransforms();
 
@@ -1038,6 +1078,7 @@ namespace WobbleStack.Runtime
             _routeProgress = 0f;
             _friendStopUntil = 0f;
             _nextJoinIndex = 0;
+            _nextRoadBumpIndex = 0;
             _runSucceeded = false;
             _pointerActive = false;
             _controlAmount = 0f;
@@ -1204,6 +1245,7 @@ namespace WobbleStack.Runtime
             _collectedBadges = 0;
             _routeProgress = 0f;
             _friendStopUntil = 0f;
+            _nextRoadBumpIndex = 0;
             _controlAmount = 0f;
             _hasGust = false;
             _runSucceeded = false;
@@ -1387,6 +1429,51 @@ namespace WobbleStack.Runtime
             _wheelJoint.useMotor = true;
         }
 
+        private void UpdateWheelAxle()
+        {
+            bool acceptsInput =
+                _pointerActive &&
+                _runSeconds >= _friendStopUntil;
+            float inputMagnitude = Mathf.Abs(_controlAmount);
+            float shapedInput =
+                Mathf.Sign(_controlAmount) *
+                inputMagnitude *
+                inputMagnitude;
+            float targetOffset = acceptsInput
+                ? shapedInput * WheelAxleTravel
+                : 0f;
+            float speed = acceptsInput
+                ? WheelAxleTravelSpeed
+                : WheelAxleReturnSpeed;
+            float previousOffset = _axleWorldOffset;
+            _axleWorldOffset = Mathf.MoveTowards(
+                _axleWorldOffset,
+                targetOffset,
+                speed * Time.fixedDeltaTime);
+            float supportSpeed =
+                (_axleWorldOffset - previousOffset) /
+                Time.fixedDeltaTime;
+            _platformBody.AddTorque(
+                supportSpeed * WheelAxleMotionTorque);
+        }
+
+        private void UpdateWheelVisual()
+        {
+            if (_wheelVisual == null || _wheelBody == null)
+            {
+                return;
+            }
+
+            _wheelVisual.position = new Vector3(
+                _wheelBody.position.x + _axleWorldOffset,
+                _wheelBody.position.y,
+                0f);
+            _wheelVisual.rotation = Quaternion.Euler(
+                0f,
+                0f,
+                _wheelBody.rotation);
+        }
+
         private void UpdateFriendStopBraking()
         {
             if (_runSeconds >= _friendStopUntil)
@@ -1512,8 +1599,11 @@ namespace WobbleStack.Runtime
                 return;
             }
 
+            Vector2 visibleWheelCenter = new Vector2(
+                _wheelBody.position.x + _axleWorldOffset,
+                _wheelBody.position.y);
             RaycastHit2D hit = Physics2D.Raycast(
-                _wheelBody.position,
+                visibleWheelCenter,
                 Vector2.down,
                 WheelRadius + 0.18f);
             if (hit.collider == null || hit.collider.gameObject.name != "Road")
@@ -1717,7 +1807,15 @@ namespace WobbleStack.Runtime
                 0.45f,
                 2.4f);
             _routeProgress += routeSpeed * Time.fixedDeltaTime;
-            _travellingWorld.SetRouteView(_cameraHome.x, _routeProgress);
+            SetWorldRouteView(_cameraHome.x);
+
+            while (!IsWindBalanceWindow() &&
+                _nextRoadBumpIndex < _route.RoadBumps.Length &&
+                IsRouteBumpAtWheel(_nextRoadBumpIndex))
+            {
+                TriggerRouteBump(_nextRoadBumpIndex);
+                _nextRoadBumpIndex += 1;
+            }
 
             while (_nextJoinIndex < _route.JoinStops.Length &&
                 _routeProgress >= _route.JoinStops[_nextJoinIndex])
@@ -1730,6 +1828,55 @@ namespace WobbleStack.Runtime
             {
                 BeginFinish();
             }
+        }
+
+        private bool IsRouteBumpAtWheel(int index)
+        {
+            if (index < 0 || index >= _route.RoadBumps.Length)
+            {
+                return false;
+            }
+
+            float bumpWorldX =
+                _cameraHome.x -
+                _routeProgress +
+                _route.RoadBumps[index];
+            float visibleWheelX =
+                _wheelBody.position.x +
+                _axleWorldOffset;
+            return bumpWorldX <= visibleWheelX + 0.08f;
+        }
+
+        private void TriggerRouteBump(int index)
+        {
+            if (_phase != GamePhase.Playing)
+            {
+                return;
+            }
+
+            float direction = (index & 1) == 0 ? 1f : -1f;
+            _platformBody.AddForce(
+                new Vector2(direction * 0.025f, 0.12f) *
+                _platformBody.mass,
+                ForceMode2D.Impulse);
+            _platformBody.AddTorque(
+                direction * 3f,
+                ForceMode2D.Impulse);
+            _cameraShake = _reducedMotion
+                ? 0f
+                : Mathf.Max(_cameraShake, 0.035f);
+            _audio.PlayClick();
+            CreateTransientSprite(
+                "Road Bump Dust",
+                GeneratedArt.Dust(),
+                _wheelBody.position + new Vector2(-direction * 0.18f, -0.72f),
+                0.36f,
+                new Vector2(-direction * 0.24f, 0.34f),
+                0.34f,
+                new Color(1f, 0.82f, 0.68f, 0.72f),
+                0.22f,
+                -direction * 22f,
+                1.25f);
         }
 
         private void AddFriendAtSafeStop()
@@ -2048,20 +2195,22 @@ namespace WobbleStack.Runtime
         private void PreparePlayingCapture()
         {
             _gameplayProbeActive = true;
+            _gustScheduler = new GustScheduler(1u);
             _phase = GamePhase.Playing;
             _route = RouteDefinition.Get(0);
-            _routeProgress = 24f;
+            _routeProgress = 18.2f;
             _travellingWorld.ConfigureRoute(_route, this);
             _creatureCount = 4;
             _collectedBadges = 3;
             ResetVehicle(false);
+            _axleWorldOffset = 0.52f;
             _wheelBody.position = new Vector2(24f, WheelCenterY);
             _platformBody.position = new Vector2(24f, PlatformY);
             _wheelBody.transform.position = _wheelBody.position;
             _platformBody.transform.position = _platformBody.position;
             _cameraHome = new Vector3(24.8f, 0f, -10f);
             _camera.transform.position = _cameraHome;
-            _travellingWorld.SetRouteView(_cameraHome.x, _routeProgress);
+            SetWorldRouteView(_cameraHome.x);
             _windStreaks.SetCenterX(_cameraHome.x);
             BuildStack(false);
             _startOverlay.SetActive(false);
@@ -2146,7 +2295,7 @@ namespace WobbleStack.Runtime
             _platformBody.transform.position = _platformBody.position;
             _cameraHome = new Vector3(vehicleX + 0.8f, 0f, -10f);
             _camera.transform.position = _cameraHome;
-            _travellingWorld.SetRouteView(_cameraHome.x, _routeProgress);
+            SetWorldRouteView(_cameraHome.x);
             _windStreaks.SetCenterX(_cameraHome.x);
             BuildStack(false);
             foreach (CreatureBody creature in _creatures)
@@ -2232,7 +2381,7 @@ namespace WobbleStack.Runtime
                 0.18f,
                 30f,
                 Time.unscaledDeltaTime);
-            _travellingWorld.SetRouteView(_cameraHome.x, _routeProgress);
+            SetWorldRouteView(_cameraHome.x);
             _windStreaks.SetCenterX(_cameraHome.x);
             if (_cameraShake <= 0f)
             {
@@ -2244,6 +2393,19 @@ namespace WobbleStack.Runtime
             float x = Mathf.Sin(Time.unscaledTime * 47f) * _cameraShake;
             float y = Mathf.Cos(Time.unscaledTime * 39f) * _cameraShake * 0.65f;
             _camera.transform.position = _cameraHome + new Vector3(x, y, 0f);
+        }
+
+        private void SetWorldRouteView(float cameraX)
+        {
+            _travellingWorld.SetRouteView(cameraX, _routeProgress);
+            if (_roadVisual == null)
+            {
+                return;
+            }
+
+            Vector3 roadPosition = _roadVisual.position;
+            roadPosition.x = cameraX - _routeProgress;
+            _roadVisual.position = roadPosition;
         }
 
         private int GetBestBadgeCount()

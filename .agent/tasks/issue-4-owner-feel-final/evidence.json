@@ -1,0 +1,33 @@
+{
+  "task": "issue-4-owner-feel-final",
+  "result": "AUTOMATED_AND_VISUAL_PASS",
+  "verified": {
+    "unity_version": "6000.3.19f1",
+    "editmode": {
+      "passed": 13,
+      "failed": 0,
+      "artifact": "raw/editmode-release-final.xml"
+    },
+    "playmode": {
+      "passed": 30,
+      "failed": 0,
+      "artifact": "raw/playmode-release-final.xml"
+    },
+    "captures": [
+      "raw/journey-release-final.png",
+      "raw/impact-release-final.png",
+      "raw/finish-release-final.png"
+    ],
+    "visual_review": [
+      "support visibly travels beneath the plank",
+      "road and scenery travel coherently",
+      "mesas and windmill bases are grounded",
+      "five distinct clean comic impact poses are visible",
+      "route bump is visible near the support"
+    ]
+  },
+  "pending": [
+    "physical iPhone launch",
+    "owner feel verdict"
+  ]
+}

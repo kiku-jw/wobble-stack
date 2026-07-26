@@ -12,7 +12,10 @@
   readable plank angle, camera-follow inputs, strongest-gust catch matrices,
   neutral/wrong fallability, weak grip release, parallax, pickups, friend joins,
   complete first-route travel, finish, and interruption-safe failure.
-- Current native-candidate receipt: `13/13` EditMode and `25/25` PlayMode pass.
+  Owner-feel coverage also checks support travel/recentering, synchronized road
+  scroll, grounded scenery bases, impact-pose variety, route-specific badge
+  motion, and survivable road bumps.
+- Current native-candidate receipt: `13/13` EditMode and `30/30` PlayMode pass.
 
 ## Deterministic rolling matrix
 
@@ -59,6 +62,8 @@ lean, or perfect per-frame correction into these proofs.
   visible weak grip creation, grip break, and no-immortality matrix.
 - Badge trigger contact, first-route Rabbit/Jelly join stops, route finish, and
   local progression persistence.
+- Route-specific badge motion and `1/2/3` authored bump counts; an isolated
+  bump must produce a measured plank jolt and remain survivable.
 - Cloud looping, windmill rotation, parallax ratios, camera bounds, and terrain
   seam visibility.
 - Impact squash, ground dust, crown/debris arcs, result hold, finish
@@ -75,9 +80,11 @@ human inspection gates rather than pixel assertions.
   portrait aspect.
 - Compare each capture against `ART_DIRECTION.md` and the two concept frames.
 - Verify wheel and road visually touch, the plank visibly rests above the
-  wheel, and world layers do not obscure controls or bodies.
+  wheel, broad input visibly shifts the support, impact poses contain no
+  doubled rigs, scenery bases are grounded, and world layers do not obscure
+  controls or bodies.
 - Current actual-physics Metal captures are stored in
-  `.agent/tasks/issue-4-rolling-world-final/raw/`.
+  `.agent/tasks/issue-4-owner-feel-final/raw/`.
 
 ## Device gate
 

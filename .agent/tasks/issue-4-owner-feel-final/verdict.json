@@ -1,0 +1,24 @@
+{
+  "task": "issue-4-owner-feel-final",
+  "verdict": "NATIVE_CANDIDATE_PENDING",
+  "review": "Automated regression, visual capture review, and adversarial implementation review passed.",
+  "findings": [
+    {
+      "finding": "Wheel dust originally remained at the hidden physical collider instead of the visible travelling support.",
+      "resolution": "The dust raycast now originates at the visible support position."
+    },
+    {
+      "finding": "An authored road bump could originally overlap a wind balance window.",
+      "resolution": "Bump contact waits until the current wind balance window is over."
+    },
+    {
+      "finding": "The initial route-coordinate trigger could fire before the bump reached the wheel on screen.",
+      "resolution": "Contact now compares the bump and visible wheel in world space and has a regression test."
+    }
+  ],
+  "residual_risk": [
+    "The support model preserves the proven physical wheel collider while moving the visible support and applying bounded transient torque; only an iPhone feel test can validate the illusion.",
+    "Moving badges and road bumps improve route variation, but replay interest remains an owner judgment rather than an automated fact."
+  ],
+  "next_gate": "Install and launch the exact committed revision on iPhone, then collect the owner feel verdict."
+}

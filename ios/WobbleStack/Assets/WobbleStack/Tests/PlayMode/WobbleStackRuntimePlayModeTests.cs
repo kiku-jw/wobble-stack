@@ -119,7 +119,24 @@ namespace WobbleStack.Runtime.Tests
             creature.ShowImpactReaction();
             yield return null;
             Assert.That(rig.Emotion, Is.EqualTo(CreatureEmotion.Impact));
-            Assert.That(rig.GetMouthSpriteName(), Is.EqualTo("face-DazedMouth"));
+            Assert.That(rig.GetMouthSpriteName(), Is.Not.EqualTo("face-DazedMouth"));
+            Assert.That(rig.GetMouthSpriteName(), Is.Not.EqualTo("face-GritMouth"));
+
+            HashSet<string> impactPoses = new HashSet<string>();
+            foreach (CharacterKind kind in new[]
+            {
+                CharacterKind.Pear,
+                CharacterKind.Cube,
+                CharacterKind.Bird,
+                CharacterKind.Rabbit,
+                CharacterKind.Jelly
+            })
+            {
+                impactPoses.Add(GeneratedArt.ImpactCharacter(kind).name);
+            }
+
+            Assert.That(impactPoses.Count, Is.EqualTo(5));
+            Assert.That(rig.IsImpactPoseVisibleProbe(), Is.True);
         }
 
         [UnityTest]
@@ -613,8 +630,10 @@ namespace WobbleStack.Runtime.Tests
             Assert.That(world, Is.Not.Null);
             Assert.That(world.CloudCount, Is.EqualTo(4));
             Assert.That(world.BadgeCount, Is.EqualTo(7));
+            Assert.That(world.RoadBumpCount, Is.EqualTo(1));
             Assert.That(GameObject.Find("Empty Sunset"), Is.Not.Null);
             Assert.That(GameObject.Find("Sunset Stage"), Is.Null);
+            Assert.That(GameObject.Find("Road Bump 1"), Is.Not.Null);
             Assert.That(Object.FindObjectsByType<RoutePickup>(FindObjectsSortMode.None).Length, Is.EqualTo(7));
 
             world.SetCameraX(20f);
@@ -641,9 +660,12 @@ namespace WobbleStack.Runtime.Tests
             Assert.That(orchard.InitialCreatureCount, Is.EqualTo(3));
             Assert.That(orchard.JoinStops.Length, Is.EqualTo(2));
             Assert.That(orchard.Badges.Length, Is.EqualTo(7));
+            Assert.That(orchard.RoadBumps.Length, Is.EqualTo(1));
             Assert.That(clouds.InitialCreatureCount, Is.EqualTo(5));
             Assert.That(clouds.Badges.Length, Is.EqualTo(8));
+            Assert.That(clouds.RoadBumps.Length, Is.EqualTo(2));
             Assert.That(windmill.Badges.Length, Is.EqualTo(9));
+            Assert.That(windmill.RoadBumps.Length, Is.EqualTo(3));
             Assert.That(orchard.FinishX, Is.LessThan(clouds.FinishX));
             Assert.That(clouds.FinishX, Is.LessThan(windmill.FinishX));
         }
@@ -886,6 +908,200 @@ namespace WobbleStack.Runtime.Tests
             Assert.That(
                 routeProgress,
                 Is.GreaterThanOrEqualTo(game.GetRouteProbeFinishX()));
+        }
+
+        [UnityTest]
+        [Order(26)]
+        public IEnumerator WheelSupportTravelsBeneathThePlankAndRecenters()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+
+            game.ConfigureGameplayProbe(0f, 1, 1f, 3, 2f);
+            float positiveBeamPeak = 0f;
+            for (int step = 0; step < 60; step += 1)
+            {
+                yield return new WaitForFixedUpdate();
+                positiveBeamPeak = Mathf.Max(
+                    positiveBeamPeak,
+                    game.GetGameplayProbePlatformRotation());
+            }
+
+            float positiveOffset = game.GetGameplayProbeAxleWorldOffset();
+            Assert.That(
+                positiveOffset,
+                Is.GreaterThan(0.45f),
+                $"Right input moved the wheel only {positiveOffset:0.00} beneath the plank.");
+
+            game.SendMessage("ShowReady");
+            yield return null;
+            game.ConfigureGameplayProbe(0f, 1, -1f, 3, 2f);
+            float negativeBeamPeak = 0f;
+            for (int step = 0; step < 60; step += 1)
+            {
+                yield return new WaitForFixedUpdate();
+                negativeBeamPeak = Mathf.Min(
+                    negativeBeamPeak,
+                    game.GetGameplayProbePlatformRotation());
+            }
+
+            float negativeOffset = game.GetGameplayProbeAxleWorldOffset();
+            Assert.That(
+                negativeOffset,
+                Is.LessThan(-0.45f),
+                $"Left input moved the wheel only {negativeOffset:0.00} beneath the plank.");
+            Assert.That(
+                positiveBeamPeak - negativeBeamPeak,
+                Is.GreaterThan(0.8f),
+                "Moving the physical fulcrum did not change the plank weight response.");
+
+            game.ReleaseGameplayProbeControl();
+            for (int step = 0; step < 45; step += 1)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            Assert.That(
+                Mathf.Abs(game.GetGameplayProbeAxleWorldOffset()),
+                Is.LessThan(0.2f),
+                "Released input did not return the wheel support toward center.");
+        }
+
+        [UnityTest]
+        [Order(27)]
+        public IEnumerator RoadAndLandmarksScrollLeftTogetherForRightwardTravel()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            game.SendMessage("ShowReady");
+            yield return null;
+
+            game.SetRouteProbeProgress(6f);
+            float cameraX = game.GetGameplayProbeCameraX();
+            float roadScreenX = game.GetRoadVisualWorldXProbe() - cameraX;
+            float landmarkScreenX =
+                GameObject.Find("Route 1 Gameplay").transform.position.x -
+                cameraX;
+
+            Assert.That(roadScreenX, Is.LessThan(-5.9f));
+            Assert.That(landmarkScreenX, Is.LessThan(-5.9f));
+            Assert.That(roadScreenX, Is.EqualTo(landmarkScreenX).Within(0.02f));
+        }
+
+        [UnityTest]
+        [Order(28)]
+        public IEnumerator MesasAndWindmillTowersHaveVisibleGroundedBases()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            game.SendMessage("ShowReady");
+            yield return null;
+
+            SpriteRenderer[] renderers =
+                Object.FindObjectsByType<SpriteRenderer>(FindObjectsSortMode.None);
+            int mesaCount = 0;
+            int towerCount = 0;
+            foreach (SpriteRenderer renderer in renderers)
+            {
+                if (renderer.gameObject.name.StartsWith("Far Mesa "))
+                {
+                    mesaCount += 1;
+                    Assert.That(
+                        renderer.bounds.min.y,
+                        Is.LessThanOrEqualTo(-7.1f),
+                        $"{renderer.gameObject.name} floated at y={renderer.bounds.min.y:0.00}.");
+                }
+                else if (renderer.gameObject.name == "Windmill Tower")
+                {
+                    towerCount += 1;
+                    Assert.That(
+                        renderer.bounds.min.y,
+                        Is.LessThanOrEqualTo(-7.05f),
+                        $"Windmill floated at y={renderer.bounds.min.y:0.00}.");
+                }
+            }
+
+            Assert.That(mesaCount, Is.GreaterThanOrEqualTo(3));
+            Assert.That(towerCount, Is.GreaterThanOrEqualTo(1));
+        }
+
+        [UnityTest]
+        [Order(29)]
+        public IEnumerator LaterRoutesGiveBadgesDistinctMovingChallenges()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            TravellingWorld world = game.GetTravellingWorldProbe();
+
+            world.ConfigureRoute(RouteDefinition.Get(0), game);
+            yield return null;
+            RoutePickup orchard = Object.FindFirstObjectByType<RoutePickup>();
+            Assert.That(orchard.HorizontalMotionAmplitude, Is.Zero);
+            Assert.That(orchard.VerticalMotionAmplitude, Is.EqualTo(0.12f).Within(0.001f));
+
+            world.ConfigureRoute(RouteDefinition.Get(1), game);
+            yield return null;
+            RoutePickup cloud = Object.FindFirstObjectByType<RoutePickup>();
+            Assert.That(cloud.HorizontalMotionAmplitude, Is.EqualTo(0.48f).Within(0.001f));
+            Assert.That(cloud.VerticalMotionAmplitude, Is.EqualTo(0.18f).Within(0.001f));
+
+            world.ConfigureRoute(RouteDefinition.Get(2), game);
+            yield return null;
+            RoutePickup windmill = Object.FindFirstObjectByType<RoutePickup>();
+            Vector3 start = windmill.transform.localPosition;
+            Assert.That(windmill.HorizontalMotionAmplitude, Is.EqualTo(0.72f).Within(0.001f));
+            Assert.That(windmill.VerticalMotionAmplitude, Is.EqualTo(0.34f).Within(0.001f));
+            yield return new WaitForSecondsRealtime(0.18f);
+            Assert.That(
+                Vector3.Distance(start, windmill.transform.localPosition),
+                Is.GreaterThan(0.04f));
+        }
+
+        [UnityTest]
+        [Order(30)]
+        public IEnumerator AuthoredRoadBumpCreatesAGentleSurvivableJolt()
+        {
+            yield return WaitForBootstrap();
+            WobbleStackGame game = Object.FindFirstObjectByType<WobbleStackGame>();
+            game.ConfigureGameplayProbe(0f, 1, 0f, 3, 1.4f);
+            for (int step = 0; step < 12; step += 1)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+            yield return null;
+
+            float bumpX = RouteDefinition.Get(0).RoadBumps[0];
+            game.SetRouteProbeProgress(bumpX);
+            Assert.That(
+                game.IsRouteBumpContactProbe(0),
+                Is.False,
+                "Road bump fired while its visual was still ahead of the wheel.");
+            game.SetRouteProbeProgress(bumpX + 3f);
+            Assert.That(
+                game.IsRouteBumpContactProbe(0),
+                Is.True,
+                "Road bump did not reach the wheel after passing through route space.");
+
+            Rigidbody2D beam =
+                GameObject.Find("Seesaw Beam").GetComponent<Rigidbody2D>();
+            float before = beam.angularVelocity;
+            game.TriggerRouteBumpProbe(0);
+            yield return new WaitForFixedUpdate();
+            float after = beam.angularVelocity;
+            Assert.That(
+                Mathf.Abs(after - before),
+                Is.GreaterThan(1.2f),
+                $"Road bump changed plank spin from {before:0.00} to only {after:0.00}.");
+
+            for (int step = 0; step < 75; step += 1)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            Assert.That(
+                game.GetGameplayProbePhase(),
+                Is.EqualTo(GamePhase.Playing),
+                $"The gentle road bump caused an unavoidable fall: {game.GetGameplayProbeFailureReason()}.");
         }
 
         private static IEnumerator WaitForBootstrap()

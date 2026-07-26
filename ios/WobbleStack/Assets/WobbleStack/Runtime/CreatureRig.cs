@@ -18,6 +18,9 @@ namespace WobbleStack.Runtime
     {
         private const float MaximumFrameStep = 0.05f;
         private readonly List<SecondaryPart> _secondaryParts = new List<SecondaryPart>();
+        private readonly List<SpriteRenderer> _articulatedRenderers =
+            new List<SpriteRenderer>();
+        private readonly List<bool> _impactRendererStates = new List<bool>();
         private Rigidbody2D _body;
         private Transform _visualRoot;
         private Transform _bodyVisual;
@@ -37,6 +40,8 @@ namespace WobbleStack.Runtime
         private SpriteRenderer _mouthRenderer;
         private SpriteRenderer _leftClosedEyeRenderer;
         private SpriteRenderer _rightClosedEyeRenderer;
+        private SpriteRenderer _impactPoseRenderer;
+        private Transform _impactPose;
         private SecondaryPart _leftArm;
         private SecondaryPart _rightArm;
         private Vector3 _leftEyeBaseScale;
@@ -64,6 +69,7 @@ namespace WobbleStack.Runtime
         private float _blinkDuration = 0.13f;
         private float _nextGazeAt;
         private float _impactKick;
+        private float _impactPoseEndsAt = -1f;
         private float _fallBlend;
         private float _mouthHeight;
         private float _emotionEyeScale = 1f;
@@ -90,6 +96,7 @@ namespace WobbleStack.Runtime
 
             BuildCharacter(sortingOrder);
             BuildFace(sortingOrder + 6);
+            BuildImpactPose(sortingOrder + 18);
             _previousVelocity = _body.linearVelocity;
             _nextBlinkAt = Time.time + Mathf.Lerp(1.2f, 3.1f, NextRandom01());
             _nextGazeAt = Time.time + Mathf.Lerp(0.3f, 1.2f, NextRandom01());
@@ -104,6 +111,9 @@ namespace WobbleStack.Runtime
             _previousWindIntensity = 0f;
             _reliefUntil = 0f;
             _impactKick = 0f;
+            _impactPoseEndsAt = -1f;
+            RestoreArticulatedRenderers();
+            _impactPoseRenderer.enabled = false;
             _fallBlend = 0f;
             _falling = false;
             _blinkStartedAt = -1f;
@@ -157,6 +167,10 @@ namespace WobbleStack.Runtime
         public void ShowImpactReaction()
         {
             _impactKick = 1f;
+            _impactPoseEndsAt = Time.unscaledTime + 0.72f;
+            HideArticulatedRenderers();
+            _impactPoseRenderer.enabled = true;
+            _impactPoseRenderer.color = Color.white;
             _falling = false;
             ClearGripTarget();
             SetEmotion(CreatureEmotion.Impact);
@@ -218,6 +232,16 @@ namespace WobbleStack.Runtime
             return _mouthRenderer.sprite.name;
         }
 
+        internal string GetImpactPoseSpriteNameProbe()
+        {
+            return _impactPoseRenderer.sprite.name;
+        }
+
+        internal bool IsImpactPoseVisibleProbe()
+        {
+            return _impactPoseRenderer.enabled;
+        }
+
         internal float GetNextBlinkAtProbe()
         {
             return _nextBlinkAt;
@@ -240,6 +264,7 @@ namespace WobbleStack.Runtime
             UpdateGaze(deltaTime);
             UpdateSecondaryMotion(deltaTime);
             UpdateBodyLife(deltaTime);
+            UpdateImpactPose();
         }
 
         private void BuildCharacter(int sortingOrder)
@@ -426,6 +451,103 @@ namespace WobbleStack.Runtime
             _leftBrowBaseScale = _leftBrow.localScale;
             _rightBrowBaseScale = _rightBrow.localScale;
             _mouthBaseScale = _mouth.localScale;
+        }
+
+        private void BuildImpactPose(int order)
+        {
+            foreach (SpriteRenderer renderer in
+                GetComponentsInChildren<SpriteRenderer>())
+            {
+                _articulatedRenderers.Add(renderer);
+            }
+
+            GetImpactPoseGeometry(out Vector2 position, out float height);
+            _impactPose = CreateSprite(
+                "Character Impact Pose",
+                GeneratedArt.ImpactCharacter(_kind),
+                position,
+                height,
+                0f,
+                order);
+            _impactPoseRenderer = _impactPose.GetComponent<SpriteRenderer>();
+            _impactPoseRenderer.enabled = false;
+        }
+
+        private void UpdateImpactPose()
+        {
+            if (!_impactPoseRenderer.enabled)
+            {
+                return;
+            }
+
+            float remaining = _impactPoseEndsAt - Time.unscaledTime;
+            if (remaining <= 0f)
+            {
+                _impactPoseRenderer.enabled = false;
+                RestoreArticulatedRenderers();
+                return;
+            }
+
+            float alpha = Mathf.InverseLerp(0f, 0.16f, remaining);
+            _impactPoseRenderer.color = new Color(1f, 1f, 1f, alpha);
+            float wobble = Mathf.Sin((Time.unscaledTime * 31f) + _idlePhase) *
+                Mathf.Min(remaining * 8f, 1f) *
+                3.5f;
+            _impactPose.localRotation = Quaternion.Euler(0f, 0f, wobble);
+        }
+
+        private void HideArticulatedRenderers()
+        {
+            if (_impactPoseRenderer.enabled)
+            {
+                return;
+            }
+
+            _impactRendererStates.Clear();
+            foreach (SpriteRenderer renderer in _articulatedRenderers)
+            {
+                _impactRendererStates.Add(renderer.enabled);
+                renderer.enabled = false;
+            }
+        }
+
+        private void RestoreArticulatedRenderers()
+        {
+            int count = Mathf.Min(
+                _articulatedRenderers.Count,
+                _impactRendererStates.Count);
+            for (int index = 0; index < count; index += 1)
+            {
+                _articulatedRenderers[index].enabled =
+                    _impactRendererStates[index];
+            }
+
+            _impactRendererStates.Clear();
+        }
+
+        private void GetImpactPoseGeometry(out Vector2 position, out float height)
+        {
+            position = Vector2.zero;
+            switch (_kind)
+            {
+                case CharacterKind.Pear:
+                    height = 2.7f;
+                    position = new Vector2(0f, 0.08f);
+                    return;
+                case CharacterKind.Cube:
+                    height = 1.84f;
+                    return;
+                case CharacterKind.Bird:
+                    height = 1.9f;
+                    return;
+                case CharacterKind.Rabbit:
+                    height = 2.72f;
+                    position = new Vector2(0f, 0.26f);
+                    return;
+                default:
+                    height = 1.48f;
+                    return;
+            }
         }
 
         private SecondaryPart CreateSecondary(
@@ -680,9 +802,22 @@ namespace WobbleStack.Runtime
             eyeScale = 1f;
             if (emotion == CreatureEmotion.Impact)
             {
-                mouth = FacePart.DazedMouth;
+                switch (_kind)
+                {
+                    case CharacterKind.Pear:
+                    case CharacterKind.Rabbit:
+                        mouth = FacePart.UncertainMouth;
+                        break;
+                    case CharacterKind.Bird:
+                        mouth = FacePart.PanicMouth;
+                        break;
+                    default:
+                        mouth = FacePart.EffortMouth;
+                        break;
+                }
+
                 brow = FacePart.DizzyBrow;
-                mouthScale = 1.15f;
+                mouthScale = _kind == CharacterKind.Bird ? 0.94f : 0.72f;
                 eyeScale = _kind == CharacterKind.Bird ? 1.15f : 0.94f;
                 return;
             }
@@ -698,24 +833,32 @@ namespace WobbleStack.Runtime
 
             if (emotion == CreatureEmotion.Panic)
             {
-                mouth = _kind == CharacterKind.Pear || _kind == CharacterKind.Rabbit
-                    ? FacePart.GritMouth
-                    : FacePart.PanicMouth;
+                mouth = _kind == CharacterKind.Pear
+                    ? FacePart.EffortMouth
+                    : _kind == CharacterKind.Rabbit
+                        ? FacePart.UncertainMouth
+                        : FacePart.PanicMouth;
                 brow = FacePart.WorriedBrow;
-                mouthScale = _kind == CharacterKind.Bird ? 1.25f : 1.05f;
+                mouthScale = _kind == CharacterKind.Bird
+                    ? 1.25f
+                    : _kind == CharacterKind.Pear || _kind == CharacterKind.Rabbit
+                        ? 0.78f
+                        : 1.05f;
                 eyeScale = _kind == CharacterKind.Cube || _kind == CharacterKind.Bird ? 1.14f : 1.07f;
                 return;
             }
 
             if (emotion == CreatureEmotion.Effort)
             {
-                mouth = _kind == CharacterKind.Pear || _kind == CharacterKind.Rabbit
-                    ? FacePart.GritMouth
+                mouth = _kind == CharacterKind.Rabbit
+                    ? FacePart.UncertainMouth
                     : FacePart.EffortMouth;
                 brow = _kind == CharacterKind.Rabbit || _kind == CharacterKind.Pear
                     ? FacePart.DeterminedBrow
                     : FacePart.WorriedBrow;
-                mouthScale = 0.86f;
+                mouthScale = _kind == CharacterKind.Pear || _kind == CharacterKind.Rabbit
+                    ? 0.72f
+                    : 0.86f;
                 eyeScale = 1.03f;
                 return;
             }

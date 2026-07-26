@@ -19,10 +19,13 @@ namespace WobbleStack.Runtime
         private Transform _windmillRotor;
         private float _cameraX;
         private float _routeProgress;
+        private int _roadBumpCount;
 
         public int CloudCount => _clouds.Count;
 
         public int BadgeCount => _pickups.Count;
+
+        public int RoadBumpCount => _roadBumpCount;
 
         public float WindmillRotation => _windmillRotor == null
             ? 0f
@@ -58,10 +61,12 @@ namespace WobbleStack.Runtime
             _foregroundLayer = CreateLayer($"Route {route.Index + 1} Foreground");
             _pickups.Clear();
             _windmillRotor = null;
+            _roadBumpCount = 0;
 
             BuildFarScenery(route);
             BuildMidScenery(route);
             BuildRouteLandmarks(route);
+            BuildRoadBumps(route);
             BuildForeground(route);
             BuildBadges(route, game);
             SetRouteView(_cameraX, _routeProgress);
@@ -151,7 +156,7 @@ namespace WobbleStack.Runtime
                     $"Far Mesa {index + 1}",
                     _farLayer,
                     GeneratedArt.World(WorldProp.Mesa),
-                    new Vector2(routeX * FarParallax, -5.85f),
+                    new Vector2(routeX * FarParallax, GroundSurfaceY - 0.24f),
                     height,
                     -72,
                     new Color(0.94f, 0.78f, 0.79f, 0.62f));
@@ -238,6 +243,29 @@ namespace WobbleStack.Runtime
             }
         }
 
+        private void BuildRoadBumps(RouteDefinition route)
+        {
+            for (int index = 0; index < route.RoadBumps.Length; index += 1)
+            {
+                SpriteRenderer bump = CreateSprite(
+                    $"Road Bump {index + 1}",
+                    _routeLayer,
+                    GeneratedArt.CoralPlate(),
+                    new Vector2(
+                        route.RoadBumps[index],
+                        GroundSurfaceY + 0.13f),
+                    0.4f,
+                    -2,
+                    new Color(0.91f, 0.43f, 0.3f, 1f));
+                Vector3 scale = bump.transform.localScale;
+                bump.transform.localScale = new Vector3(
+                    scale.x * 1.6f,
+                    scale.y,
+                    scale.z);
+                _roadBumpCount += 1;
+            }
+        }
+
         private void BuildBadges(RouteDefinition route, WobbleStackGame game)
         {
             for (int index = 0; index < route.Badges.Length; index += 1)
@@ -254,7 +282,7 @@ namespace WobbleStack.Runtime
                 collider.isTrigger = true;
                 collider.radius = renderer.sprite.bounds.extents.x * 0.7f;
                 RoutePickup pickup = badge.AddComponent<RoutePickup>();
-                pickup.Initialize(game, index);
+                pickup.Initialize(game, index, route.Index);
                 _pickups.Add(pickup);
             }
         }
@@ -293,7 +321,7 @@ namespace WobbleStack.Runtime
                 "Windmill Tower",
                 parent,
                 GeneratedArt.World(WorldProp.WindmillTower),
-                new Vector2(x, GroundSurfaceY + 0.04f),
+                new Vector2(x, GroundSurfaceY - 0.08f),
                 height,
                 sortingOrder,
                 Color.white);
@@ -301,7 +329,7 @@ namespace WobbleStack.Runtime
                 "Windmill Rotor",
                 parent,
                 GeneratedArt.World(WorldProp.WindmillRotor),
-                new Vector2(x, GroundSurfaceY + (height * 0.79f)),
+                new Vector2(x, GroundSurfaceY - 0.08f + (height * 0.79f)),
                 height * 0.48f,
                 sortingOrder + 1,
                 Color.white);

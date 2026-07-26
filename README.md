@@ -24,18 +24,22 @@ The public GitHub Pages build remains the lightweight Matter.js prototype. The
 current iPhone production client lives in `ios/WobbleStack`: a Unity 6 build
 whose dynamic star wheel rolls on a clay road, drives a freely reacting plank,
 and carries the tower through three handcrafted variable-intensity journeys.
+Wide thumb slides also move the visible support point beneath the plank and
+give it a short physical weight response.
 Five articulated personalities blink, look, brace, panic, briefly grab one
 another, tumble, and react to impact. Parallax scenery, drifting clouds, a
-turning windmill, optional badges, two first-route friend joins, local route
-odometer, finish celebration, impact slow motion, sound, haptics, safe areas,
-Reduced Motion, pause, and instant Retry are all implemented without a backend
-or runtime content SDK.
+turning windmill, moving optional badges, authored road bumps, two first-route
+friend joins, local route odometer, finish celebration, character-specific
+impact poses, impact slow motion, sound, haptics, safe areas, Reduced Motion,
+pause, and instant Retry are all implemented without a backend or runtime
+content SDK.
 
 ## Controls
 
 - **iPhone:** touch anywhere outside UI, then slide left or right from that
   touch-down point to roll the wheel. Use short counter-slides to put the wheel
-  back under a developing lean; release to resume the gentle forward roll.
+  back under a developing lean; wider slides visibly shift its support beneath
+  the plank. Release to resume the gentle forward roll.
 - **Web prototype:** drag left/right with touch or mouse, or use Left/Right or
   A/D.
 - **Goal:** reach the windmill with every creature and collect festival badges

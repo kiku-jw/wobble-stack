@@ -29,6 +29,12 @@ stationary beam is no longer authoritative for native gameplay.
 - Wheel: a dynamic circular `Rigidbody2D` with measured visual/collider
   alignment, high road friction, and enough physical mass to stay grounded
   without a positional constraint.
+- Moving support: broad signed input offsets the rendered wheel by at most
+  `0.72` world units beneath the plank while preserving the proven centered
+  circular solver collider on the flat road. Only offset motion adds a bounded
+  torque to the dynamic plank; no body receives a position or target angle.
+  This keeps small catch corrections precise and makes a wide support shift
+  visibly carry weight without injecting a persistent auto-balance force.
 - Plank: a dynamic `Rigidbody2D` with a rounded capsule collider. A single
   native `WheelJoint2D` supplies the legitimate one-wheel connection and
   suspension; code never assigns a target plank angle.
@@ -43,6 +49,9 @@ stationary beam is no longer authoritative for native gameplay.
   wheel position, so counter-steering cannot reverse the journey and no wheel,
   plank, or creature receives a scripted common-frame translation. Blue
   preview, active gusts, safe stops, and route finish pause the odometer.
+- The tiled road renderer uses the same camera-minus-route offset as gameplay
+  landmarks, so road texture, trees, badges, and destinations all communicate
+  rightward travel consistently while the physical road collider stays fixed.
 - Camera: horizontal smoothing, dead-zone-like lag, and velocity look-ahead
   follow the wheel. Camera impulse is layered on top and disabled by Reduced
   Motion.
@@ -76,8 +85,10 @@ stationary beam is no longer authoritative for native gameplay.
 - First route uses three bodies, then authored join stops add Rabbit and Jelly
   to the current moving stack after a short calm window. Five is the final
   active roster.
-- Badge triggers live in authored route space and record the best count per
-  route. No server or economy is introduced.
+- Badge triggers live in authored route space, use route-specific motion
+  patterns, and record the best count per route. Authored `1/2/3` road bumps
+  add a small plank impulse, dust, sound, and camera response only in calm
+  travel. No server or economy is introduced.
 
 ## Art pipeline
 

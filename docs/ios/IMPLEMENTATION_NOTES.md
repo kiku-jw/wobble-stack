@@ -174,6 +174,32 @@
   `PlayerPrefs`, and the existing render-capture path. No runtime package,
   backend, analytics SDK, video layer, or content framework was added.
 
+## 2026-07-26 — owner feel correction
+
+- The first attempt to move the live `WheelJoint2D.anchor` failed the accepted
+  gust matrix because changing a suspension constraint injected solver energy.
+  A physical slider-carriage experiment also changed the proven vehicle
+  response. Both were rejected before release.
+- The accepted model leaves the one proven wheel joint and flat-road collider
+  untouched. Broad input moves the independent rendered wheel horizontally and
+  applies only a short torque while that visible support is moving. Small
+  corrections remain precise, release recenters the support, and no body is
+  assigned a position or angle.
+- The road renderer now shares the gameplay layer's route offset, eliminating
+  the old contradiction where road texture implied leftward travel while trees
+  implied rightward travel.
+- Far mesas were lowered behind the road edge and windmill bases moved below
+  the ground line. Portrait travel and finish captures confirm planted bases.
+- The old five character-specific impact poses now flash cleanly for `0.72 s`.
+  The articulated renderers are temporarily hidden to avoid doubled bodies,
+  then restored; large shared `DazedMouth` and `GritMouth` reactions are no
+  longer used for Pear/Rabbit impact and effort.
+- Cloud Bridge badges weave sideways and Windmill Hill badges trace a larger
+  figure-eight. Reused clay UI art supplies `1/2/3` visible road bumps; each
+  adds a bounded calm-travel plank jolt, dust, sound, and camera response.
+- No new package, generated asset, runtime service, HUD element, currency, or
+  generalized route framework was introduced.
+
 ## Tooling constraint
 
 - Active developer directory is `/Applications/Xcode.app/Contents/Developer`; Xcode `26.6` is licensed and its first-launch setup is complete.

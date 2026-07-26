@@ -30,6 +30,8 @@ recovering the golden festival badges scattered along the road.
 - Seven, eight, and nine authored badge pickups across the three routes at
   different heights, collected by creature contact and persisted as each
   route's best count.
+- Later-route badges move in wider patterns, while `1/2/3` visible clay road
+  bumps add short survivable physical beats across the three journeys.
 - Start, travel, pause/settings, collapse, Retry, route finish, and route
   selection flows.
 - Sound, haptics, reduced motion, safe areas, interruption-safe pause, and local
@@ -44,7 +46,8 @@ recovering the golden festival badges scattered along the road.
 3. Read gust buildup from blue wind, appendages, faces, and sound rather than
    text or a meter.
 4. Travel toward the windmill, collect optional badges with the creatures, and
-   add the two missing friends at first-route safe stops.
+   add the two missing friends at first-route safe stops. Read and absorb short
+   road-bump jolts between gusts.
 5. Recover from near-falls or lose a friend to the ground in a comic physical
    collapse.
 6. Retry immediately; completing the route records badges and opens the next

@@ -11,7 +11,8 @@ namespace WobbleStack.Runtime
             float finishX,
             int initialCreatureCount,
             Vector2[] badges,
-            float[] joinStops)
+            float[] joinStops,
+            float[] roadBumps)
         {
             Index = index;
             Title = title;
@@ -20,6 +21,7 @@ namespace WobbleStack.Runtime
             InitialCreatureCount = initialCreatureCount;
             Badges = badges;
             JoinStops = joinStops;
+            RoadBumps = roadBumps;
         }
 
         public int Index { get; }
@@ -35,6 +37,8 @@ namespace WobbleStack.Runtime
         public Vector2[] Badges { get; }
 
         public float[] JoinStops { get; }
+
+        public float[] RoadBumps { get; }
 
         public static int Count => 3;
 
@@ -59,7 +63,8 @@ namespace WobbleStack.Runtime
                             new Vector2(31f, -0.15f),
                             new Vector2(36f, 1.3f)
                         },
-                        new[] { 12.5f, 25f });
+                        new[] { 12.5f, 25f },
+                        new[] { 19f });
                 case 1:
                     return new RouteDefinition(
                         1,
@@ -78,7 +83,8 @@ namespace WobbleStack.Runtime
                             new Vector2(42f, 0.75f),
                             new Vector2(46f, 1.75f)
                         },
-                        new float[0]);
+                        new float[0],
+                        new[] { 15f, 34f });
                 default:
                     return new RouteDefinition(
                         2,
@@ -98,7 +104,8 @@ namespace WobbleStack.Runtime
                             new Vector2(51f, 2.2f),
                             new Vector2(56f, 0.85f)
                         },
-                        new float[0]);
+                        new float[0],
+                        new[] { 12f, 29f, 46f });
             }
         }
     }
