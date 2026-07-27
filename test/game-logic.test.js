@@ -18,6 +18,7 @@ import {
   ROUTES,
   createShuffledOrder,
   getBadgeScreenY,
+  getCappedPointerSupportOffset,
   getCounterSupportOffset,
   getRoute,
   getRouteCompletion,
@@ -191,6 +192,65 @@ test("keyboard support accounts for both the board slope and explicit counter fo
   assert.ok(support < 20);
   assert.equal(mirrored, -support);
   assert.equal(getCounterSupportOffset(0.0001, 1, 0, 0.8, 44, 0.23), 0);
+});
+
+test("pointer control caps a full correct swipe at the strongest useful counter-angle", () => {
+  const parameters = [1, 1, 0.000135, 0.00105, 0.8, 44, 0.23];
+  const ideal = getCounterSupportOffset(0.000135, 1, 0.00105, 0.8, 44, 0.23);
+  const partialSwipe = getCappedPointerSupportOffset(0.35, ...parameters);
+  const fullSwipe = getCappedPointerSupportOffset(1, ...parameters);
+
+  assert.equal(partialSwipe, ideal * 0.35);
+  assert.equal(fullSwipe, ideal);
+  assert.ok(fullSwipe < 20);
+});
+
+test("pointer control follows the gust envelope and keeps wrong-way input dangerous", () => {
+  const earlyGust = getCappedPointerSupportOffset(
+    0.4,
+    1,
+    0.25,
+    WIND_PROFILE.forceMax,
+    0.00105,
+    0.8,
+    44,
+    0.23,
+  );
+  const fullGust = getCappedPointerSupportOffset(
+    0.4,
+    1,
+    1,
+    WIND_PROFILE.forceMax,
+    0.00105,
+    0.8,
+    44,
+    0.23,
+  );
+  const wrongWay = getCappedPointerSupportOffset(
+    -1,
+    1,
+    1,
+    WIND_PROFILE.forceMax,
+    0.00105,
+    0.8,
+    44,
+    0.23,
+  );
+  const betweenGusts = getCappedPointerSupportOffset(
+    1,
+    0,
+    0,
+    WIND_PROFILE.forceMax,
+    0.00105,
+    0.8,
+    44,
+    0.23,
+  );
+
+  assert.ok(earlyGust > 0);
+  assert.ok(fullGust > earlyGust);
+  assert.equal(wrongWay, -9.68);
+  assert.equal(betweenGusts, 9.68);
 });
 
 test("music shuffle exhausts every track and avoids a boundary repeat", () => {

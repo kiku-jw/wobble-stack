@@ -16,6 +16,7 @@ import {
   ROUTES,
   createShuffledOrder,
   getBadgeScreenY,
+  getCappedPointerSupportOffset,
   getCounterSupportOffset,
   getRoute,
   getRouteCompletion,
@@ -765,7 +766,16 @@ function updateVehicleControl() {
   if (keyboardDirection !== 0) {
     supportTarget = getKeyboardSupportTarget();
   } else if (pointerActive) {
-    supportTarget = pointerControl * MAX_SUPPORT_OFFSET;
+    supportTarget = getCappedPointerSupportOffset(
+      pointerControl,
+      gust?.direction || 0,
+      getActiveGustEnvelope(),
+      WIND_PROFILE.forceMax,
+      GRAVITY_SCALE,
+      COUNTER_TILT_AUTHORITY,
+      MAX_SUPPORT_OFFSET,
+      MAX_PLATFORM_ANGLE,
+    );
   } else {
     supportTarget = 0;
   }
