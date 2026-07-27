@@ -117,12 +117,14 @@ export function getCappedPointerSupportOffset(
 
   const activeEnvelope = clamp(Number(gustEnvelope) || 0, 0, 1);
   const windDirection = Math.sign(gustDirection);
-  const isCounteringActiveWind =
+  const hasActiveWind =
     Math.max(0, Number(maximumGustForce) || 0) > 0 &&
     activeEnvelope > 0 &&
-    Math.sign(boundedControl) === windDirection;
+    windDirection !== 0;
 
-  if (!isCounteringActiveWind) {
+  if (!hasActiveWind) return 0;
+
+  if (Math.sign(boundedControl) !== windDirection) {
     return boundedControl * maxSupportOffset * 0.22;
   }
 
@@ -134,7 +136,10 @@ export function getCappedPointerSupportOffset(
     maxSupportOffset,
     maxPlatformAngle,
   );
-  return maximumUsefulOffset * Math.abs(boundedControl);
+  const recoveryOffset = maximumUsefulOffset * 1.45;
+  return Math.sign(recoveryOffset) *
+    Math.min(Math.abs(recoveryOffset), maxSupportOffset) *
+    Math.abs(boundedControl);
 }
 
 export function createShuffledOrder(items, random = Math.random, previousItem = null) {

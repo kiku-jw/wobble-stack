@@ -8,6 +8,7 @@ import {
   getFailureTimeScale,
   getGustEnvelope,
   getGustTiming,
+  getStackWindScale,
   getWindTravelSpeed,
   layoutStack,
   shouldShowFailureResults,
@@ -464,6 +465,7 @@ function resetPhysics() {
     currentRoute.initialCreatures,
   );
   creatures = activeSpecs.map((spec) => createCreature(spec));
+  const baseGripLinks = createBaseGripLinks(platform, creatures[0]);
   stackLinks = [];
 
   for (let index = 1; index < creatures.length; index += 1) {
@@ -474,6 +476,7 @@ function resetPhysics() {
     platform,
     catchFloor,
     ...creatures.map((creature) => creature.body),
+    ...baseGripLinks,
     ...stackLinks,
   ]);
   Events.on(engine, "collisionStart", handleCollisionStart);
@@ -516,8 +519,30 @@ function createFriendshipLinks(lowerCreature, upperCreature) {
       y: upperCreature.proxyHeight / 2,
     },
     length: 0,
-    stiffness: 0.017,
-    damping: 0.09,
+    stiffness: 0.14,
+    damping: 0.3,
+    render: { visible: false },
+  }));
+}
+
+function createBaseGripLinks(board, baseCreature) {
+  const footOffset = baseCreature.proxyWidth * 0.18;
+
+  return [-1, 1].map((side) => Constraint.create({
+    label: "base-grip",
+    bodyA: board,
+    pointA: {
+      x: side * footOffset,
+      y: -12,
+    },
+    bodyB: baseCreature.body,
+    pointB: {
+      x: side * footOffset,
+      y: baseCreature.proxyHeight / 2,
+    },
+    length: 0,
+    stiffness: 0.12,
+    damping: 0.25,
     render: { visible: false },
   }));
 }
@@ -770,7 +795,7 @@ function updateVehicleControl() {
       pointerControl,
       gust?.direction || 0,
       getActiveGustEnvelope(),
-      WIND_PROFILE.forceMax,
+      WIND_PROFILE.forceMax * getStackWindScale(creatures.length),
       GRAVITY_SCALE,
       COUNTER_TILT_AUTHORITY,
       MAX_SUPPORT_OFFSET,
@@ -803,7 +828,7 @@ function getKeyboardSupportTarget() {
   }
 
   const support = getCounterSupportOffset(
-    gust.force,
+    gust.force * getStackWindScale(creatures.length),
     gust.direction,
     GRAVITY_SCALE,
     COUNTER_TILT_AUTHORITY,
@@ -852,7 +877,7 @@ function applyGustForce() {
   if (!gust || gust.phase !== "active") return;
   const envelope = getActiveGustEnvelope();
   const horizontalAcceleration = getEffectiveGustAcceleration(
-    gust.force,
+    gust.force * getStackWindScale(creatures.length),
     gust.direction,
     envelope,
     platform.angle,

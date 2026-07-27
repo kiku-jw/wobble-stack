@@ -10,6 +10,7 @@ import {
   getGustEnvelope,
   getGustTiming,
   getRequiredCounterAngle,
+  getStackWindScale,
   getWindTravelSpeed,
   layoutStack,
   shouldShowFailureResults,
@@ -114,6 +115,14 @@ test("wind streak travel speed increases with visual intensity", () => {
   assert.equal(getWindTravelSpeed(2), getWindTravelSpeed(1));
 });
 
+test("taller stacks receive normalized wind without changing the gust visuals", () => {
+  assert.equal(getStackWindScale(3), 1);
+  assert.equal(getStackWindScale(4), 0.76);
+  assert.equal(getStackWindScale(5), 0.52);
+  assert.equal(getStackWindScale(12), 0.52);
+  assert.equal(getStackWindScale(-2), 1);
+});
+
 test("stack layout supports three through five touching creatures", () => {
   const specs = [78, 54, 56, 62, 50].map((proxyHeight, index) => ({
     kind: String(index),
@@ -194,14 +203,14 @@ test("keyboard support accounts for both the board slope and explicit counter fo
   assert.equal(getCounterSupportOffset(0.0001, 1, 0, 0.8, 44, 0.23), 0);
 });
 
-test("pointer control caps a full correct swipe at the strongest useful counter-angle", () => {
+test("pointer control leaves enough correct-swipe authority to recover a leaning stack", () => {
   const parameters = [1, 1, 0.000135, 0.00105, 0.8, 44, 0.23];
   const ideal = getCounterSupportOffset(0.000135, 1, 0.00105, 0.8, 44, 0.23);
   const partialSwipe = getCappedPointerSupportOffset(0.35, ...parameters);
   const fullSwipe = getCappedPointerSupportOffset(1, ...parameters);
 
-  assert.equal(partialSwipe, ideal * 0.35);
-  assert.equal(fullSwipe, ideal);
+  assert.equal(partialSwipe, ideal * 1.45 * 0.35);
+  assert.equal(fullSwipe, ideal * 1.45);
   assert.ok(fullSwipe < 20);
 });
 
@@ -250,7 +259,7 @@ test("pointer control follows the gust envelope and keeps wrong-way input danger
   assert.ok(earlyGust > 0);
   assert.ok(fullGust > earlyGust);
   assert.equal(wrongWay, -9.68);
-  assert.equal(betweenGusts, 9.68);
+  assert.equal(betweenGusts, 0);
 });
 
 test("music shuffle exhausts every track and avoids a boundary repeat", () => {
