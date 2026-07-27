@@ -117,9 +117,9 @@ test("wind streak travel speed increases with visual intensity", () => {
 
 test("taller stacks receive normalized wind without changing the gust visuals", () => {
   assert.equal(getStackWindScale(3), 1);
-  assert.equal(getStackWindScale(4), 0.76);
-  assert.equal(getStackWindScale(5), 0.52);
-  assert.equal(getStackWindScale(12), 0.52);
+  assert.equal(getStackWindScale(4), 0.88);
+  assert.equal(getStackWindScale(5), 0.76);
+  assert.equal(getStackWindScale(12), 0.76);
   assert.equal(getStackWindScale(-2), 1);
 });
 

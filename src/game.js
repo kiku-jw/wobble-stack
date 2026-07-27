@@ -519,32 +519,30 @@ function createFriendshipLinks(lowerCreature, upperCreature) {
       y: upperCreature.proxyHeight / 2,
     },
     length: 0,
-    stiffness: 0.14,
-    damping: 0.3,
+    stiffness: 0.075,
+    damping: 0.2,
     render: { visible: false },
   }));
 }
 
 function createBaseGripLinks(board, baseCreature) {
-  const footOffset = baseCreature.proxyWidth * 0.18;
-
-  return [-1, 1].map((side) => Constraint.create({
+  return [Constraint.create({
     label: "base-grip",
     bodyA: board,
     pointA: {
-      x: side * footOffset,
+      x: 0,
       y: -12,
     },
     bodyB: baseCreature.body,
     pointB: {
-      x: side * footOffset,
+      x: 0,
       y: baseCreature.proxyHeight / 2,
     },
     length: 0,
-    stiffness: 0.12,
-    damping: 0.25,
+    stiffness: 0.08,
+    damping: 0.22,
     render: { visible: false },
-  }));
+  })];
 }
 
 function startRun() {

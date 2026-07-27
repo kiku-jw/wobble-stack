@@ -59,7 +59,7 @@ export function getWindTravelSpeed(intensity) {
 
 export function getStackWindScale(creatureCount) {
   const extraFriends = clamp(Math.round(Number(creatureCount) || 3), 3, 5) - 3;
-  return 1 - extraFriends * 0.24;
+  return 1 - extraFriends * 0.12;
 }
 
 export function getRequiredCounterAngle(force, gravityScale) {
