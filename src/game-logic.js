@@ -57,6 +57,12 @@ export function getWindTravelSpeed(intensity) {
   return bounded === 0 ? 0 : 55 + bounded * 315;
 }
 
+export function getAudioFadeGain(elapsedMs, durationMs) {
+  if (durationMs <= 0) return 1;
+  const progress = clamp(elapsedMs / durationMs, 0, 1);
+  return progress * progress * (3 - 2 * progress);
+}
+
 export function getStackWindScale(creatureCount) {
   const extraFriends = clamp(Math.round(Number(creatureCount) || 3), 3, 5) - 3;
   return 1 - extraFriends * 0.12;

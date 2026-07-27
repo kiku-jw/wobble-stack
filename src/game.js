@@ -4,6 +4,7 @@ import {
   WIND_PROFILE,
   clamp,
   createSeededRandom,
+  getAudioFadeGain,
   getEffectiveGustAcceleration,
   getFailureTimeScale,
   getGustEnvelope,
@@ -54,6 +55,7 @@ const REDUCED_FAILURE_IMPACT_HOLD_MS = 180;
 const PROGRESS_KEY = "wobble-stack-journey-v1";
 const MUSIC_VOLUME_KEY = "wobble-stack-music-volume-v1";
 const DEFAULT_MUSIC_VOLUME = 0.5;
+const MUSIC_FADE_IN_MS = 1100;
 const MUSIC_TRACKS = Object.freeze([
   "assets/music/sunny-clay-parade-a.mp3",
   "assets/music/sunny-clay-parade-b.mp3",
@@ -141,6 +143,8 @@ let musicVolume = readMusicVolume();
 let musicQueue = [];
 let currentMusicTrack = null;
 let musicActivated = false;
+let musicFadeFrame = null;
+let musicFadeGeneration = 0;
 const musicPlayer = new Audio();
 
 const creatureSpecs = [
@@ -314,20 +318,51 @@ function configureMusic() {
 function startMusic() {
   musicActivated = true;
   if (!currentMusicTrack) selectNextMusicTrack();
-  musicPlayer.play().catch(() => {
+  cancelMusicFade();
+  const fadeGeneration = musicFadeGeneration;
+  musicPlayer.volume = 0;
+  musicPlayer.play().then(() => {
+    if (fadeGeneration !== musicFadeGeneration || musicPlayer.paused) return;
+    const startedAt = performance.now();
+
+    const fadeIn = (now) => {
+      if (fadeGeneration !== musicFadeGeneration) return;
+      const gain = getAudioFadeGain(now - startedAt, MUSIC_FADE_IN_MS);
+      musicPlayer.volume = musicVolume * gain;
+
+      if (gain < 1 && !musicPlayer.paused) {
+        musicFadeFrame = window.requestAnimationFrame(fadeIn);
+      } else {
+        musicFadeFrame = null;
+        musicPlayer.volume = musicVolume;
+      }
+    };
+
+    musicFadeFrame = window.requestAnimationFrame(fadeIn);
+  }).catch(() => {
+    musicPlayer.volume = musicVolume;
     // A later Play or Resume gesture retries when the browser blocks autoplay.
   });
 }
 
 function pauseMusic() {
+  cancelMusicFade();
   musicPlayer.pause();
 }
 
 function playNextMusicTrack() {
   if (!selectNextMusicTrack() || !musicActivated || document.hidden) return;
+  cancelMusicFade();
+  musicPlayer.volume = musicVolume;
   musicPlayer.play().catch(() => {
     // Keep the playlist queued for the next explicit user gesture.
   });
+}
+
+function cancelMusicFade() {
+  musicFadeGeneration += 1;
+  if (musicFadeFrame !== null) window.cancelAnimationFrame(musicFadeFrame);
+  musicFadeFrame = null;
 }
 
 function selectNextMusicTrack() {
@@ -345,7 +380,7 @@ function selectNextMusicTrack() {
 function setMusicVolume(value) {
   const percentage = clamp(Math.round(Number(value) || 0), 0, 100);
   musicVolume = percentage / 100;
-  musicPlayer.volume = musicVolume;
+  if (musicFadeFrame === null) musicPlayer.volume = musicVolume;
   syncMusicVolumeControls();
   writeMusicVolume();
 }
@@ -1815,6 +1850,8 @@ if (new URLSearchParams(window.location.search).has("debug")) {
     }),
     getMusicState: () => ({
       volume: musicVolume,
+      playerVolume: musicPlayer.volume,
+      fading: musicFadeFrame !== null,
       paused: musicPlayer.paused,
       currentTrack: currentMusicTrack
         ? new URL(currentMusicTrack).pathname.split("/").pop()

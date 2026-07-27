@@ -5,6 +5,7 @@ import {
   clamp,
   createSeededRandom,
   formatTime,
+  getAudioFadeGain,
   getEffectiveGustAcceleration,
   getFailureTimeScale,
   getGustEnvelope,
@@ -113,6 +114,14 @@ test("wind streak travel speed increases with visual intensity", () => {
   }
   assert.equal(getWindTravelSpeed(-1), 0);
   assert.equal(getWindTravelSpeed(2), getWindTravelSpeed(1));
+});
+
+test("music fade enters gently and reaches the selected volume", () => {
+  assert.equal(getAudioFadeGain(0, 1100), 0);
+  assert.equal(getAudioFadeGain(550, 1100), 0.5);
+  assert.equal(getAudioFadeGain(1100, 1100), 1);
+  assert.equal(getAudioFadeGain(2000, 1100), 1);
+  assert.equal(getAudioFadeGain(0, 0), 1);
 });
 
 test("taller stacks receive normalized wind without changing the gust visuals", () => {
