@@ -4,7 +4,7 @@ Updated: 2026-07-30
 
 ## Current state
 
-- Phase: phone-first public browser game
+- Phase: published phone-first browser game
 - Canonical task: [GitHub Issue #4](https://github.com/kiku-jw/wobble-stack/issues/4)
 - Distribution: [GitHub Pages](https://kiku-jw.github.io/wobble-stack/)
 - Runtime: Vite, Canvas, Matter.js, no backend
@@ -52,7 +52,5 @@ Updated: 2026-07-30
 
 ## Next
 
-- Publish the verified revision and confirm the GitHub Pages workflow and fresh
-  live session.
 - Test the feel on a physical iPhone and inside Telegram, then tune from observed
   play rather than adding a larger progression system.
