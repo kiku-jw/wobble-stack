@@ -4,12 +4,17 @@ Updated: 2026-07-30
 
 ## Current state
 
-- Phase: published phone-first browser game
+- Phase: privacy-first public-link playtest
 - Canonical task: [GitHub Issue #4](https://github.com/kiku-jw/wobble-stack/issues/4)
 - Distribution: [GitHub Pages](https://kiku-jw.github.io/wobble-stack/)
-- Runtime: Vite, Canvas, Matter.js, no backend
+- Runtime: Vite, Canvas, Matter.js, first-party Cloudflare Worker + EU D1
 - Release evidence: recorded in the canonical Issue
 - Human acceptance gate: physical iPhone feel and Telegram-client behavior
+- Primary share link:
+  `https://kiku-jw.github.io/wobble-stack/?from=telegram&playtest=TG1&source=telegram`
+- Primary cohort: the first 20 anonymous browser installations to start a
+  round. The earlier three-friend test is qualitative context, not part of the
+  measured cohort.
 
 ## Current game
 
@@ -33,12 +38,21 @@ Updated: 2026-07-30
   motion, and local music preferences remain intact.
 - Four owner-supplied parade tracks play through a non-repeating shuffled bag
   after the player starts the game.
+- The public-link mode asks before sending anonymous round summaries. Private
+  play stores no participant UUID and makes no collector request.
+- Joined play measures rounds, finish/loss, Retry, duration, progress, badges,
+  jumps, obstacle hits/clears, source, and local day. It does not store names,
+  Telegram IDs, messages, user agent, IP, or precise controls.
+- Failed delivery stays in a bounded local outbox. Players can delete their
+  telemetry; the cohort slot remains empty so later players cannot replace
+  someone who withdrew.
 
 ## Local verification
 
-- `pnpm test`: 23/23 passing, including held-key repeat rejection and the
-  deterministic obstacle-impact response.
-- `pnpm build`: passing production build.
+- `pnpm test`: 58/58 passing, including collector validation, fixed first-20
+  cohort slots, offline delivery, deletion, and Telegram handoff.
+- `pnpm build`: passing production build with the live collector endpoint.
+- `pnpm worker:check`: passing Worker bundle and binding validation.
 - `git diff --check`: passing.
 - A real full drag at 390 × 844 held support at `36.42/36.96`; release returned
   it to `0.40` while the run remained active.
@@ -56,8 +70,14 @@ Updated: 2026-07-30
   Retry reset jump height and obstacle outcomes.
 - 320 × 700, 390 × 844, and 1280 × 900 had no document overflow. Browser console:
   0 errors, 0 warnings.
+- The local end-to-end collector accepted start, finish, Retry, and jump
+  summaries; offline play stayed active with one pending event and delivered it
+  after reconnect. Deletion removed events and anonymized the occupied slot.
+- The live Worker health check, exact-origin CORS, foreign-origin rejection,
+  EU D1 migration, and 30-day retention trigger are active.
 
 ## Next
 
-- Test the feel on a physical iPhone and inside Telegram, then tune from observed
-  play rather than adding a larger progression system.
+- Share the primary link, wait for 20 starters, then evaluate whether at least
+  12 reach five rounds and at least 6 return on another local day before adding
+  larger progression.
