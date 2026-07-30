@@ -18,13 +18,17 @@
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node --test",
-    "check": "pnpm test && pnpm build"
+    "test": "node --test test/*.test.js worker/test/*.test.js",
+    "worker:check": "wrangler deploy --dry-run --config worker/wrangler.jsonc",
+    "worker:dev": "wrangler dev --config worker/wrangler.jsonc --var GAME_ORIGIN:http://127.0.0.1:5173",
+    "worker:deploy": "wrangler deploy --config worker/wrangler.jsonc",
+    "check": "pnpm test && pnpm build && pnpm worker:check"
   },
   "dependencies": {
     "matter-js": "0.20.0"
   },
   "devDependencies": {
-    "vite": "8.1.5"
+    "vite": "8.1.5",
+    "wrangler": "4.116.0"
   }
 }
