@@ -161,10 +161,15 @@ A narrow adapter reads and writes the one versioned localStorage key. It:
 Existing game transitions call the playtest recorder:
 
 - page load to initialize or read the scoped record without counting a session;
-- `startRun`;
+- initial Start, result-state Retry, finished-route Replay, and Next road through
+  explicit semantic handlers before their shared `startRun` transition;
 - failure results;
 - route completion;
-- Retry from results.
+
+The recorder does not infer intent from `startRun` itself. Only the
+result-overlay Retry handler increments `retries`; Start, Replay, Next road,
+route selection, reload, and debug controls never do. Every successful gameplay
+start still increments the round and route-attempt counters exactly once.
 
 The integration is observational. It cannot change wind, physics, scoring,
 routes, unlocks, input, music, or result timing.
