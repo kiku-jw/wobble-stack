@@ -177,6 +177,42 @@ test("a later successful flush acknowledges an existing outbox", async () => {
   assert.equal(harness.client.status().pending, 0);
 });
 
+test("a long offline outbox reconnects in server-sized batches", async () => {
+  const batches = [];
+  let online = false;
+  const client = createPlaytestClient({
+    config: { cohort: "TG1", source: "telegram", build: "TG1-01" },
+    endpoint: "https://collector.example",
+    storage: new MemoryStorage(),
+    randomUUID: makeUuidFactory(),
+    now: () => new Date(2026, 6, 30, 12, 0),
+    fetchImpl: async (url, init) => {
+      const body = JSON.parse(init.body);
+      if (!online) return { ok: false, status: 503 };
+      batches.push(body.events);
+      return {
+        ok: true,
+        async json() {
+          return { accepted: body.events.map((event) => event.eventId) };
+        },
+      };
+    },
+  });
+  client.join();
+
+  for (let index = 0; index < 25; index += 1) {
+    await client.recordRetry("orchard");
+  }
+  assert.equal(client.status().pending, 25);
+
+  online = true;
+  const result = await client.flush();
+
+  assert.deepEqual(batches.map((batch) => batch.length), [20, 5]);
+  assert.deepEqual(result, { delivered: true, accepted: 25 });
+  assert.equal(client.status().pending, 0);
+});
+
 test("an event queued during delivery is flushed before the shared flush settles", async () => {
   const storage = new MemoryStorage();
   const requests = [];

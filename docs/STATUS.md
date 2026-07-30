@@ -49,8 +49,8 @@ Updated: 2026-07-30
 
 ## Local verification
 
-- `pnpm test`: 58/58 passing, including collector validation, fixed first-20
-  cohort slots, offline delivery, deletion, and Telegram handoff.
+- `pnpm test`: 59/59 passing, including collector validation, fixed first-20
+  cohort slots, 20-event reconnect batching, deletion, and Telegram handoff.
 - `pnpm build`: passing production build with the live collector endpoint.
 - `pnpm worker:check`: passing Worker bundle and binding validation.
 - `git diff --check`: passing.

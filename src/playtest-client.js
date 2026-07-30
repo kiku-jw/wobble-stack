@@ -9,6 +9,7 @@ import {
 const STATE_PREFIX = "wobble-stack-playtest:v1";
 const CHOICE_PREFIX = "wobble-stack-playtest-choice:v1";
 const MAX_PENDING_EVENTS = 50;
+const DELIVERY_BATCH_SIZE = 20;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -215,7 +216,7 @@ export function createPlaytestClient({
       return { delivered: false, accepted: 0 };
     }
 
-    const snapshot = [...state.pending];
+    const snapshot = state.pending.slice(0, DELIVERY_BATCH_SIZE);
     try {
       const response = await fetchImpl(`${normalizedEndpoint}/v1/events`, {
         method: "POST",
