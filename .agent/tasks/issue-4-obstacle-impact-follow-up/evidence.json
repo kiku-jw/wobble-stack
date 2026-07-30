@@ -15,8 +15,9 @@
       "evidence": "Hit/clear resolved once and Retry reset pause, impact motion, and outcomes."
     },
     "AC4": {
-      "status": "PENDING_RELEASE",
-      "evidence": "23 tests, build, diff check, production preview, and zero-console checks pass; fresh verifier and public release remain."
+      "status": "PASS",
+      "evidence": "23 tests, build, diff check, production preview, gameplay commit 8d94bde, successful Pages run 30537686637, public hit/clear smoke, and zero-console checks pass."
     }
-  }
+  },
+  "final_verifier": "PASS"
 }

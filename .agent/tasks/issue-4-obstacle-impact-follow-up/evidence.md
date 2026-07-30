@@ -46,7 +46,21 @@ After a deliberate collapse, Retry returned to `playing` with:
 - impact active: `false`
 - obstacle outcomes: `[]`
 
-## Remaining release steps
+## Public release
 
-Fresh read-only verification, Git publication, Pages workflow, and public smoke
-remain pending.
+- Gameplay commit: `8d94bde`.
+- GitHub Pages workflow: `30537686637`, success.
+- Public asset: `assets/index-BSFDt1bc.js`.
+- Public 390 × 844 grounded hit:
+  - maximum pause: `0.52 s`
+  - maximum lift: `15.9855 px`
+  - maximum absolute tilt: `0.08387 rad`
+  - maximum creature displacement: `25.7598 px`
+  - state after impact: `playing`
+- Public jump clear:
+  - maximum impact lift: `0`
+  - maximum impact pause: `0`
+  - progress advanced from `19.00439` to `19.66095` in 500 ms
+  - state: `playing`
+- Public console: 0 errors, 0 warnings.
+- Fresh final read-only verifier: PASS, no findings or remaining gaps.

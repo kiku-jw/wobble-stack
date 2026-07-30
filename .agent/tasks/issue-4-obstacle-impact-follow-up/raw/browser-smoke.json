@@ -28,5 +28,30 @@
   "console": {
     "errors": 0,
     "warnings": 0
+  },
+  "public_release": {
+    "commit": "8d94bde",
+    "workflow": 30537686637,
+    "asset": "assets/index-BSFDt1bc.js",
+    "hit": {
+      "outcomes": [[0, "hit"]],
+      "max_pause": 0.52,
+      "max_impact_height": 15.985459642892035,
+      "max_abs_platform_angle": 0.08386715486024787,
+      "max_creature_shift": 25.75983901074133,
+      "state": "playing"
+    },
+    "clear": {
+      "outcomes": [[0, "cleared"]],
+      "max_pause": 0,
+      "max_impact_height": 0,
+      "clear_progress": 19.004392,
+      "progress_after_500_ms": 19.660953999999993,
+      "state": "playing"
+    },
+    "console": {
+      "errors": 0,
+      "warnings": 0
+    }
   }
 }
