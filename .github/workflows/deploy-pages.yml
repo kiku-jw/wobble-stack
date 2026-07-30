@@ -40,6 +40,8 @@ jobs:
         run: pnpm test
 
       - name: Build site
+        env:
+          VITE_PLAYTEST_ENDPOINT: ${{ vars.PLAYTEST_ENDPOINT }}
         run: pnpm build
 
       - name: Configure GitHub Pages
