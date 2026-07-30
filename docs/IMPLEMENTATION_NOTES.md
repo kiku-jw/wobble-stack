@@ -150,8 +150,10 @@ The team-selection frame is explicitly deferred. It is evidence for possible fut
   constraint carries the living stack. The wheel drawing follows the same
   height while the road and obstacle stay grounded.
 - Existing route `bumpDistances` remain the only obstacle positions. Sufficient
-  jump height clears once; otherwise the prior bump kick, dust, shake, and
-  balance consequence run unchanged.
+  jump height clears once. A grounded hit pauses progress for `0.52 s`, lifts
+  the platform through a bounded 16-pixel arc, applies a strong alternating
+  tilt, and gives each creature a deterministic velocity/angular-velocity
+  impulse. The result remains recoverable rather than scripting a loss.
 - Known Telegram contexts and the explicit `from=telegram` share query receive
   an honest start-menu notice. Clipboard uses the native browser API, supported
   Telegram Mini App `openLink` is used only when already present, and ordinary

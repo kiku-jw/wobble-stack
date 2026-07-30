@@ -1,0 +1,32 @@
+{
+  "viewport": [390, 844],
+  "hit": {
+    "outcomes": [[0, "hit"]],
+    "hit_progress": 19.00337,
+    "progress_after_850_ms": 19.489988000000007,
+    "max_impact_height": 15.979911391400263,
+    "max_abs_platform_angle": 0.08386715486024787,
+    "max_pause": 0.52,
+    "max_creature_shift": 27.598261646200164,
+    "state": "playing"
+  },
+  "clear": {
+    "outcomes": [[0, "cleared"]],
+    "clear_progress": 19.002494000000002,
+    "progress_after_500_ms": 19.757313999999994,
+    "max_impact_height": 0,
+    "max_pause": 0,
+    "state": "playing"
+  },
+  "retry": {
+    "state": "playing",
+    "pause": 0,
+    "impact_height": 0,
+    "impact_active": false,
+    "outcomes": []
+  },
+  "console": {
+    "errors": 0,
+    "warnings": 0
+  }
+}

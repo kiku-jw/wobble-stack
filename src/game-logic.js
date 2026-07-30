@@ -105,6 +105,21 @@ export function isObstacleCleared(jumpHeight, minimumClearance) {
   return Number(jumpHeight) >= Math.max(0, Number(minimumClearance) || 0);
 }
 
+export function getObstacleHitResponse(obstacleIndex, routeIndex, creatureIndex) {
+  const obstacle = Math.max(0, Math.round(Number(obstacleIndex) || 0));
+  const route = Math.max(0, Math.round(Number(routeIndex) || 0));
+  const creature = Math.max(0, Math.round(Number(creatureIndex) || 0));
+  const direction = obstacle % 2 === 0 ? 1 : -1;
+
+  return {
+    direction,
+    platformKick: direction * (0.15 + route * 0.012),
+    velocityX: direction * (0.9 + creature * 0.12),
+    velocityY: -1.55 - creature * 0.12,
+    angularVelocity: direction * (0.022 + creature * 0.004),
+  };
+}
+
 export function isTelegramContext({
   userAgent = "",
   source = "",

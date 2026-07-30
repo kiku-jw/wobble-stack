@@ -1,0 +1,22 @@
+{
+  "date": "2026-07-30",
+  "target": "local production preview at 390x844",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": "Hit paused progress for 0.52s, lifted 15.9799px, tilted 0.08387rad, displaced a creature 27.5983px, and remained playing."
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": "Clear recorded once, added zero impact lift and zero pause, and advanced progress from 19.00249 to 19.75731 in 500ms."
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": "Hit/clear resolved once and Retry reset pause, impact motion, and outcomes."
+    },
+    "AC4": {
+      "status": "PENDING_RELEASE",
+      "evidence": "23 tests, build, diff check, production preview, and zero-console checks pass; fresh verifier and public release remain."
+    }
+  }
+}

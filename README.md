@@ -43,7 +43,8 @@ or backend.
   jumps on release. Left/Right and A/D steer, while Space, Arrow Up, or W jumps.
 - **Goal:** reach the windmill with every creature and collect festival badges
   by touching them with the living stack. Jump the visible road obstacles;
-  hitting one adds a strong wobble instead of ending the run automatically.
+  hitting one briefly stalls the wheel, jolts the platform and living stack,
+  and demands a recovery instead of ending the run automatically.
 - **Pause:** use the button in the top-right corner or press Escape.
 - **Music:** starts after Play, defaults to 50%, and can be adjusted from the
   road selector or pause menu. The preference stays on the device.
@@ -92,7 +93,8 @@ pnpm build
   bounded plank response. Keyboard control uses the same support model.
 - A short stationary tap moves the existing static platform through one bounded
   jump arc. The existing authored bump distances resolve once as either a clear
-  or the established physical bump response.
+  or a recoverable impact with a short progress stall, platform lift, and
+  deterministic stack impulse.
 - Seeded gusts vary inside one continuous force range biased toward ordinary
   Normal-like wind, with occasional soft and strong outliers.
 - Moving wind streaks show direction while their speed, density, and opacity build with force.

@@ -39,8 +39,10 @@ Assertions cover:
 4. Short-tap the canvas; confirm wheel, beam, and stack jump. Drag away and back
    before releasing; confirm that gesture does not jump.
 5. Clear one authored obstacle and deliberately hit another. Confirm each
-   resolves once, a clear stays readable, and a hit adds the physical bump
-   rather than an instant scripted failure.
+   resolves once. A clear must keep progress moving with no impact lift. A hit
+   must stall at the obstacle, lift and tilt the platform, physically displace
+   the stack, and remain recoverable rather than causing an instant scripted
+   failure.
 6. Wait for the first wind streaks; confirm they move with the push and increase in number, speed, opacity, and force without an arrow pill.
    Compare equal time windows during attack: horizontal distance must be smallest near onset, larger while building, and largest at peak.
 7. Deliberately collapse the stack; confirm bodies fall at normal speed, slow only on first ground impact, and a face changes on impact.

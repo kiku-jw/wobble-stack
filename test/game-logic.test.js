@@ -12,6 +12,7 @@ import {
   getGustEnvelope,
   getGustTiming,
   getJumpArcHeight,
+  getObstacleHitResponse,
   getRequiredCounterAngle,
   getStackWindScale,
   getWindTravelSpeed,
@@ -251,6 +252,23 @@ test("jump arc is bounded and obstacle clearance is explicit", () => {
   assert.equal(getJumpArcHeight(0.2, 0, 54), 0);
   assert.equal(isObstacleCleared(18, 18), true);
   assert.equal(isObstacleCleared(17.99, 18), false);
+});
+
+test("obstacle hits alternate direction and disturb taller stacks more", () => {
+  assert.deepEqual(getObstacleHitResponse(0, 0, 0), {
+    direction: 1,
+    platformKick: 0.15,
+    velocityX: 0.9,
+    velocityY: -1.55,
+    angularVelocity: 0.022,
+  });
+
+  const laterHit = getObstacleHitResponse(1, 2, 4);
+  assert.equal(laterHit.direction, -1);
+  assert.ok(Math.abs(laterHit.platformKick + 0.174) < 1e-12);
+  assert.ok(Math.abs(laterHit.velocityX + 1.38) < 1e-12);
+  assert.ok(Math.abs(laterHit.velocityY + 2.03) < 1e-12);
+  assert.ok(Math.abs(laterHit.angularVelocity + 0.038) < 1e-12);
 });
 
 test("Telegram context detection stays explicit and dependency-free", () => {

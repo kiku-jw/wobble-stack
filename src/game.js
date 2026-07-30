@@ -11,6 +11,7 @@ import {
   getGustEnvelope,
   getGustTiming,
   getJumpArcHeight,
+  getObstacleHitResponse,
   getStackWindScale,
   getWindTravelSpeed,
   isJumpKey,
@@ -54,6 +55,9 @@ const JUMP_DURATION_SECONDS = 0.72;
 const JUMP_HEIGHT = 54;
 const JUMP_COOLDOWN_SECONDS = 0.84;
 const OBSTACLE_CLEARANCE = 18;
+const OBSTACLE_IMPACT_DURATION_SECONDS = 0.42;
+const OBSTACLE_IMPACT_HEIGHT = 16;
+const OBSTACLE_PROGRESS_PAUSE_SECONDS = 0.52;
 const FAIL_Y = 731;
 const PIXELS_PER_UNIT = 34;
 const JOURNEY_SPEED = 1.46;
@@ -147,6 +151,8 @@ let bumpKick = 0;
 let jumpElapsed = null;
 let jumpHeight = 0;
 let jumpCooldown = 0;
+let obstacleImpactElapsed = null;
+let obstacleImpactHeight = 0;
 let obstacleOutcomes = new Map();
 let accumulator = 0;
 let lastFrameTime = performance.now();
@@ -591,6 +597,8 @@ function resetJourney() {
   jumpElapsed = null;
   jumpHeight = 0;
   jumpCooldown = 0;
+  obstacleImpactElapsed = null;
+  obstacleImpactHeight = 0;
   runSeconds = 0;
   failElapsed = 0;
   firstImpactAt = null;
@@ -861,7 +869,7 @@ function frame(now) {
 
   if (state === "playing") {
     runSeconds += deltaSeconds;
-    updateJumpMotion(deltaSeconds);
+    updatePlatformMotion(deltaSeconds);
     updateJourney(deltaSeconds);
     updateGustPhase();
     accumulator += deltaMs;
@@ -984,19 +992,27 @@ function resolveObstacle(index) {
 }
 
 function triggerBump(index) {
-  const direction = index % 2 === 0 ? 1 : -1;
-  bumpKick = direction * (0.055 + selectedRouteIndex * 0.008);
+  const baseResponse = getObstacleHitResponse(index, selectedRouteIndex, 0);
+  bumpKick = baseResponse.platformKick;
+  journeyPause = Math.max(journeyPause, OBSTACLE_PROGRESS_PAUSE_SECONDS);
+  obstacleImpactElapsed = 0;
+  obstacleImpactHeight = 0;
 
-  for (const creature of creatures) {
-    Body.applyForce(creature.body, creature.body.position, {
-      x: direction * 0.000013 * creature.body.mass,
-      y: -0.000042 * creature.body.mass,
+  creatures.forEach((creature, creatureIndex) => {
+    const response = getObstacleHitResponse(index, selectedRouteIndex, creatureIndex);
+    Body.setVelocity(creature.body, {
+      x: creature.body.velocity.x + response.velocityX,
+      y: Math.min(creature.body.velocity.y, response.velocityY),
     });
-  }
+    Body.setAngularVelocity(
+      creature.body,
+      creature.body.angularVelocity + response.angularVelocity,
+    );
+  });
 
   burst(CENTER_X, ROAD_SURFACE_Y - 4, "#f7d29b", reducedMotion.matches ? 5 : 14, "dust");
-  shake = reducedMotion.matches ? 0 : 3.4;
-  setJourneyMessage("BUMP!", 0.8);
+  shake = reducedMotion.matches ? 0 : 6.2;
+  setJourneyMessage("BIG BUMP!", 0.9);
 }
 
 function triggerJump() {
@@ -1008,29 +1024,46 @@ function triggerJump() {
   return true;
 }
 
-function updateJumpMotion(deltaSeconds) {
+function updatePlatformMotion(deltaSeconds) {
   jumpCooldown = Math.max(0, jumpCooldown - deltaSeconds);
-  if (jumpElapsed === null) return;
+  if (jumpElapsed !== null) {
+    jumpElapsed += deltaSeconds;
+    jumpHeight = getJumpArcHeight(jumpElapsed, JUMP_DURATION_SECONDS, JUMP_HEIGHT);
 
-  jumpElapsed += deltaSeconds;
-  jumpHeight = getJumpArcHeight(jumpElapsed, JUMP_DURATION_SECONDS, JUMP_HEIGHT);
+    if (jumpElapsed >= JUMP_DURATION_SECONDS) {
+      jumpElapsed = null;
+      jumpHeight = 0;
+      burst(CENTER_X + supportOffset, ROAD_SURFACE_Y - 2, "#f7d29b", reducedMotion.matches ? 3 : 8, "dust");
+      shake = reducedMotion.matches ? 0 : Math.max(shake, 1.8);
+    }
+  }
+
+  if (obstacleImpactElapsed !== null) {
+    obstacleImpactElapsed += deltaSeconds;
+    obstacleImpactHeight = getJumpArcHeight(
+      obstacleImpactElapsed,
+      OBSTACLE_IMPACT_DURATION_SECONDS,
+      OBSTACLE_IMPACT_HEIGHT,
+    );
+
+    if (obstacleImpactElapsed >= OBSTACLE_IMPACT_DURATION_SECONDS) {
+      obstacleImpactElapsed = null;
+      obstacleImpactHeight = 0;
+    }
+  }
+
   Body.setPosition(platform, {
     x: CENTER_X,
-    y: PLATFORM_Y - jumpHeight,
+    y: PLATFORM_Y - jumpHeight - obstacleImpactHeight,
   });
-
-  if (jumpElapsed < JUMP_DURATION_SECONDS) return;
-  jumpElapsed = null;
-  jumpHeight = 0;
-  Body.setPosition(platform, { x: CENTER_X, y: PLATFORM_Y });
-  burst(CENTER_X + supportOffset, ROAD_SURFACE_Y - 2, "#f7d29b", reducedMotion.matches ? 3 : 8, "dust");
-  shake = reducedMotion.matches ? 0 : Math.max(shake, 1.8);
 }
 
 function settleJumpPlatform() {
   jumpElapsed = null;
   jumpHeight = 0;
   jumpCooldown = 0;
+  obstacleImpactElapsed = null;
+  obstacleImpactHeight = 0;
   if (platform) Body.setPosition(platform, { x: CENTER_X, y: PLATFORM_Y });
 }
 
@@ -1777,16 +1810,17 @@ function drawWind(time) {
 function drawVehicle(time) {
   if (!platform) return;
 
-  const wheelY = WHEEL_Y - jumpHeight;
+  const liftHeight = jumpHeight + obstacleImpactHeight;
+  const wheelY = WHEEL_Y - liftHeight;
   context.save();
-  context.globalAlpha = 1 - Math.min(0.62, jumpHeight / JUMP_HEIGHT * 0.62);
+  context.globalAlpha = 1 - Math.min(0.62, liftHeight / JUMP_HEIGHT * 0.62);
   context.fillStyle = "rgba(78, 43, 48, 0.23)";
   context.beginPath();
   context.ellipse(
     CENTER_X + supportOffset,
     ROAD_SURFACE_Y + 5,
-    56 - jumpHeight * 0.18,
-    10 - jumpHeight * 0.06,
+    56 - liftHeight * 0.18,
+    10 - liftHeight * 0.06,
     0,
     0,
     Math.PI * 2,
@@ -2049,6 +2083,9 @@ if (new URLSearchParams(window.location.search).has("debug")) {
       jumpHeight,
       jumpActive: jumpElapsed !== null,
       jumpCooldown,
+      obstacleImpactHeight,
+      obstacleImpactActive: obstacleImpactElapsed !== null,
+      journeyPause,
       obstacleOutcomes: [...obstacleOutcomes.entries()],
       creatureCount: creatures.length,
       creaturePositions: creatures.map((creature) => ({

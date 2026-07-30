@@ -22,7 +22,9 @@ Updated: 2026-07-30
 - A short stationary tap jumps the wheel, plank, and living stack. A drag never
   becomes a jump on release.
 - Clearing an authored bump gives restrained success feedback. Hitting it
-  applies the existing physical kick and wobble instead of an automatic loss.
+  briefly stalls forward travel, lifts and tilts the platform, and physically
+  disturbs the stack instead of allowing an ordinary drive-through or forcing
+  an automatic loss.
 - Known Telegram contexts and the `from=telegram` share link receive honest
   instructions, copy-link support, and a non-blocking route to keep playing.
 - Pointer capture is best-effort, release is handled at window level, and
@@ -34,7 +36,8 @@ Updated: 2026-07-30
 
 ## Local verification
 
-- `pnpm test`: 22/22 passing, including held-key repeat rejection.
+- `pnpm test`: 23/23 passing, including held-key repeat rejection and the
+  deterministic obstacle-impact response.
 - `pnpm build`: passing production build.
 - `git diff --check`: passing.
 - A real full drag at 390 × 844 held support at `36.42/36.96`; release returned
@@ -43,6 +46,10 @@ Updated: 2026-07-30
   produced no jump.
 - Deterministic first-obstacle checks recorded exactly one `hit` without a jump
   and exactly one `cleared` outcome at `39.15` pixels of jump height.
+- Follow-up impact proof measured a `0.52 s` progress pause, `15.98 px` maximum
+  platform lift, `0.0839 rad` maximum tilt, and `27.60 px` maximum creature
+  displacement while the run remained playable. A jump clear measured zero
+  impact lift and zero progress pause.
 - At 320 × 700 the Telegram notice had no overflow, both actions were 44 pixels
   high, copy-link succeeded, and “Play here anyway” dismissed the notice.
 - Normal launch did not show the Telegram notice. Pause/resume and Retry passed;
