@@ -170,6 +170,35 @@ The team-selection frame is explicitly deferred. It is evidence for possible fut
 - Rejected: a new dependency, gesture framework, physical obstacle bodies,
   Telegram SDK/bot, backend, second jump button, and route-schema expansion.
 
+## M11 privacy-first public playtest
+
+- Telemetry is active only for allow-listed `playtest` and `source` query
+  values. The ordinary game remains unchanged and sends nothing.
+- Consent is explicit. Private play stores only that choice; joining creates a
+  random installation UUID and a bounded 50-event local outbox.
+- Events are semantic round summaries: start, finish, Retry, duration,
+  progress, badges, jumps, obstacle hits/clears, route, source, and local day.
+  Names, Telegram identifiers, messages, user agent, IP, and precise controls
+  are not stored in the application database.
+- A first-party Cloudflare Worker validates exact shapes and origin, limits
+  bodies and request rate, uses prepared D1 statements, and exposes no report
+  route. Raw events expire after 30 days.
+- The first 20 distinct TG1 starters occupy fixed cohort slots. Withdrawal
+  deletes their events and anonymizes the slot without admitting participant
+  21 into the primary cohort.
+- The private SQL report measures five-round repetition, another-local-day
+  return, Retry, jumps, obstacle hits/clears, duration, and progress.
+
+### M11 lazy-senior receipt
+
+- Lower rung: native browser storage/fetch plus Cloudflare Worker, D1, SQL, and
+  rate-limit bindings.
+- GitHub prior art: larger analytics and Worker stacks were broader than this
+  three-route collector; adoption = ignore.
+- Added only the official Wrangler deployment dependency. Rejected analytics
+  SDKs, frameworks, ORMs, queues, dashboards, fingerprinting, and control-level
+  telemetry.
+
 ## lazy-senior receipt
 
 - Lower rung: browser Canvas + one small established physics dependency.

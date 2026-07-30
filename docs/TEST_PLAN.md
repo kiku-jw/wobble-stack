@@ -6,8 +6,7 @@ From the repository root:
 
 ```sh
 pnpm install --frozen-lockfile
-pnpm test
-pnpm build
+pnpm check
 ```
 
 Assertions cover:
@@ -28,6 +27,13 @@ Assertions cover:
 - peak-travel gesture classification separates short taps from drags and holds;
 - the jump arc returns from zero through one bounded peak to zero;
 - obstacle clearance and Telegram-context detection stay deterministic.
+- playtest activation is allow-listed, private play creates no identity or
+  requests, failed delivery stays queued, and deletion clears local state only
+  after server success;
+- the public collector rejects unknown fields, oversized bodies, mixed
+  identities, foreign origins, and excess requests before writing;
+- D1 deduplicates events, keeps the first 20 cohort slots fixed, and leaves a
+  withdrawn slot empty rather than replacing it with participant 21.
 
 ## Browser smoke
 
@@ -62,6 +68,22 @@ Assertions cover:
 16. Change Music in either menu, reload, and confirm both controls restore the
     same saved value.
 17. Check browser console for uncaught errors.
+
+## Public-link playtest smoke
+
+1. Open `/` at 320 × 700. Confirm no consent prompt and no collector request.
+2. Open `?playtest=TG1-PILOT&source=pilot`. Confirm both choices fit onscreen.
+3. Choose private play. Confirm the game starts and no collector request occurs.
+4. In a clean profile, join the test. Confirm Start, finish, Retry, jump count,
+   obstacle hit/clear totals, and local day arrive as round-level summaries.
+5. Set the browser offline before joining. Confirm play starts, the event stays
+   pending, and a later online reload delivers it.
+6. Return to road selection and delete test data. Confirm the second-tap
+   safeguard, server deletion, local reset, and an empty but occupied cohort
+   slot.
+7. Open
+   `?from=telegram&playtest=TG1-PILOT&source=pilot`. Confirm the Telegram notice
+   appears before consent and Copy preserves the complete query string.
 
 ## Calibration matrix
 
