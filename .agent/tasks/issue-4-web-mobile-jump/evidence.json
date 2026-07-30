@@ -1,0 +1,30 @@
+{
+  "date": "2026-07-30",
+  "target": "local production preview",
+  "acceptance": {
+    "AC1": {
+      "status": "PASS",
+      "evidence": "Real full drag held 36.4155 of the 36.96 target and released to 0.3970 while playing."
+    },
+    "AC2": {
+      "status": "PASS",
+      "evidence": "Real short tap sampled 47.9745 px of jump height; an 80 px away-and-back drag sampled no jump."
+    },
+    "AC3": {
+      "status": "PASS",
+      "evidence": "The first Orchard obstacle resolved once as hit without a jump and once as cleared at 39.1540 px."
+    },
+    "AC4": {
+      "status": "PASS",
+      "evidence": "Explicit Telegram route showed a no-overflow notice with 44 px actions, successful copy, and dismiss; normal route did not show it."
+    },
+    "AC5": {
+      "status": "PENDING_RELEASE",
+      "evidence": "22 tests, build, diff check, mobile/desktop preview, pause, Retry, and zero-console checks pass. Push, Pages workflow, and live smoke remain."
+    }
+  },
+  "residual_risk": [
+    "Physical iPhone control feel needs a human device test.",
+    "Telegram client behavior varies and needs an in-client human test."
+  ]
+}

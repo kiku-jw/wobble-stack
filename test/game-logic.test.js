@@ -6,13 +6,19 @@ import {
   createSeededRandom,
   formatTime,
   getAudioFadeGain,
+  getDirectSupportOffset,
   getEffectiveGustAcceleration,
   getFailureTimeScale,
   getGustEnvelope,
   getGustTiming,
+  getJumpArcHeight,
   getRequiredCounterAngle,
   getStackWindScale,
   getWindTravelSpeed,
+  isJumpKey,
+  isObstacleCleared,
+  isShortTap,
+  isTelegramContext,
   layoutStack,
   shouldShowFailureResults,
 } from "../src/game-logic.js";
@@ -20,7 +26,6 @@ import {
   ROUTES,
   createShuffledOrder,
   getBadgeScreenY,
-  getCappedPointerSupportOffset,
   getCounterSupportOffset,
   getRoute,
   getRouteCompletion,
@@ -212,63 +217,48 @@ test("keyboard support accounts for both the board slope and explicit counter fo
   assert.equal(getCounterSupportOffset(0.0001, 1, 0, 0.8, 44, 0.23), 0);
 });
 
-test("pointer control leaves enough correct-swipe authority to recover a leaning stack", () => {
-  const parameters = [1, 1, 0.000135, 0.00105, 0.8, 44, 0.23];
-  const ideal = getCounterSupportOffset(0.000135, 1, 0.00105, 0.8, 44, 0.23);
-  const partialSwipe = getCappedPointerSupportOffset(0.35, ...parameters);
-  const fullSwipe = getCappedPointerSupportOffset(1, ...parameters);
-
-  assert.equal(partialSwipe, ideal * 1.45 * 0.35);
-  assert.equal(fullSwipe, ideal * 1.45);
-  assert.ok(fullSwipe < 20);
+test("pointer control directly uses most of the visible support range", () => {
+  assert.equal(getDirectSupportOffset(0, 44), 0);
+  assert.equal(getDirectSupportOffset(1, 44), 36.96);
+  assert.equal(getDirectSupportOffset(-1, 44), -36.96);
+  assert.equal(getDirectSupportOffset(0.1, 44), 3.696);
+  assert.equal(getDirectSupportOffset(2, 44), 36.96);
+  assert.equal(getDirectSupportOffset(1, 0), 0);
 });
 
-test("pointer control follows the gust envelope and keeps wrong-way input dangerous", () => {
-  const earlyGust = getCappedPointerSupportOffset(
-    0.4,
-    1,
-    0.25,
-    WIND_PROFILE.forceMax,
-    0.00105,
-    0.8,
-    44,
-    0.23,
-  );
-  const fullGust = getCappedPointerSupportOffset(
-    0.4,
-    1,
-    1,
-    WIND_PROFILE.forceMax,
-    0.00105,
-    0.8,
-    44,
-    0.23,
-  );
-  const wrongWay = getCappedPointerSupportOffset(
-    -1,
-    1,
-    1,
-    WIND_PROFILE.forceMax,
-    0.00105,
-    0.8,
-    44,
-    0.23,
-  );
-  const betweenGusts = getCappedPointerSupportOffset(
-    1,
-    0,
-    0,
-    WIND_PROFILE.forceMax,
-    0.00105,
-    0.8,
-    44,
-    0.23,
-  );
+test("tap classification rejects drags, holds, and excessive peak travel", () => {
+  assert.equal(isShortTap(140, 4), true);
+  assert.equal(isShortTap(260, 12), true);
+  assert.equal(isShortTap(261, 4), false);
+  assert.equal(isShortTap(140, 13), false);
+  assert.equal(isShortTap(-1, 0), false);
+});
 
-  assert.ok(earlyGust > 0);
-  assert.ok(fullGust > earlyGust);
-  assert.equal(wrongWay, -9.68);
-  assert.equal(betweenGusts, 0);
+test("jump keys fire once per physical key press", () => {
+  assert.equal(isJumpKey("ArrowUp"), true);
+  assert.equal(isJumpKey(" "), true);
+  assert.equal(isJumpKey("W"), true);
+  assert.equal(isJumpKey("w", true), false);
+  assert.equal(isJumpKey("ArrowUp", true), false);
+  assert.equal(isJumpKey("ArrowLeft"), false);
+});
+
+test("jump arc is bounded and obstacle clearance is explicit", () => {
+  assert.equal(getJumpArcHeight(0, 0.72, 54), 0);
+  assert.equal(getJumpArcHeight(0.36, 0.72, 54), 54);
+  assert.equal(getJumpArcHeight(0.72, 0.72, 54), 0);
+  assert.equal(getJumpArcHeight(2, 0.72, 54), 0);
+  assert.equal(getJumpArcHeight(0.2, 0, 54), 0);
+  assert.equal(isObstacleCleared(18, 18), true);
+  assert.equal(isObstacleCleared(17.99, 18), false);
+});
+
+test("Telegram context detection stays explicit and dependency-free", () => {
+  assert.equal(isTelegramContext({ source: "telegram" }), true);
+  assert.equal(isTelegramContext({ source: "tg" }), true);
+  assert.equal(isTelegramContext({ hasWebApp: true }), true);
+  assert.equal(isTelegramContext({ userAgent: "Mozilla Telegram/12.0" }), true);
+  assert.equal(isTelegramContext({ userAgent: "Mozilla/5.0 Safari/605.1" }), false);
 });
 
 test("music shuffle exhausts every track and avoids a boundary repeat", () => {

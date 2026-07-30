@@ -313,6 +313,58 @@ input[type="range"]:focus-visible,
   backdrop-filter: blur(10px);
 }
 
+.telegram-browser-notice {
+  width: 100%;
+  padding: 10px 12px 11px;
+  border: 1px solid rgba(255, 226, 130, 0.52);
+  border-radius: 15px;
+  color: #fff8df;
+  background: rgba(74, 42, 49, 0.9);
+  box-shadow:
+    0 8px 22px rgba(38, 22, 31, 0.2),
+    inset 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.telegram-browser-notice > strong {
+  color: #ffe48b;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+
+.telegram-browser-notice > p {
+  margin: 5px 0 8px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.telegram-notice-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.telegram-notice-actions:has(#telegram-external-button:not([hidden])) {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.telegram-notice-actions button {
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 1px solid rgba(255, 239, 211, 0.18);
+  border-radius: 11px;
+  color: #fff7df;
+  background: rgba(132, 73, 66, 0.74);
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.telegram-notice-actions button:active {
+  transform: translateY(2px);
+}
+
 .picker-label {
   margin-bottom: 8px;
   color: rgba(255, 244, 217, 0.72);
@@ -727,6 +779,14 @@ input[type="range"]:focus-visible,
 
   .route-picker {
     padding: 9px;
+  }
+
+  .telegram-browser-notice {
+    padding: 8px 10px;
+  }
+
+  .telegram-browser-notice > p {
+    margin: 3px 0 6px;
   }
 
   .route-card {

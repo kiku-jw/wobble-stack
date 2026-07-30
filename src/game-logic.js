@@ -68,6 +68,59 @@ export function getStackWindScale(creatureCount) {
   return 1 - extraFriends * 0.12;
 }
 
+export function getDirectSupportOffset(control, maxSupportOffset, authority = 0.84) {
+  const boundedControl = clamp(Number(control) || 0, -1, 1);
+  const boundedOffset = Math.max(0, Number(maxSupportOffset) || 0);
+  const boundedAuthority = clamp(Number(authority) || 0, 0, 1);
+  return boundedControl * boundedOffset * boundedAuthority;
+}
+
+export function isShortTap(
+  durationMs,
+  maximumTravel,
+  maximumDurationMs = 260,
+  maximumTravelPixels = 12,
+) {
+  return (
+    Number(durationMs) >= 0 &&
+    Number(durationMs) <= maximumDurationMs &&
+    Number(maximumTravel) >= 0 &&
+    Number(maximumTravel) <= maximumTravelPixels
+  );
+}
+
+export function isJumpKey(key, repeat = false) {
+  const normalizedKey = String(key).toLowerCase();
+  return !repeat && (key === "ArrowUp" || key === " " || normalizedKey === "w");
+}
+
+export function getJumpArcHeight(elapsedSeconds, durationSeconds, maximumHeight) {
+  if (durationSeconds <= 0 || maximumHeight <= 0) return 0;
+  const progress = clamp(elapsedSeconds / durationSeconds, 0, 1);
+  if (progress === 0 || progress === 1) return 0;
+  return Math.sin(progress * Math.PI) * maximumHeight;
+}
+
+export function isObstacleCleared(jumpHeight, minimumClearance) {
+  return Number(jumpHeight) >= Math.max(0, Number(minimumClearance) || 0);
+}
+
+export function isTelegramContext({
+  userAgent = "",
+  source = "",
+  hasWebApp = false,
+} = {}) {
+  const normalizedSource = String(source).trim().toLowerCase();
+  const normalizedUserAgent = String(userAgent).toLowerCase();
+  return (
+    Boolean(hasWebApp) ||
+    normalizedSource === "telegram" ||
+    normalizedSource === "tg" ||
+    normalizedUserAgent.includes("telegram") ||
+    normalizedUserAgent.includes("tgwebview")
+  );
+}
+
 export function getRequiredCounterAngle(force, gravityScale) {
   return Math.atan(force / gravityScale);
 }

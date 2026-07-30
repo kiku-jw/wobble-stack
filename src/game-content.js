@@ -102,46 +102,6 @@ export function getCounterSupportOffset(
   return Math.sign(direction) * normalizedAngle * maxSupportOffset;
 }
 
-export function getCappedPointerSupportOffset(
-  control,
-  gustDirection,
-  gustEnvelope,
-  maximumGustForce,
-  gravityScale,
-  counterAuthority,
-  maxSupportOffset,
-  maxPlatformAngle,
-) {
-  const boundedControl = clamp(Number(control) || 0, -1, 1);
-  if (boundedControl === 0) return 0;
-
-  const activeEnvelope = clamp(Number(gustEnvelope) || 0, 0, 1);
-  const windDirection = Math.sign(gustDirection);
-  const hasActiveWind =
-    Math.max(0, Number(maximumGustForce) || 0) > 0 &&
-    activeEnvelope > 0 &&
-    windDirection !== 0;
-
-  if (!hasActiveWind) return 0;
-
-  if (Math.sign(boundedControl) !== windDirection) {
-    return boundedControl * maxSupportOffset * 0.22;
-  }
-
-  const maximumUsefulOffset = getCounterSupportOffset(
-    maximumGustForce * activeEnvelope,
-    windDirection,
-    gravityScale,
-    counterAuthority,
-    maxSupportOffset,
-    maxPlatformAngle,
-  );
-  const recoveryOffset = maximumUsefulOffset * 1.45;
-  return Math.sign(recoveryOffset) *
-    Math.min(Math.abs(recoveryOffset), maxSupportOffset) *
-    Math.abs(boundedControl);
-}
-
 export function createShuffledOrder(items, random = Math.random, previousItem = null) {
   const order = [...items];
 

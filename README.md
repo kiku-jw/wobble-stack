@@ -38,10 +38,12 @@ or backend.
   back under a developing lean; wider slides visibly shift its support beneath
   the plank. Release to resume the gentle forward roll.
 - **Browser:** touch or click anywhere on the stage, then slide relative to
-  that point to roll the wheel under the falling side. Release to recenter.
-  Left/Right and A/D use the same wheel movement.
+  that point to roll the wheel under the falling side. The wheel keeps useful
+  travel between gusts and recenters on release. A short tap jumps; a drag never
+  jumps on release. Left/Right and A/D steer, while Space, Arrow Up, or W jumps.
 - **Goal:** reach the windmill with every creature and collect festival badges
-  by touching them with the living stack.
+  by touching them with the living stack. Jump the visible road obstacles;
+  hitting one adds a strong wobble instead of ending the run automatically.
 - **Pause:** use the button in the top-right corner or press Escape.
 - **Music:** starts after Play, defaults to 50%, and can be adjusted from the
   road selector or pause menu. The preference stays on the device.
@@ -51,6 +53,19 @@ and the wind itself—not a meter or difficulty label—shows how strong it is.
 The first route will begin with three friends and add Rabbit and Jelly King at
 safe stops. Completing a route records its best badge count and opens the next
 road.
+
+### Telegram
+
+Telegram's embedded browser may intercept game swipes. Known Telegram contexts
+show an honest pre-game notice with instructions, a copy-link action, and a
+non-blocking option to keep playing. When sharing directly in Telegram,
+`https://kiku-jw.github.io/wobble-stack/?from=telegram` guarantees that the
+notice is shown even if the client does not identify itself.
+
+The page does not claim it can force an ordinary Telegram link into Safari or
+Chrome. If it is ever hosted as a Telegram Mini App and the supported
+`Telegram.WebApp.openLink` API is already present, the external-open action is
+offered only from a user click.
 
 ## Run the browser game locally
 
@@ -72,9 +87,12 @@ pnpm build
 
 - Matter.js provides gravity, collision, and rigid-body motion.
 - A custom Canvas renderer draws the stage and up to five characters.
-- Relative pointer input moves the visible wheel beneath the plank; its support
-  position drives the bounded plank response. Keyboard control uses the same
-  support model.
+- Relative pointer input directly moves the visible wheel through most of its
+  support range, independent of gust state; its support position drives the
+  bounded plank response. Keyboard control uses the same support model.
+- A short stationary tap moves the existing static platform through one bounded
+  jump arc. The existing authored bump distances resolve once as either a clear
+  or the established physical bump response.
 - Seeded gusts vary inside one continuous force range biased toward ordinary
   Normal-like wind, with occasional soft and strong outliers.
 - Moving wind streaks show direction while their speed, density, and opacity build with force.

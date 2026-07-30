@@ -1,4 +1,4 @@
-# Wobble Stack web prototype test plan
+# Wobble Stack browser edition test plan
 
 ## Automated checks
 
@@ -23,42 +23,59 @@ Assertions cover:
 - failure results wait for either the configured impact hold or the hard timeout.
 - the music shuffle includes all four tracks exactly once per cycle and avoids
   an immediate repeat at the cycle boundary.
+- direct pointer support reaches at least 34 of 44 logical pixels without
+  depending on gust state;
+- peak-travel gesture classification separates short taps from drags and holds;
+- the jump arc returns from zero through one bounded peak to zero;
+- obstacle clearance and Telegram-context detection stay deterministic.
 
 ## Browser smoke
 
 1. Open the development build at 390 × 844.
-2. Press Play and confirm the five bodies settle on the beam.
-3. Drag left and right; confirm the beam follows without page scrolling.
-4. Wait for the first wind streaks; confirm they move with the push and increase in number, speed, opacity, and force without an arrow pill.
+2. Press Play and confirm the route's starting bodies settle on the beam.
+3. Drag left and right before the first gust; confirm the wheel uses most of its
+   visible range, the beam follows without page scrolling, and release
+   recenters.
+4. Short-tap the canvas; confirm wheel, beam, and stack jump. Drag away and back
+   before releasing; confirm that gesture does not jump.
+5. Clear one authored obstacle and deliberately hit another. Confirm each
+   resolves once, a clear stays readable, and a hit adds the physical bump
+   rather than an instant scripted failure.
+6. Wait for the first wind streaks; confirm they move with the push and increase in number, speed, opacity, and force without an arrow pill.
    Compare equal time windows during attack: horizontal distance must be smallest near onset, larger while building, and largest at peak.
-5. Deliberately collapse the stack; confirm bodies fall at normal speed, slow only on first ground impact, and a face changes on impact.
-6. Confirm dust appears at impact and the dazed face remains visible before the result overlay.
-7. Confirm results appear within the hard cinematic timeout even if no creature reaches the floor.
-8. Press Retry; confirm score, bodies, beam, face state, and hazard timing reset without navigation.
-9. Pause and resume; confirm time and physics stop while paused.
-10. Repeat input using Left/Right or A/D and Enter/Space.
-11. From a clean browser profile, confirm Music reads 50% and no MP3 is
+7. Deliberately collapse the stack; confirm bodies fall at normal speed, slow only on first ground impact, and a face changes on impact.
+8. Confirm dust appears at impact and the dazed face remains visible before the result overlay.
+9. Confirm results appear within the hard cinematic timeout even if no creature reaches the floor.
+10. Press Retry; confirm score, bodies, beam, face, jump cooldown, and obstacle
+    outcomes reset without navigation.
+11. Pause and resume; confirm time and physics stop while paused.
+12. Repeat steering using Left/Right or A/D and jumping using Space, Arrow Up,
+    or W.
+13. Open `?from=telegram` at 320 × 700. Confirm the notice, two 44-pixel
+    actions, copy failure fallback, “Play here anyway”, and no overflow.
+14. From a clean browser profile, confirm Music reads 50% and no MP3 is
     requested before Play.
-12. Press Play and confirm exactly one shuffled track starts. Pause must pause
+15. Press Play and confirm exactly one shuffled track starts. Pause must pause
     it; Resume must continue it.
-13. Change Music in either menu, reload, and confirm both controls restore the
+16. Change Music in either menu, reload, and confirm both controls restore the
     same saved value.
-14. Check browser console for uncaught errors.
+17. Check browser console for uncaught errors.
 
 ## Calibration matrix
 
-1. Confirm setup contains creature count only; there is no difficulty control or
-   wind meter.
+1. Confirm the route selector contains no difficulty control or wind meter.
 2. Sample several seeded gusts and confirm force varies independently inside
    the single range rather than increasing with elapsed time.
 3. Compare weakest and strongest gusts: streak density, speed, length, opacity,
    and physical response must be clearly different without a HUD label.
 4. For the strongest gust, record neutral, correct, and wrong input from the
    same setup. Correct must survive longest; neutral and wrong must still fail.
-5. Change the count to 3, 4, and 5; confirm the preview and physical stack rebuild immediately, the minus button disables at three, and stored lower values clamp to three.
-6. Record a best score, change creature count, and confirm the displayed best changes with it while an existing Normal score remains available.
-7. Lose a run and press Retry; confirm the selected count is preserved.
-8. Lose a run and press Change Setup; confirm the settings return without reloading.
+5. Confirm Orchard begins with three friends and its two safe stops add Rabbit
+   and Jelly; Cloud and Windmill begin with five.
+6. Compare small, half, and full drags between gusts. Travel must be direct,
+   monotonic, and bounded; full drag must not exceed 44 logical pixels.
+7. Confirm route obstacle counts remain `1/2/3` and that Retry clears all prior
+   clear/hit outcomes.
 
 ## Collapse matrix
 

@@ -1,0 +1,52 @@
+{
+  "viewport_drag": {
+    "width": 390,
+    "height": 844,
+    "held_support_offset": 36.4154743468598,
+    "held_support_target": 36.96,
+    "released_support_offset": 0.3970334022257679,
+    "released_support_target": 0,
+    "state": "playing"
+  },
+  "tap_jump": {
+    "jump_height": 47.97451932031333,
+    "jump_active": true
+  },
+  "drag_release": {
+    "jump_height": 0,
+    "jump_active": false
+  },
+  "keyboard_repeat": {
+    "initial_jump_keys": ["ArrowUp", "Space", "W"],
+    "repeat_rejected": true,
+    "browser_after_repeat": {
+      "jump_height": 0,
+      "jump_active": false,
+      "jump_cooldown": 0,
+      "state": "playing"
+    }
+  },
+  "obstacles": {
+    "miss": [[0, "hit"]],
+    "clear": [[0, "cleared"]],
+    "clear_sample_jump_height": 39.153993333864555
+  },
+  "telegram": {
+    "viewport": [320, 700],
+    "notice_visible": true,
+    "copy_action_height": 44,
+    "continue_action_height": 44,
+    "document_size": [320, 700],
+    "copy_result": "Link copied",
+    "dismissed": true
+  },
+  "layout": {
+    "mobile_document": [390, 844],
+    "desktop_document": [1280, 900],
+    "desktop_frame": [415.875, 899.984375]
+  },
+  "console": {
+    "errors": 0,
+    "warnings": 0
+  }
+}

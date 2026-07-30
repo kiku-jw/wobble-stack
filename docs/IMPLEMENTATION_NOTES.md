@@ -134,6 +134,40 @@ The team-selection frame is explicitly deferred. It is evidence for possible fut
 - No Web Audio graph, mixer abstraction, module, dependency, worker, analyser,
   or playlist state machine was added.
 
+## M10 direct mobile control and jump obstacles
+
+- Pointer steering no longer reads the current gust before deciding how far the
+  wheel may move. A full drag directly requests `84%` of the existing
+  44-logical-pixel support range during and between gusts.
+- The current support and platform easing remain the only horizontal response
+  layer. Wrong-way input still applies the wrong platform angle and receives no
+  hidden correction.
+- One short stationary pointer release starts a fixed `0.72 s`, 54-pixel sine
+  jump. Peak pointer travel classifies the gesture, so dragging away and back
+  cannot become a jump. Keyboard auto-repeat is ignored so a held jump key
+  cannot queue another jump after cooldown.
+- The static Matter.js platform moves through the arc; its existing base
+  constraint carries the living stack. The wheel drawing follows the same
+  height while the road and obstacle stay grounded.
+- Existing route `bumpDistances` remain the only obstacle positions. Sufficient
+  jump height clears once; otherwise the prior bump kick, dust, shake, and
+  balance consequence run unchanged.
+- Known Telegram contexts and the explicit `from=telegram` share query receive
+  an honest start-menu notice. Clipboard uses the native browser API, supported
+  Telegram Mini App `openLink` is used only when already present, and ordinary
+  pages never promise a forced external-browser launch.
+- Pointer capture is best-effort with window-level release handling. Only
+  browsers without Pointer Events receive the non-passive touch fallback.
+
+### M10 lazy-senior receipt
+
+- Lower rung: tiny local code in existing input, route-crossing, static-platform,
+  start-overlay, and debug seams.
+- GitHub prior art: skipped because this is a bounded repo-local control and
+  physics change, not a reusable gesture or obstacle system.
+- Rejected: a new dependency, gesture framework, physical obstacle bodies,
+  Telegram SDK/bot, backend, second jump button, and route-schema expansion.
+
 ## lazy-senior receipt
 
 - Lower rung: browser Canvas + one small established physics dependency.

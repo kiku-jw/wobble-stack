@@ -5,12 +5,18 @@ import {
   clamp,
   createSeededRandom,
   getAudioFadeGain,
+  getDirectSupportOffset,
   getEffectiveGustAcceleration,
   getFailureTimeScale,
   getGustEnvelope,
   getGustTiming,
+  getJumpArcHeight,
   getStackWindScale,
   getWindTravelSpeed,
+  isJumpKey,
+  isObstacleCleared,
+  isShortTap,
+  isTelegramContext,
   layoutStack,
   shouldShowFailureResults,
 } from "./game-logic.js";
@@ -18,7 +24,6 @@ import {
   ROUTES,
   createShuffledOrder,
   getBadgeScreenY,
-  getCappedPointerSupportOffset,
   getCounterSupportOffset,
   getRoute,
   getRouteCompletion,
@@ -41,6 +46,14 @@ const GRAVITY_SCALE = 0.00105;
 const MAX_PLATFORM_ANGLE = 0.23;
 const MAX_SUPPORT_OFFSET = 44;
 const COUNTER_TILT_AUTHORITY = 0.8;
+const POINTER_SUPPORT_AUTHORITY = 0.84;
+const POINTER_TRAVEL_RATIO = 0.25;
+const TAP_MAX_DURATION_MS = 260;
+const TAP_MAX_TRAVEL_PX = 12;
+const JUMP_DURATION_SECONDS = 0.72;
+const JUMP_HEIGHT = 54;
+const JUMP_COOLDOWN_SECONDS = 0.84;
+const OBSTACLE_CLEARANCE = 18;
 const FAIL_Y = 731;
 const PIXELS_PER_UNIT = 34;
 const JOURNEY_SPEED = 1.46;
@@ -93,6 +106,10 @@ const resumeButton = document.querySelector("#resume-button");
 const pauseRoutesButton = document.querySelector("#pause-routes-button");
 const musicVolumeInputs = document.querySelectorAll("[data-music-volume]");
 const musicVolumeOutputs = document.querySelectorAll("[data-music-volume-output]");
+const telegramBrowserNotice = document.querySelector("#telegram-browser-notice");
+const telegramExternalButton = document.querySelector("#telegram-external-button");
+const copyGameLinkButton = document.querySelector("#copy-game-link-button");
+const playHereButton = document.querySelector("#play-here-button");
 const thumbCue = document.querySelector("#thumb-cue");
 const journeyMessage = document.querySelector("#journey-message");
 const liveStatus = document.querySelector("#live-status");
@@ -109,7 +126,6 @@ let currentRoute = getRoute(0);
 let journeyProgress = 0;
 let collectedBadges = new Set();
 let joinedStops = new Set();
-let triggeredBumps = new Set();
 let journeyPause = 0;
 let runSeconds = 0;
 let runCount = 0;
@@ -120,10 +136,18 @@ let supportOffset = 0;
 let supportTarget = 0;
 let pointerControl = 0;
 let pointerStartX = 0;
+let pointerStartY = 0;
+let pointerStartedAt = 0;
+let pointerMaximumTravel = 0;
+let activePointerId = null;
 let pointerStartControl = 0;
 let pointerActive = false;
 let keyboardDirection = 0;
 let bumpKick = 0;
+let jumpElapsed = null;
+let jumpHeight = 0;
+let jumpCooldown = 0;
+let obstacleOutcomes = new Map();
 let accumulator = 0;
 let lastFrameTime = performance.now();
 let failElapsed = 0;
@@ -208,6 +232,7 @@ const creatureSpecs = [
 configureMusic();
 setupCanvas();
 bindControls();
+configureTelegramNotice();
 requestAnimationFrame(frame);
 
 loadGameArt((progress) => {
@@ -252,24 +277,30 @@ function bindControls() {
     input.addEventListener("input", () => setMusicVolume(input.value));
   });
 
-  canvas.addEventListener("pointerdown", (event) => {
-    if (state !== "playing") return;
-    pointerActive = true;
-    pointerStartX = event.clientX;
-    pointerStartControl = pointerControl;
-    canvas.classList.add("is-grabbing");
-    canvas.setPointerCapture(event.pointerId);
-    canvas.focus({ preventScroll: true });
-    thumbCue.classList.remove("is-visible");
-  });
-
-  canvas.addEventListener("pointermove", (event) => {
-    if (!pointerActive || state !== "playing") return;
-    updatePointerControl(event);
-  });
-
-  canvas.addEventListener("pointerup", releasePointer);
-  canvas.addEventListener("pointercancel", releasePointer);
+  if (window.PointerEvent) {
+    canvas.addEventListener("pointerdown", (event) => {
+      if (!beginPointerControl(event.clientX, event.clientY, event.pointerId)) return;
+      try {
+        canvas.setPointerCapture(event.pointerId);
+      } catch {
+        // Window-level pointer listeners still finish input in restrictive webviews.
+      }
+      event.preventDefault();
+    });
+    window.addEventListener("pointermove", (event) => {
+      if (!pointerActive || event.pointerId !== activePointerId) return;
+      updatePointerControl(event.clientX, event.clientY);
+      if (event.cancelable) event.preventDefault();
+    }, { passive: false });
+    window.addEventListener("pointerup", (event) => {
+      releasePointer(event.clientX, event.clientY, event.pointerId, false);
+    });
+    window.addEventListener("pointercancel", (event) => {
+      releasePointer(event.clientX, event.clientY, event.pointerId, true);
+    });
+  } else {
+    bindTouchFallback();
+  }
 
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
@@ -280,6 +311,12 @@ function bindControls() {
 
     if (state !== "playing") return;
     const key = event.key.toLowerCase();
+
+    if (isJumpKey(event.key, event.repeat)) {
+      triggerJump();
+      thumbCue.classList.remove("is-visible");
+      event.preventDefault();
+    }
 
     if (event.key === "ArrowLeft" || key === "a") {
       keyboardDirection = -1;
@@ -308,11 +345,105 @@ function bindControls() {
   });
 }
 
+function beginPointerControl(clientX, clientY, pointerId) {
+  if (state !== "playing" || pointerActive) return false;
+  pointerActive = true;
+  activePointerId = pointerId;
+  pointerStartX = clientX;
+  pointerStartY = clientY;
+  pointerStartedAt = performance.now();
+  pointerMaximumTravel = 0;
+  pointerStartControl = pointerControl;
+  canvas.classList.add("is-grabbing");
+  canvas.focus({ preventScroll: true });
+  thumbCue.classList.remove("is-visible");
+  return true;
+}
+
+function bindTouchFallback() {
+  canvas.addEventListener("touchstart", (event) => {
+    if (event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    if (!beginPointerControl(touch.clientX, touch.clientY, touch.identifier)) return;
+    event.preventDefault();
+  }, { passive: false });
+
+  window.addEventListener("touchmove", (event) => {
+    if (!pointerActive) return;
+    const touch = findTouch(event.touches, activePointerId);
+    if (!touch) return;
+    updatePointerControl(touch.clientX, touch.clientY);
+    event.preventDefault();
+  }, { passive: false });
+
+  window.addEventListener("touchend", (event) => {
+    if (!pointerActive) return;
+    const touch = findTouch(event.changedTouches, activePointerId);
+    if (!touch) return;
+    releasePointer(touch.clientX, touch.clientY, touch.identifier, false);
+    event.preventDefault();
+  }, { passive: false });
+
+  window.addEventListener("touchcancel", (event) => {
+    if (!pointerActive) return;
+    const touch = findTouch(event.changedTouches, activePointerId);
+    if (!touch) return;
+    releasePointer(touch.clientX, touch.clientY, touch.identifier, true);
+  }, { passive: false });
+}
+
+function findTouch(touchList, identifier) {
+  for (let index = 0; index < touchList.length; index += 1) {
+    const touch = touchList[index];
+    if (touch.identifier === identifier) return touch;
+  }
+  return null;
+}
+
 function configureMusic() {
   musicPlayer.preload = "metadata";
   musicPlayer.volume = musicVolume;
   musicPlayer.addEventListener("ended", playNextMusicTrack);
   syncMusicVolumeControls();
+}
+
+function configureTelegramNotice() {
+  const telegramWebApp = window.Telegram?.WebApp;
+  const source = new URLSearchParams(window.location.search).get("from") || "";
+  const shouldShowNotice = isTelegramContext({
+    userAgent: navigator.userAgent,
+    source,
+    hasWebApp: Boolean(telegramWebApp || window.TelegramWebviewProxy),
+  });
+  if (!shouldShowNotice) return;
+
+  const canonicalLink = document.querySelector('link[rel="canonical"]');
+  const gameUrl = canonicalLink?.href || `${window.location.origin}${window.location.pathname}`;
+  telegramBrowserNotice.hidden = false;
+
+  if (typeof telegramWebApp?.openLink === "function") {
+    telegramExternalButton.hidden = false;
+    telegramExternalButton.addEventListener("click", () => {
+      telegramWebApp.openLink(gameUrl);
+    });
+  }
+
+  copyGameLinkButton.addEventListener("click", async () => {
+    try {
+      if (typeof navigator.clipboard?.writeText !== "function") throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(gameUrl);
+      copyGameLinkButton.textContent = "Link copied";
+      liveStatus.textContent = "Game link copied. Paste it into Safari or Chrome.";
+    } catch {
+      copyGameLinkButton.textContent = "Use the ⋯ menu";
+      liveStatus.textContent = "Use Telegram's menu and choose Open in Browser.";
+    }
+  });
+
+  playHereButton.addEventListener("click", () => {
+    telegramBrowserNotice.hidden = true;
+    liveStatus.textContent = "Telegram notice dismissed. Choose a road and start the journey.";
+  });
 }
 
 function startMusic() {
@@ -447,14 +578,19 @@ function resetJourney() {
   journeyProgress = 0;
   collectedBadges = new Set();
   joinedStops = new Set();
-  triggeredBumps = new Set();
+  obstacleOutcomes = new Map();
   journeyPause = 0;
   supportOffset = 0;
   supportTarget = 0;
   pointerControl = 0;
   pointerActive = false;
+  activePointerId = null;
+  pointerMaximumTravel = 0;
   keyboardDirection = 0;
   bumpKick = 0;
+  jumpElapsed = null;
+  jumpHeight = 0;
+  jumpCooldown = 0;
   runSeconds = 0;
   failElapsed = 0;
   firstImpactAt = null;
@@ -609,6 +745,7 @@ function pauseRun() {
   state = "paused";
   pointerActive = false;
   pointerControl = 0;
+  activePointerId = null;
   keyboardDirection = 0;
   pauseMusic();
   canvas.classList.remove("is-grabbing");
@@ -682,18 +819,39 @@ function disarmReset() {
   resetProgressButton.textContent = "Reset progress";
 }
 
-function releasePointer(event) {
-  if (!pointerActive) return;
+function releasePointer(clientX, clientY, pointerId, cancelled) {
+  if (!pointerActive || pointerId !== activePointerId) return;
+  updatePointerTravel(clientX, clientY);
+  const shouldJump = !cancelled && isShortTap(
+    performance.now() - pointerStartedAt,
+    pointerMaximumTravel,
+    TAP_MAX_DURATION_MS,
+    TAP_MAX_TRAVEL_PX,
+  );
   pointerActive = false;
   pointerControl = 0;
+  activePointerId = null;
   canvas.classList.remove("is-grabbing");
-  if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+  try {
+    if (canvas.hasPointerCapture?.(pointerId)) canvas.releasePointerCapture(pointerId);
+  } catch {
+    // The window-level release already completed the input session.
+  }
+  if (shouldJump) triggerJump();
 }
 
-function updatePointerControl(event) {
+function updatePointerControl(clientX, clientY) {
+  updatePointerTravel(clientX, clientY);
   const bounds = canvas.getBoundingClientRect();
-  const travel = (event.clientX - pointerStartX) / Math.max(1, bounds.width * 0.32);
+  const travel = (clientX - pointerStartX) / Math.max(1, bounds.width * POINTER_TRAVEL_RATIO);
   pointerControl = clamp(pointerStartControl + travel, -1, 1);
+}
+
+function updatePointerTravel(clientX, clientY) {
+  pointerMaximumTravel = Math.max(
+    pointerMaximumTravel,
+    Math.hypot(clientX - pointerStartX, clientY - pointerStartY),
+  );
 }
 
 function frame(now) {
@@ -703,6 +861,7 @@ function frame(now) {
 
   if (state === "playing") {
     runSeconds += deltaSeconds;
+    updateJumpMotion(deltaSeconds);
     updateJourney(deltaSeconds);
     updateGustPhase();
     accumulator += deltaMs;
@@ -773,12 +932,11 @@ function updateJourney(deltaSeconds) {
 
   currentRoute.bumpDistances.forEach((distance, index) => {
     if (
-      !triggeredBumps.has(index) &&
+      !obstacleOutcomes.has(index) &&
       previousProgress < distance &&
       journeyProgress >= distance
     ) {
-      triggeredBumps.add(index);
-      triggerBump(index);
+      resolveObstacle(index);
     }
   });
 }
@@ -804,6 +962,27 @@ function addFriend(character) {
   liveStatus.textContent = `${character} joined the stack.`;
 }
 
+function resolveObstacle(index) {
+  const cleared = isObstacleCleared(jumpHeight, OBSTACLE_CLEARANCE);
+  obstacleOutcomes.set(index, cleared ? "cleared" : "hit");
+
+  if (!cleared) {
+    triggerBump(index);
+    liveStatus.textContent = "The wheel hit an obstacle. Keep balancing.";
+    return;
+  }
+
+  burst(
+    CENTER_X + supportOffset,
+    WHEEL_Y - jumpHeight,
+    "#fff0a6",
+    reducedMotion.matches ? 5 : 13,
+    "star",
+  );
+  setJourneyMessage("NICE JUMP!", 0.85);
+  liveStatus.textContent = "Obstacle cleared.";
+}
+
 function triggerBump(index) {
   const direction = index % 2 === 0 ? 1 : -1;
   bumpKick = direction * (0.055 + selectedRouteIndex * 0.008);
@@ -820,26 +999,56 @@ function triggerBump(index) {
   setJourneyMessage("BUMP!", 0.8);
 }
 
+function triggerJump() {
+  if (state !== "playing" || jumpElapsed !== null || jumpCooldown > 0) return false;
+  jumpElapsed = 0;
+  jumpCooldown = JUMP_COOLDOWN_SECONDS;
+  setJourneyMessage("HOP!", 0.45);
+  liveStatus.textContent = "Jump started.";
+  return true;
+}
+
+function updateJumpMotion(deltaSeconds) {
+  jumpCooldown = Math.max(0, jumpCooldown - deltaSeconds);
+  if (jumpElapsed === null) return;
+
+  jumpElapsed += deltaSeconds;
+  jumpHeight = getJumpArcHeight(jumpElapsed, JUMP_DURATION_SECONDS, JUMP_HEIGHT);
+  Body.setPosition(platform, {
+    x: CENTER_X,
+    y: PLATFORM_Y - jumpHeight,
+  });
+
+  if (jumpElapsed < JUMP_DURATION_SECONDS) return;
+  jumpElapsed = null;
+  jumpHeight = 0;
+  Body.setPosition(platform, { x: CENTER_X, y: PLATFORM_Y });
+  burst(CENTER_X + supportOffset, ROAD_SURFACE_Y - 2, "#f7d29b", reducedMotion.matches ? 3 : 8, "dust");
+  shake = reducedMotion.matches ? 0 : Math.max(shake, 1.8);
+}
+
+function settleJumpPlatform() {
+  jumpElapsed = null;
+  jumpHeight = 0;
+  jumpCooldown = 0;
+  if (platform) Body.setPosition(platform, { x: CENTER_X, y: PLATFORM_Y });
+}
+
 function updateVehicleControl() {
   if (keyboardDirection !== 0) {
     supportTarget = getKeyboardSupportTarget();
   } else if (pointerActive) {
-    supportTarget = getCappedPointerSupportOffset(
+    supportTarget = getDirectSupportOffset(
       pointerControl,
-      gust?.direction || 0,
-      getActiveGustEnvelope(),
-      WIND_PROFILE.forceMax * getStackWindScale(creatures.length),
-      GRAVITY_SCALE,
-      COUNTER_TILT_AUTHORITY,
       MAX_SUPPORT_OFFSET,
-      MAX_PLATFORM_ANGLE,
+      POINTER_SUPPORT_AUTHORITY,
     );
   } else {
     supportTarget = 0;
   }
 
   const supportError = supportTarget - supportOffset;
-  supportOffset += clamp(supportError * 0.17, -2.7, 2.7);
+  supportOffset += clamp(supportError * 0.23, -4.2, 4.2);
   bumpKick *= 0.972;
 
   const targetAngle =
@@ -1066,8 +1275,10 @@ function beginFailure() {
   impactSlowMoEndsAt = null;
   pointerActive = false;
   pointerControl = 0;
+  activePointerId = null;
   keyboardDirection = 0;
   gust = null;
+  settleJumpPlatform();
   thumbCue.classList.remove("is-visible");
   canvas.classList.remove("is-grabbing");
 
@@ -1174,8 +1385,10 @@ function completeRoute() {
   state = "finished";
   pointerActive = false;
   pointerControl = 0;
+  activePointerId = null;
   keyboardDirection = 0;
   gust = null;
+  settleJumpPlatform();
   journeyProgress = currentRoute.finishDistance;
   const badgeCount = collectedBadges.size;
   progressData.bestBadges[selectedRouteIndex] = Math.max(
@@ -1475,7 +1688,7 @@ function drawRoad() {
 
 function drawRouteObjects(time) {
   currentRoute.bumpDistances.forEach((distance, index) => {
-    if (triggeredBumps.has(index) && distance < journeyProgress - 2) return;
+    if (obstacleOutcomes.has(index) && distance < journeyProgress - 2) return;
     const x = getWorldScreenX(distance, journeyProgress, CENTER_X, PIXELS_PER_UNIT);
     if (x < -70 || x > WIDTH + 70) return;
     if (art.bump) {
@@ -1564,17 +1777,27 @@ function drawWind(time) {
 function drawVehicle(time) {
   if (!platform) return;
 
+  const wheelY = WHEEL_Y - jumpHeight;
   context.save();
+  context.globalAlpha = 1 - Math.min(0.62, jumpHeight / JUMP_HEIGHT * 0.62);
   context.fillStyle = "rgba(78, 43, 48, 0.23)";
   context.beginPath();
-  context.ellipse(CENTER_X + supportOffset, ROAD_SURFACE_Y + 5, 56, 10, 0, 0, Math.PI * 2);
+  context.ellipse(
+    CENTER_X + supportOffset,
+    ROAD_SURFACE_Y + 5,
+    56 - jumpHeight * 0.18,
+    10 - jumpHeight * 0.06,
+    0,
+    0,
+    Math.PI * 2,
+  );
   context.fill();
   context.restore();
 
   const wheelX = CENTER_X + supportOffset;
   if (art.wheel) {
     context.save();
-    context.translate(wheelX, WHEEL_Y);
+    context.translate(wheelX, wheelY);
     context.rotate(journeyProgress * 0.8 + supportOffset * 0.028);
     context.shadowColor = "rgba(74, 39, 45, 0.32)";
     context.shadowBlur = 8;
@@ -1604,7 +1827,7 @@ function drawVehicle(time) {
     context.globalAlpha = 0.24 + Math.sin(time * 2) * 0.04;
     context.fillStyle = "#fff3b4";
     context.beginPath();
-    context.ellipse(wheelX, WHEEL_Y - 2, 16, 9, 0, 0, Math.PI * 2);
+    context.ellipse(wheelX, wheelY - 2, 16, 9, 0, 0, Math.PI * 2);
     context.fill();
     context.restore();
   }
@@ -1823,6 +2046,10 @@ if (new URLSearchParams(window.location.search).has("debug")) {
       supportOffset,
       supportTarget,
       platformAngle: platform ? platform.angle : 0,
+      jumpHeight,
+      jumpActive: jumpElapsed !== null,
+      jumpCooldown,
+      obstacleOutcomes: [...obstacleOutcomes.entries()],
       creatureCount: creatures.length,
       creaturePositions: creatures.map((creature) => ({
         kind: creature.kind,
@@ -1892,6 +2119,12 @@ if (new URLSearchParams(window.location.search).has("debug")) {
     releaseControl: () => {
       pointerActive = false;
       pointerControl = 0;
+      return true;
+    },
+    triggerJump: () => triggerJump(),
+    setProgress: (progress) => {
+      if (state !== "playing") return false;
+      journeyProgress = clamp(Number(progress) || 0, 0, currentRoute.finishDistance);
       return true;
     },
     triggerGust: (direction = 1, force = WIND_PROFILE.forceMax) => {
