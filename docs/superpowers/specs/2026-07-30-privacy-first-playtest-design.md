@@ -68,7 +68,7 @@ Decision rules:
 The shared link uses a non-personal cohort and source label:
 
 ```text
-https://kiku-jw.github.io/wobble-stack/?playtest=TG1&source=telegram
+https://kiku-jw.github.io/wobble-stack/?from=telegram&playtest=TG1&source=telegram
 ```
 
 Links posted elsewhere use the same cohort and a different allow-listed source,
