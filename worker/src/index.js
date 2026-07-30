@@ -4,7 +4,7 @@ import {
 } from "./validation.js";
 
 const MAX_BODY_BYTES = 4096;
-const EVENT_INSERT = `
+export const EVENT_INSERT = `
   INSERT OR IGNORE INTO events (
     event_id,
     participant_id,
@@ -25,7 +25,7 @@ const EVENT_INSERT = `
     obstacles_cleared
   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `;
-const COHORT_SLOT_INSERT = `
+export const COHORT_SLOT_INSERT = `
   INSERT INTO cohort_members (cohort, ordinal, participant_id)
   SELECT ?, COUNT(*) + 1, ?
   FROM cohort_members
@@ -33,11 +33,11 @@ const COHORT_SLOT_INSERT = `
   HAVING COUNT(*) < 20
   ON CONFLICT DO NOTHING
 `;
-const DELETE_EVENTS = `
+export const DELETE_EVENTS = `
   DELETE FROM events
   WHERE cohort = ? AND participant_id = ?
 `;
-const WITHDRAW_COHORT_SLOT = `
+export const WITHDRAW_COHORT_SLOT = `
   UPDATE cohort_members
   SET participant_id = NULL, deleted_at = unixepoch()
   WHERE cohort = ? AND participant_id = ?
