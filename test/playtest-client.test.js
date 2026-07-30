@@ -177,6 +177,46 @@ test("a later successful flush acknowledges an existing outbox", async () => {
   assert.equal(harness.client.status().pending, 0);
 });
 
+test("an event queued during delivery is flushed before the shared flush settles", async () => {
+  const storage = new MemoryStorage();
+  const requests = [];
+  let releaseFirst;
+  const firstDelivery = new Promise((resolve) => {
+    releaseFirst = resolve;
+  });
+  const client = createPlaytestClient({
+    config: { cohort: "TG1", source: "telegram", build: "TG1-01" },
+    endpoint: "https://collector.example",
+    storage,
+    randomUUID: makeUuidFactory(),
+    now: () => new Date(2026, 6, 30, 12, 0),
+    fetchImpl: async (url, init) => {
+      const body = JSON.parse(init.body);
+      requests.push({ url, body });
+      if (requests.length === 1) await firstDelivery;
+      return {
+        ok: true,
+        async json() {
+          return { accepted: body.events.map((event) => event.eventId) };
+        },
+      };
+    },
+  });
+  client.join();
+
+  const retryPromise = client.recordRetry("orchard");
+  await Promise.resolve();
+  const startPromise = client.recordStarted("orchard", "external");
+  releaseFirst();
+  await Promise.all([retryPromise, startPromise]);
+
+  assert.deepEqual(
+    requests.map((request) => request.body.events[0].type),
+    ["retry_clicked", "round_started"],
+  );
+  assert.equal(client.status().pending, 0);
+});
+
 test("delete removes server and local telemetry state only after success", async () => {
   const harness = createHarness();
   harness.client.join();

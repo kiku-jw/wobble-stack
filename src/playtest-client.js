@@ -247,9 +247,23 @@ export function createPlaytestClient({
     }
   }
 
+  async function flushAll() {
+    let accepted = 0;
+    let delivered = false;
+
+    while (mode === "joined" && state?.pending.length > 0) {
+      const result = await flushPending();
+      if (!result.delivered) break;
+      delivered = true;
+      accepted += result.accepted;
+    }
+
+    return { delivered, accepted };
+  }
+
   function flush() {
     if (flushPromise) return flushPromise;
-    flushPromise = flushPending().finally(() => {
+    flushPromise = flushAll().finally(() => {
       flushPromise = null;
     });
     return flushPromise;

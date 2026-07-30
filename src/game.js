@@ -32,6 +32,8 @@ import {
   getWorldScreenX,
 } from "./game-content.js";
 import { getCharacterArt, loadGameArt } from "./game-art.js";
+import { createPlaytestClient } from "./playtest-client.js";
+import { parsePlaytestConfig } from "./playtest-logic.js";
 
 const { Bodies, Body, Composite, Constraint, Engine, Events } = Matter;
 
@@ -90,10 +92,16 @@ const progressFill = document.querySelector("#progress-fill");
 const pauseButton = document.querySelector("#pause-button");
 const loadingOverlay = document.querySelector("#loading-overlay");
 const loadingFill = document.querySelector("#loading-fill");
+const playtestOverlay = document.querySelector("#playtest-overlay");
+const joinPlaytestButton = document.querySelector("#join-playtest-button");
+const privatePlayButton = document.querySelector("#private-play-button");
 const startOverlay = document.querySelector("#start-overlay");
 const startButton = document.querySelector("#start-button");
 const routeList = document.querySelector("#route-list");
 const resetProgressButton = document.querySelector("#reset-progress-button");
+const playtestStatus = document.querySelector("#playtest-status");
+const playtestStatusCopy = document.querySelector("#playtest-status-copy");
+const deletePlaytestButton = document.querySelector("#delete-playtest-button");
 const resultOverlay = document.querySelector("#result-overlay");
 const resultKicker = document.querySelector("#result-kicker");
 const resultTitle = document.querySelector("#result-title");
@@ -117,6 +125,26 @@ const playHereButton = document.querySelector("#play-here-button");
 const thumbCue = document.querySelector("#thumb-cue");
 const journeyMessage = document.querySelector("#journey-message");
 const liveStatus = document.querySelector("#live-status");
+const searchParams = new URLSearchParams(window.location.search);
+const telegramWebApp = window.Telegram?.WebApp;
+const telegramSource = searchParams.get("from") || "";
+const telegramBridgeAvailable = Boolean(
+  telegramWebApp || window.TelegramWebviewProxy,
+);
+const telegramContextDetected = isTelegramContext({
+  userAgent: navigator.userAgent,
+  source: telegramSource,
+  hasWebApp: telegramBridgeAvailable,
+});
+const launchContext = telegramContextDetected ? "telegram" : "external";
+const playtest = createPlaytestClient({
+  config: parsePlaytestConfig(window.location.search),
+  endpoint: import.meta.env.VITE_PLAYTEST_ENDPOINT || "",
+  storage: window.localStorage,
+  fetchImpl: window.fetch.bind(window),
+  randomUUID: () => window.crypto.randomUUID(),
+  now: () => new Date(),
+});
 
 let art = {};
 let engine;
@@ -133,6 +161,8 @@ let joinedStops = new Set();
 let journeyPause = 0;
 let runSeconds = 0;
 let runCount = 0;
+let runJumpCount = 0;
+let lastRunReason = "none";
 let random = createSeededRandom(1);
 let gust = null;
 let windTravel = 0;
@@ -168,6 +198,9 @@ let messageSeconds = 0;
 let resetArmed = false;
 let resetArmTimer = null;
 let finishTimer = null;
+let gameReady = false;
+let deletePlaytestArmed = false;
+let deletePlaytestArmTimer = null;
 let progressData = readProgress();
 let musicVolume = readMusicVolume();
 let musicQueue = [];
@@ -249,9 +282,12 @@ loadGameArt((progress) => {
   currentRoute = getRoute(selectedRouteIndex);
   resetJourney();
   state = "ready";
+  gameReady = true;
   loadingOverlay.hidden = true;
   startOverlay.hidden = false;
   renderRoutePicker();
+  syncPlaytestInterface();
+  void playtest.flush().finally(syncPlaytestInterface);
   syncInterface();
   liveStatus.textContent = "Choose a road and start the journey.";
 }).catch((error) => {
@@ -269,9 +305,15 @@ function setupCanvas() {
 }
 
 function bindControls() {
-  startButton.addEventListener("click", startRun);
-  retryButton.addEventListener("click", startRun);
-  replayButton.addEventListener("click", startRun);
+  startButton.addEventListener("click", () => startRun("start"));
+  retryButton.addEventListener("click", () => {
+    void playtest.recordRetry(currentRoute.id).finally(syncPlaytestInterface);
+    startRun("retry");
+  });
+  replayButton.addEventListener("click", () => startRun("replay"));
+  joinPlaytestButton.addEventListener("click", handleJoinPlaytest);
+  privatePlayButton.addEventListener("click", handlePrivatePlay);
+  deletePlaytestButton.addEventListener("click", handleDeletePlaytest);
   resultRoutesButton.addEventListener("click", showRouteSelect);
   finishRoutesButton.addEventListener("click", showRouteSelect);
   pauseRoutesButton.addEventListener("click", showRouteSelect);
@@ -351,6 +393,82 @@ function bindControls() {
   });
 }
 
+function syncPlaytestInterface() {
+  const status = playtest.status();
+  const consentRequired = status.mode === "undecided";
+  const telegramHandoffVisible = !telegramBrowserNotice.hidden;
+
+  playtestOverlay.hidden = !(
+    gameReady &&
+    consentRequired &&
+    !telegramHandoffVisible
+  );
+  startButton.disabled = consentRequired;
+
+  const showJoinedStatus = status.mode === "joined";
+  const showUnavailableStatus = status.mode === "unavailable";
+  playtestStatus.hidden = !showJoinedStatus && !showUnavailableStatus;
+  deletePlaytestButton.hidden = !showJoinedStatus;
+
+  if (showJoinedStatus) {
+    playtestStatusCopy.textContent = status.pending > 0
+      ? `Anonymous test active · ${status.pending} pending`
+      : "Anonymous test active";
+  } else if (showUnavailableStatus) {
+    playtestStatusCopy.textContent = "Test data unavailable · private play";
+  }
+
+  if (!deletePlaytestArmed && !deletePlaytestButton.disabled) {
+    deletePlaytestButton.textContent = "Delete test data";
+  }
+}
+
+function handleJoinPlaytest() {
+  playtest.join();
+  syncPlaytestInterface();
+  startRun("start");
+}
+
+function handlePrivatePlay() {
+  playtest.choosePrivate();
+  syncPlaytestInterface();
+  startRun("start");
+}
+
+async function handleDeletePlaytest() {
+  if (!deletePlaytestArmed) {
+    deletePlaytestArmed = true;
+    deletePlaytestButton.textContent = "Tap again to delete";
+    window.clearTimeout(deletePlaytestArmTimer);
+    deletePlaytestArmTimer = window.setTimeout(disarmDeletePlaytest, 3000);
+    return;
+  }
+
+  deletePlaytestButton.disabled = true;
+  deletePlaytestButton.textContent = "Deleting…";
+  const result = await playtest.deleteData();
+  deletePlaytestButton.disabled = false;
+  disarmDeletePlaytest();
+
+  if (result.deleted) {
+    liveStatus.textContent = "Anonymous playtest data deleted.";
+    syncPlaytestInterface();
+    return;
+  }
+
+  deletePlaytestButton.textContent = "Could not delete · retry";
+  liveStatus.textContent = "Playtest data could not be deleted. Try again online.";
+}
+
+function disarmDeletePlaytest() {
+  deletePlaytestArmed = false;
+  window.clearTimeout(deletePlaytestArmTimer);
+  deletePlaytestArmTimer = null;
+  if (!deletePlaytestButton.disabled) {
+    deletePlaytestButton.textContent = "Delete test data";
+  }
+}
+
 function beginPointerControl(clientX, clientY, pointerId) {
   if (state !== "playing" || pointerActive) return false;
   pointerActive = true;
@@ -414,30 +532,23 @@ function configureMusic() {
 }
 
 function configureTelegramNotice() {
-  const telegramWebApp = window.Telegram?.WebApp;
-  const source = new URLSearchParams(window.location.search).get("from") || "";
-  const shouldShowNotice = isTelegramContext({
-    userAgent: navigator.userAgent,
-    source,
-    hasWebApp: Boolean(telegramWebApp || window.TelegramWebviewProxy),
-  });
-  if (!shouldShowNotice) return;
+  if (!telegramContextDetected) return;
 
-  const canonicalLink = document.querySelector('link[rel="canonical"]');
-  const gameUrl = canonicalLink?.href || `${window.location.origin}${window.location.pathname}`;
+  const gameUrl = new URL(window.location.href);
+  gameUrl.hash = "";
   telegramBrowserNotice.hidden = false;
 
   if (typeof telegramWebApp?.openLink === "function") {
     telegramExternalButton.hidden = false;
     telegramExternalButton.addEventListener("click", () => {
-      telegramWebApp.openLink(gameUrl);
+      telegramWebApp.openLink(gameUrl.href);
     });
   }
 
   copyGameLinkButton.addEventListener("click", async () => {
     try {
       if (typeof navigator.clipboard?.writeText !== "function") throw new Error("Clipboard unavailable");
-      await navigator.clipboard.writeText(gameUrl);
+      await navigator.clipboard.writeText(gameUrl.href);
       copyGameLinkButton.textContent = "Link copied";
       liveStatus.textContent = "Game link copied. Paste it into Safari or Chrome.";
     } catch {
@@ -448,6 +559,7 @@ function configureTelegramNotice() {
 
   playHereButton.addEventListener("click", () => {
     telegramBrowserNotice.hidden = true;
+    syncPlaytestInterface();
     liveStatus.textContent = "Telegram notice dismissed. Choose a road and start the journey.";
   });
 }
@@ -600,6 +712,7 @@ function resetJourney() {
   obstacleImpactElapsed = null;
   obstacleImpactHeight = 0;
   runSeconds = 0;
+  runJumpCount = 0;
   failElapsed = 0;
   firstImpactAt = null;
   impactSlowMoEndsAt = null;
@@ -724,14 +837,16 @@ function createBaseGripLinks(board, baseCreature) {
   })];
 }
 
-function startRun() {
+function startRun(reason = "start") {
   startMusic();
   resetJourney();
+  lastRunReason = reason;
   runCount += 1;
   random = createSeededRandom(7907 + selectedRouteIndex * 2003 + runCount * 101);
   state = "playing";
   loadingOverlay.hidden = true;
   startOverlay.hidden = true;
+  playtestOverlay.hidden = true;
   resultOverlay.hidden = true;
   finishOverlay.hidden = true;
   pauseOverlay.hidden = true;
@@ -739,6 +854,8 @@ function startRun() {
   scheduleGust(3.5);
   syncInterface();
   liveStatus.textContent = `${currentRoute.title} started with ${creatures.length} friends.`;
+  void playtest.recordStarted(currentRoute.id, launchContext)
+    .finally(syncPlaytestInterface);
 
   if (runCount === 1) {
     thumbCue.classList.add("is-visible");
@@ -781,6 +898,7 @@ function showRouteSelect() {
   startOverlay.hidden = false;
   resetJourney();
   renderRoutePicker();
+  syncPlaytestInterface();
   syncInterface();
   liveStatus.textContent = "Choose a road.";
   startButton.focus({ preventScroll: true });
@@ -799,7 +917,7 @@ function startNextRoute() {
   currentRoute = getRoute(selectedRouteIndex);
   progressData.selectedRoute = selectedRouteIndex;
   writeProgress();
-  startRun();
+  startRun("next");
 }
 
 function handleResetProgress() {
@@ -1019,6 +1137,7 @@ function triggerJump() {
   if (state !== "playing" || jumpElapsed !== null || jumpCooldown > 0) return false;
   jumpElapsed = 0;
   jumpCooldown = JUMP_COOLDOWN_SECONDS;
+  runJumpCount += 1;
   setJourneyMessage("HOP!", 0.45);
   liveStatus.textContent = "Jump started.";
   return true;
@@ -1389,10 +1508,30 @@ function shouldShowResults() {
   return shouldShowFailureResults(failElapsed, firstImpactAt, impactHold, timeout);
 }
 
+function getPlaytestRoundSummary(outcome) {
+  const outcomes = [...obstacleOutcomes.values()];
+  return {
+    outcome,
+    durationSeconds: runSeconds,
+    progressPercent: getRouteCompletion(
+      journeyProgress,
+      currentRoute.finishDistance,
+    ) * 100,
+    badges: collectedBadges.size,
+    jumps: runJumpCount,
+    obstaclesHit: outcomes.filter((value) => value === "hit").length,
+    obstaclesCleared: outcomes.filter((value) => value === "cleared").length,
+  };
+}
+
 function showResults() {
   if (state !== "failing") return;
   state = "results";
   engine.timing.timeScale = 1;
+  void playtest.recordFinished(
+    currentRoute.id,
+    getPlaytestRoundSummary("loss"),
+  ).finally(syncPlaytestInterface);
   const best = progressData.bestBadges[selectedRouteIndex];
   const newBest = collectedBadges.size > best;
 
@@ -1423,6 +1562,10 @@ function completeRoute() {
   gust = null;
   settleJumpPlatform();
   journeyProgress = currentRoute.finishDistance;
+  void playtest.recordFinished(
+    currentRoute.id,
+    getPlaytestRoundSummary("completed"),
+  ).finally(syncPlaytestInterface);
   const badgeCount = collectedBadges.size;
   progressData.bestBadges[selectedRouteIndex] = Math.max(
     progressData.bestBadges[selectedRouteIndex],
@@ -2122,6 +2265,16 @@ if (new URLSearchParams(window.location.search).has("debug")) {
         : null,
       queuedTracks: musicQueue.map((track) => new URL(track).pathname.split("/").pop()),
     }),
+    getPlaytestState: () => {
+      const status = playtest.status();
+      return {
+        mode: status.mode,
+        pending: status.pending,
+        dropped: status.dropped,
+        lastRunReason,
+        runJumpCount,
+      };
+    },
     setMusicVolume: (percentage) => {
       setMusicVolume(percentage);
       return musicVolume;
@@ -2134,7 +2287,7 @@ if (new URLSearchParams(window.location.search).has("debug")) {
     },
     start: () => {
       if (state !== "ready" && state !== "results" && state !== "finished") return false;
-      startRun();
+      startRun("debug");
       return true;
     },
     setRoute: (routeIndex) => {

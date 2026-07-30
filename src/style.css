@@ -218,6 +218,50 @@ input[type="range"]:focus-visible,
   text-transform: uppercase;
 }
 
+.playtest-overlay {
+  z-index: 14;
+  color: #fff8e4;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(247, 173, 114, 0.28), transparent 36%),
+    rgba(52, 29, 40, 0.88);
+  backdrop-filter: blur(12px);
+}
+
+.playtest-card {
+  display: grid;
+  width: min(330px, 100%);
+  padding: 24px 20px 18px;
+  border: 1px solid rgba(255, 235, 181, 0.34);
+  border-radius: 22px;
+  gap: 14px;
+  background:
+    linear-gradient(180deg, rgba(133, 74, 66, 0.96), rgba(72, 41, 50, 0.98));
+  box-shadow:
+    0 18px 45px rgba(31, 18, 27, 0.36),
+    inset 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.playtest-card h2 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 1000;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.playtest-card > p:not(.eyebrow) {
+  margin: 0;
+  color: rgba(255, 246, 222, 0.86);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.playtest-card > .text-button {
+  width: 100%;
+}
+
 .loading-mark,
 .festival-star {
   display: grid;
@@ -507,6 +551,35 @@ input[type="range"]:focus-visible,
   font-size: 9px;
 }
 
+.playtest-status {
+  position: absolute;
+  z-index: 2;
+  top: max(12px, env(safe-area-inset-top));
+  right: 14px;
+  left: 14px;
+  display: flex;
+  min-height: 36px;
+  padding: 3px 5px 3px 11px;
+  border: 1px solid rgba(255, 231, 159, 0.28);
+  border-radius: 12px;
+  align-items: center;
+  justify-content: space-between;
+  color: rgba(255, 244, 217, 0.86);
+  background: rgba(70, 40, 48, 0.76);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.045em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.playtest-status .text-button {
+  min-height: 32px;
+  padding: 4px 6px;
+  font-size: 8px;
+  white-space: nowrap;
+}
+
 .music-control {
   display: grid;
   min-width: 0;
@@ -759,6 +832,15 @@ input[type="range"]:focus-visible,
 }
 
 @media (max-height: 730px) {
+  .playtest-card {
+    padding: 18px 16px 12px;
+    gap: 10px;
+  }
+
+  .playtest-card h2 {
+    font-size: 27px;
+  }
+
   .title-lockup {
     top: 56px;
   }

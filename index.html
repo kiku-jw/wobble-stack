@@ -68,6 +68,23 @@
           </span>
         </div>
 
+        <div id="playtest-overlay" class="game-overlay playtest-overlay" hidden>
+          <div class="playtest-card">
+            <p class="eyebrow">OPTIONAL PLAYTEST</p>
+            <h2>Help improve the wobble</h2>
+            <p>
+              This test sends anonymous round summaries. No name, Telegram account,
+              messages, or precise controls are collected.
+            </p>
+            <button id="join-playtest-button" class="primary-button" type="button">
+              Play and join the test
+            </button>
+            <button id="private-play-button" class="text-button" type="button">
+              Play privately
+            </button>
+          </div>
+        </div>
+
         <div id="start-overlay" class="game-overlay start-overlay" hidden>
           <div class="title-lockup">
             <p class="eyebrow">THE WINDMILL FESTIVAL STARTS AT SUNSET</p>
@@ -107,6 +124,12 @@
               <output data-music-volume-output for="music-volume-start">50%</output>
             </label>
             <button id="reset-progress-button" class="text-button" type="button">Reset progress</button>
+          </div>
+          <div id="playtest-status" class="playtest-status" hidden>
+            <span id="playtest-status-copy"></span>
+            <button id="delete-playtest-button" class="text-button" type="button">
+              Delete test data
+            </button>
           </div>
           <nav class="creator-links" aria-label="Creator links">
             <a
