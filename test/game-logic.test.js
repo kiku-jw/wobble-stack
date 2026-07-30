@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import * as gameLogic from "../src/game-logic.js";
 import {
   WIND_PROFILE,
   clamp,
@@ -277,6 +278,15 @@ test("Telegram context detection stays explicit and dependency-free", () => {
   assert.equal(isTelegramContext({ hasWebApp: true }), true);
   assert.equal(isTelegramContext({ userAgent: "Mozilla Telegram/12.0" }), true);
   assert.equal(isTelegramContext({ userAgent: "Mozilla/5.0 Safari/605.1" }), false);
+});
+
+test("external handoff keeps the playtest query without retriggering Telegram", () => {
+  assert.equal(
+    gameLogic.buildExternalGameUrl?.(
+      "https://kiku-jw.github.io/wobble-stack/?from=telegram&playtest=TG1&source=telegram&debug=1#game",
+    ),
+    "https://kiku-jw.github.io/wobble-stack/?playtest=TG1&source=telegram&debug=1",
+  );
 });
 
 test("music shuffle exhausts every track and avoids a boundary repeat", () => {

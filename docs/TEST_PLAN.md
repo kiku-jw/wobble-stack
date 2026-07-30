@@ -83,7 +83,8 @@ Assertions cover:
    slot.
 7. Open
    `?from=telegram&playtest=TG1-PILOT&source=pilot`. Confirm the Telegram notice
-   appears before consent and Copy preserves the complete query string.
+   appears before consent and Copy preserves the playtest/source query while
+   removing only `from=telegram`, so the external browser does not loop.
 
 ## Calibration matrix
 

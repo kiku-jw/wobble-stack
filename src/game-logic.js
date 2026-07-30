@@ -136,6 +136,13 @@ export function isTelegramContext({
   );
 }
 
+export function buildExternalGameUrl(href) {
+  const url = new URL(href);
+  url.hash = "";
+  url.searchParams.delete("from");
+  return url.href;
+}
+
 export function getRequiredCounterAngle(force, gravityScale) {
   return Math.atan(force / gravityScale);
 }

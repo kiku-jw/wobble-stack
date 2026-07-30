@@ -2,6 +2,7 @@ import Matter from "matter-js";
 import "./style.css";
 import {
   WIND_PROFILE,
+  buildExternalGameUrl,
   clamp,
   createSeededRandom,
   getAudioFadeGain,
@@ -534,21 +535,20 @@ function configureMusic() {
 function configureTelegramNotice() {
   if (!telegramContextDetected) return;
 
-  const gameUrl = new URL(window.location.href);
-  gameUrl.hash = "";
+  const gameUrl = buildExternalGameUrl(window.location.href);
   telegramBrowserNotice.hidden = false;
 
   if (typeof telegramWebApp?.openLink === "function") {
     telegramExternalButton.hidden = false;
     telegramExternalButton.addEventListener("click", () => {
-      telegramWebApp.openLink(gameUrl.href);
+      telegramWebApp.openLink(gameUrl);
     });
   }
 
   copyGameLinkButton.addEventListener("click", async () => {
     try {
       if (typeof navigator.clipboard?.writeText !== "function") throw new Error("Clipboard unavailable");
-      await navigator.clipboard.writeText(gameUrl.href);
+      await navigator.clipboard.writeText(gameUrl);
       copyGameLinkButton.textContent = "Link copied";
       liveStatus.textContent = "Game link copied. Paste it into Safari or Chrome.";
     } catch {
