@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .playwright-cli/
+.worktrees/
 .DS_Store
 
 # Unity project state
