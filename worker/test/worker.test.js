@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import worker, { handleRequest } from "../src/index.js";
+import * as workerEntry from "../src/index.js";
 
 const GAME_ORIGIN = "https://kiku-jw.github.io";
 const participantId = "11111111-1111-4111-8111-111111111111";
@@ -91,6 +92,13 @@ function request(path, {
     body: body === undefined ? undefined : body,
   });
 }
+
+test("entry module exposes only Worker-compatible named handlers", () => {
+  for (const [name, value] of Object.entries(workerEntry)) {
+    if (name === "default") continue;
+    assert.equal(typeof value, "function", `${name} must be a function`);
+  }
+});
 
 test("health returns only a readiness result", async () => {
   const response = await handleRequest(

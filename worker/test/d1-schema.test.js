@@ -8,7 +8,7 @@ import {
   DELETE_EVENTS,
   EVENT_INSERT,
   WITHDRAW_COHORT_SLOT,
-} from "../src/index.js";
+} from "../src/statements.js";
 
 const migrationUrl = new URL(
   "../migrations/0001_playtest.sql",
